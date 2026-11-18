@@ -2,8 +2,10 @@ import os
 import sys
 import hashlib
 import datetime
+import statistics
 from pathlib import Path
 from typing import Any
+from collections import defaultdict
 import openpyxl
 
 from app.database import SessionLocal
@@ -121,13 +123,72 @@ def check_confirmation(row_values: list[Any], row_dict: dict[str, Any], notes: s
     return False, None
 
 
+def analyze_span_tension_anomalies(raw_rows: list[tuple[int, list[Any]]]) -> dict[int, list[str]]:
+    """Analyze Span-Tension Tables for:
+    (a) equal values at neighbouring spans (when column is not globally constant),
+    (b) direction changes in values/steps,
+    (c) any step > 1.5x median step, or second difference anomaly (e.g. curvature drop / deceleration).
+    """
+    col_names = ["tension_kn", "tension_27_kn", "sag_15_m", "sag_27_m", "sag_65_m"]
+    tables = defaultdict(list)
+    for r_idx, r in raw_rows:
+        if r[0] is not None:
+            tables[r[0]].append((r_idx, r))
+
+    row_flags: dict[int, list[str]] = defaultdict(list)
+
+    for tid, pts in tables.items():
+        pts.sort(key=lambda x: x[1][1])
+        for col_idx, col_name in enumerate(col_names, start=2):
+            vals = [to_float(p[1][col_idx]) for p in pts]
+            spans = [to_float(p[1][1]) for p in pts]
+            r_indices = [p[0] for p in pts]
+
+            if any(v is None for v in vals):
+                continue
+
+            # Check if entire column is globally constant (e.g. design tension across all spans)
+            is_all_constant = all(abs(v - vals[0]) < 1e-9 for v in vals)
+            if not is_all_constant:
+                # (a) Equal values at neighbouring spans
+                for i in range(1, len(vals)):
+                    if abs(vals[i] - vals[i-1]) < 1e-9:
+                        row_flags[r_indices[i]].append(f"{col_name}: equal value to neighbouring span {spans[i-1]}m ({vals[i]})")
+                        row_flags[r_indices[i-1]].append(f"{col_name}: equal value to neighbouring span {spans[i]}m ({vals[i]})")
+
+            steps = [round(vals[i] - vals[i-1], 6) for i in range(1, len(vals))]
+            abs_steps = [abs(s) for s in steps if abs(s) > 1e-9]
+            med_step = statistics.median(abs_steps) if abs_steps else 0
+
+            # (b) Direction changes
+            for i in range(1, len(steps)):
+                if (steps[i] > 1e-9 and steps[i-1] < -1e-9) or (steps[i] < -1e-9 and steps[i-1] > 1e-9):
+                    row_flags[r_indices[i+1]].append(f"{col_name}: direction change (step {steps[i-1]} -> {steps[i]})")
+
+            # (c) Step > 1.5x median step or second difference anomaly
+            for i, s in enumerate(steps):
+                span_curr = spans[i+1]
+                r_idx_curr = r_indices[i+1]
+                if med_step > 0 and abs(s) > 1.5 * med_step:
+                    row_flags[r_idx_curr].append(f"{col_name}: step {s:.4f} > 1.5x median ({med_step:.4f})")
+
+                # Second difference anomaly (in sag, steps must grow smoothly with d2 >= 0)
+                if i > 0 and "sag" in col_name:
+                    d2 = steps[i] - steps[i-1]
+                    if d2 < -0.03:
+                        row_flags[r_idx_curr].append(f"{col_name}: second difference drop (d2={d2:.4f}m)")
+
+    return row_flags
+
+
 def import_excel_master(filepath: str) -> DatasetVersion:
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"Source file not found at: {filepath}")
 
     file_hash = compute_file_hash(filepath)
     filename = Path(filepath).name
-    version_name = f"LECO_Import_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    version_name = f"LECO_Import_{now_utc.strftime('%Y%m%d_%H%M%S')}"
 
     wb = openpyxl.load_workbook(filepath, data_only=True)
     db = SessionLocal()
@@ -136,7 +197,7 @@ def import_excel_master(filepath: str) -> DatasetVersion:
         # Create new version (Idempotent: every import creates a distinct dataset_version without modifying or duplicating previous versions)
         dataset_version = DatasetVersion(
             name=version_name,
-            imported_at=datetime.datetime.utcnow(),
+            imported_at=now_utc,
             source_file=filename,
             file_hash=file_hash,
         )
@@ -231,9 +292,10 @@ def import_excel_master(filepath: str) -> DatasetVersion:
         if "Span-Tension Tables" in wb.sheetnames:
             ws = wb["Span-Tension Tables"]
             rows = list(ws.iter_rows(values_only=True))
-            for r_idx, r in enumerate(rows[3:], start=4):
-                if not any(c is not None for c in r):
-                    continue
+            raw_st_rows = [(r_idx, list(r)) for r_idx, r in enumerate(rows[3:], start=4) if any(c is not None for c in r)]
+            st_anomalies = analyze_span_tension_anomalies(raw_st_rows)
+
+            for r_idx, r in raw_st_rows:
                 tid = clean_val(r[0])
                 span_m = to_float(r[1])
                 t_kn = to_float(r[2])
@@ -243,6 +305,10 @@ def import_excel_master(filepath: str) -> DatasetVersion:
                 s65 = to_float(r[6])
 
                 needs_conf, conf_note = check_confirmation(list(r), {})
+                if r_idx in st_anomalies:
+                    needs_conf = True
+                    anomaly_str = "; ".join(st_anomalies[r_idx])
+                    conf_note = f"{conf_note}; {anomaly_str}" if conf_note else anomaly_str
 
                 st = SpanTensionPoint(
                     dataset_version_id=version_id,

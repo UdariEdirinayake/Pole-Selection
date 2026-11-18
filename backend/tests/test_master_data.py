@@ -30,7 +30,6 @@ def test_row_counts_match_excel():
     """Verify all 12 populated sheets match exact row counts."""
     db = SessionLocal()
     try:
-        # Get latest dataset version
         latest_version = db.query(DatasetVersion).order_by(DatasetVersion.id.desc()).first()
         assert latest_version is not None
         v_id = latest_version.id
@@ -151,6 +150,45 @@ def test_needs_value_rows_are_null_and_flagged():
         db.close()
 
 
+def test_span_tension_monotonicity_anomalies_flagged():
+    """Verify known non-monotonic and anomaly cases in span-tension tables are flagged needs_confirmation=True:
+    - UQ 65 m sag_15 (step 1.02m > 1.5x median)
+    - UQ 45 m sag_15 (second difference deceleration / drop d2=-0.05m)
+    - UD-2.74 55 m and 60 m sag_65 (equal values at neighbouring spans: 1.42 m)
+    """
+    db = SessionLocal()
+    try:
+        latest = db.query(DatasetVersion).order_by(DatasetVersion.id.desc()).first()
+        v_id = latest.id
+
+        # 1. UQ 65 m
+        uq_65 = db.query(SpanTensionPoint).filter_by(dataset_version_id=v_id, table_id="UQ", span_m=65.0).first()
+        assert uq_65 is not None
+        assert uq_65.needs_confirmation is True
+        assert "sag_15_m: step" in uq_65.confirmation_note
+        assert "sag_15 = 3.0" or "sag_15" in uq_65.confirmation_note
+
+        # 2. UQ 45 m
+        uq_45 = db.query(SpanTensionPoint).filter_by(dataset_version_id=v_id, table_id="UQ", span_m=45.0).first()
+        assert uq_45 is not None
+        assert uq_45.needs_confirmation is True
+        assert "sag_15_m: second difference drop" in uq_45.confirmation_note
+
+        # 3. UD-2.74 55 m
+        ud_55 = db.query(SpanTensionPoint).filter_by(dataset_version_id=v_id, table_id="UD-2.74", span_m=55.0).first()
+        assert ud_55 is not None
+        assert ud_55.needs_confirmation is True
+        assert "sag_65_m: equal value to neighbouring span" in ud_55.confirmation_note
+
+        # 4. UD-2.74 60 m
+        ud_60 = db.query(SpanTensionPoint).filter_by(dataset_version_id=v_id, table_id="UD-2.74", span_m=60.0).first()
+        assert ud_60 is not None
+        assert ud_60.needs_confirmation is True
+        assert "sag_65_m: equal value to neighbouring span" in ud_60.confirmation_note
+    finally:
+        db.close()
+
+
 def test_idempotent_reimport_creates_new_version_without_duplicates():
     """Verify running importer again creates a distinct new version and leaves old data untouched."""
     db = SessionLocal()
@@ -160,7 +198,6 @@ def test_idempotent_reimport_creates_new_version_without_duplicates():
         assert new_v.id is not None
         assert db.query(DatasetVersion).count() == initial_version_count + 1
 
-        # Check records for new version
         new_cond_count = db.query(Conductor).filter_by(dataset_version_id=new_v.id).count()
         assert new_cond_count == 22
     finally:
@@ -169,14 +206,12 @@ def test_idempotent_reimport_creates_new_version_without_duplicates():
 
 def test_master_api_endpoints():
     """Verify GET /api/master/{table} and GET /api/master/dataset-versions."""
-    # 1. Dataset versions endpoint
     res = client.get("/api/master/dataset-versions")
     assert res.status_code == 200
     versions = res.json()
     assert len(versions) >= 1
     assert "source_file" in versions[0]
 
-    # 2. Conductors table
     res_cond = client.get("/api/master/conductors?limit=5")
     assert res_cond.status_code == 200
     data = res_cond.json()
@@ -184,7 +219,6 @@ def test_master_api_endpoints():
     assert len(data["items"]) == 5
     assert "needs_confirmation" in data["items"][0]
 
-    # 3. Filter by needs_confirmation=true
     res_conf = client.get("/api/master/conductors?needs_confirmation=true")
     assert res_conf.status_code == 200
     conf_data = res_conf.json()

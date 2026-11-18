@@ -1,7 +1,7 @@
 # Phase 1 Data Quality & Audit Report
 
 **Source File:** `data/source/LECO_Pole_Selection_Construction_Data.xlsx`  
-**Dataset Version:** `LECO_Import_20261118_063829` (SHA-256: `63ae74f4b93198ee3e2cb5038f45b5972ee7857ea293c6179b0ba6a1251c9103`)  
+**Latest Dataset Version:** `LECO_Import_20261118_065626` (SHA-256: `63ae74f4b93198ee3e2cb5038f45b5972ee7857ea293c6179b0ba6a1251c9103`)  
 **Audit Date:** 2026-11-18  
 
 ---
@@ -42,28 +42,49 @@
 
 ---
 
-## 3. Monotonicity Audit of Span-Tension Tables
+## 3. Comprehensive Span-Tension Monotonicity & Step Audit
 
-Every span-tension lookup table was audited across increasing span distance (`span_m`):
-- **Tension (`tension_kn`)** and **Tension at 27°C (`tension_27_kn`)**: checked for monotonic behavior.
-- **Sag at 15°C (`sag_15_m`)**, **Sag at 27°C (`sag_27_m`)**, and **Sag at 65°C (`sag_65_m`)**: checked for monotonic behavior.
+For every span-tension table and every column (`tension_kn`, `tension_27_kn`, `sag_15_m`, `sag_27_m`, `sag_65_m`), the importer strictly checks:
+- **(a) Equal values at neighbouring spans:** Equal values between adjacent spans (excluding columns intentionally designed globally constant across all spans).
+- **(b) Direction changes:** Any reversal or unexpected inflection in curve progression.
+- **(c) Step > 1.5x median step & Second difference anomalies:** Steps exceeding 1.5x the table's median step, or parabolic sag curvature drops ($d^2 < -0.03\text{ m}$).
 
-### Results:
-| Table ID | Span Range (m) | Point Count | Tension Monotonic | Sag Monotonic | Status |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **UQ** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UP** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UR** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UA-7.90** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UB-7.90** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UC-7.90** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UE-7.90** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UD-2.74** | 10 – 65 | 12 | True | True | Verified PASS |
-| **UC-22.3** | 40 – 120 | 17 | True | True | Verified PASS |
-| **UE-22.3** | 40 – 120 | 17 | True | True | Verified PASS |
-| **UD-7.85** | 40 – 120 | 17 | True | True | Verified PASS |
+> **Rule:** No values are changed or smoothed. Every affected row is marked with `needs_confirmation = true` and a detailed explanatory note.
 
-*Note: All 11 tables exhibit strictly monotonic behavior. No anomalies or reversals detected.*
+### Detailed Anomaly Findings:
+
+#### 1. Table `UQ` (7 flagged rows)
+- **Span 15 m (Row 5):** `tension_kn` step $0.2390\text{ kN} > 1.5\times\text{median}$ ($0.1510\text{ kN}$).
+- **Span 20 m (Row 6):** `tension_kn` step $0.2390\text{ kN} > 1.5\times\text{median}$ ($0.1510\text{ kN}$).
+- **Span 45 m (Row 11):** `sag_15_m` second difference drop ($d^2 = -0.0500\text{ m}$). The sag step abruptly decelerates from $0.20\text{ m}$ to $0.15\text{ m}$ before jumping again.
+- **Span 50 m (Row 12):** `sag_15_m` step $0.3200\text{ m} > 1.5\times\text{median}$ ($0.1800\text{ m}$).
+- **Span 55 m (Row 13):** `sag_15_m` second difference drop ($d^2 = -0.0500\text{ m}$).
+- **Span 60 m (Row 14):** `sag_15_m` step $0.2900\text{ m} > 1.5\times\text{median}$; `sag_27_m` step $0.2800\text{ m} > 1.5\times\text{median}$.
+- **Span 65 m (Row 15):** `sag_15_m` step $1.0200\text{ m} > 1.5\times\text{median}$ ($0.1800\text{ m}$); sag jumps from $1.98\text{ m}$ directly to $3.00\text{ m}$! Also `sag_27_m` step $0.30\text{ m} > 1.5\times$ and `sag_65_m` step $0.32\text{ m} > 1.5\times$.
+
+#### 2. Table `UD-2.74` (7 flagged rows)
+- **Span 15 m (Row 89):** `tension_kn` step $-0.1820\text{ kN} > 1.5\times\text{median}$ ($0.0670\text{ kN}$).
+- **Span 20 m (Row 90):** `tension_kn` step $-0.1810\text{ kN} > 1.5\times\text{median}$ ($0.0670\text{ kN}$).
+- **Span 25 m (Row 91):** `tension_kn` step $-0.1540\text{ kN} > 1.5\times\text{median}$ ($0.0670\text{ kN}$).
+- **Span 30 m (Row 92):** `tension_kn` step $-0.1190\text{ kN} > 1.5\times\text{median}$ ($0.0670\text{ kN}$).
+- **Span 55 m (Row 97):** `sag_65_m` equal to neighbouring span 60 m ($1.42\text{ m}$).
+- **Span 60 m (Row 98):** `sag_65_m` equal to neighbouring span 55 m ($1.42\text{ m}$); zero sag increase between 55 m and 60 m ($d^2 = -0.2000\text{ m}$). Also `sag_15_m` and `sag_27_m` steps $> 1.5\times\text{median}$.
+- **Span 65 m (Row 99):** `sag_65_m` step jumps $0.4700\text{ m} > 1.5\times\text{median}$ ($0.1500\text{ m}$).
+
+#### 3. Table `UP` (4 flagged rows)
+- **Span 15 m, 20 m:** initial tension drop steps $> 1.5\times\text{median}$ ($0.1610\text{ kN}$).
+- **Span 60 m, 65 m:** terminal sag steps $> 1.5\times\text{median}$ for `sag_15_m`, `sag_27_m`, and `sag_65_m`.
+
+#### 4. Table `UR` (4 flagged rows)
+- **Span 15 m, 20 m:** initial tension steps $> 1.5\times\text{median}$.
+- **Span 60 m, 65 m:** terminal sag steps $> 1.5\times\text{median}$.
+
+#### 5. Tables `UA-7.90`, `UB-7.90`, `UC-7.90`, `UE-7.90`
+- Initial short spans (15–30 m) show rapid rate of tension relaxation ($|\Delta T| > 1.5\times\text{median}$).
+- Terminal long spans (60–65 m) show steepened sag growth rate ($|\Delta S| > 1.5\times\text{median}$).
+
+#### 6. Table `UE-22.3`
+- **Span 45 m, 55 m:** tension step $> 1.5\times\text{median}$ ($0.0255\text{ kN}$).
 
 ---
 
@@ -84,14 +105,15 @@ In accordance with `AGENTS.md` rules:
 
 ## 5. Summary of `needs_confirmation` Rows
 
-| Table | Flagged Rows | Reasons |
+| Table | Flagged Rows | Primary Reasons |
 | :--- | :---: | :--- |
 | **Conductor** | 11 | 4 rows contain `NEEDS_VALUE`; 11 rows missing lookup table ("no sag-tension data") |
+| **SpanTensionPoint** | 48 | Step $> 1.5\times$ median, equal neighbouring spans (UD-2.74), or second difference drop (UQ) |
 | **Insulator** | 4 | All 4 rows have empty `Tension MFL kN` |
 | **GroundClearance** | 10 | Source notes explicitly state "confirm" or require project owner review |
 | **StructureClearance** | 3 | Rows with notes stating "confirm" (e.g. 33kV ABC, 11kV ABC, Earth conductor) |
 | **CircuitClearance** | 15 | Cross-circuit separation matrix notes requesting confirmation |
-| **Total Flagged Rows** | **43** | All preserved with explicit `confirmation_note` |
+| **Total Flagged Rows** | **91** | All preserved with explicit `confirmation_note` |
 
 ---
 

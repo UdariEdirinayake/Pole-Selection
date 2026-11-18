@@ -177,7 +177,7 @@ def test_sample_results_endpoint(setup_users):
     assert "phase_separation" in data["data"]
     assert "sag_schedule_27" in data["data"]
 
-    # Check that missing columns are shown as "Pending"
-    first_load = data["data"]["structural_loading"][0]
-    assert first_load["pole_top_loads"] == "Pending"
-    assert first_load["buckling_capacity"] == "Pending"
+    # Check that unreadable/clipped columns are shown as "Pending"
+    p10_load = data["data"]["structural_loading"][9]
+    assert p10_load["strutted_rec"] == "Pending"
+    assert p10_load["buckling_check"] == "Pending"

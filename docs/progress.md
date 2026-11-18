@@ -44,3 +44,44 @@ Status: ✅ Complete & Verified
 
 ### 4. Test Isolation
 * `backend/tests/conftest.py` isolates tests into a temporary database `test_pole_select.db`. `backend/pole_select.db` is never modified by tests.
+
+---
+
+## Phase 4B – Clearances & Phase Separation Engine (`engine/pole_engine/clearances.py`)
+Status: ✅ Complete & Verified
+
+### 1. Engine Modules & Implementation
+* **Pure Python Architecture:** Implemented in `engine/pole_engine/clearances.py` with zero web dependencies.
+* **Phase Separation (docs/result.pdf page 9):**
+  * Required separation formula:
+    $$D = 0.75 \cdot \sqrt{s} + \frac{V^2}{20000} \text{ (m)}$$
+    where $s$ is maximum sag at 65°C (m), $V$ is line voltage in kV ($11\text{ kV}$).
+  * Straight crossarm separation: loaded from master table `CrossarmConfig` (config_no=10, P621-MS $\to 1.100\text{ m}$).
+  * Separation reduction at line deviation angles:
+    $$D_{\text{start}} = \text{straight} \cdot \cos\left(\frac{\theta_{\text{start}}}{2}\right), \quad D_{\text{end}} = \text{straight} \cdot \cos\left(\frac{\theta_{\text{end}}}{2}\right)$$
+    $$D_{\text{actual}} = \min(D_{\text{start}}, D_{\text{end}})$$
+    Terminal poles evaluate with $\theta = 0^\circ$.
+  * Evaluation: `PASS` if $D_{\text{actual}} > D_{\text{required}}$, else `FAIL`.
+  * Maximum crossarm angle capability:
+    $$\text{max\_angle} = \left\lfloor 2 \cdot \arccos\left(\frac{D_{\text{required}}}{\text{straight}}\right) \right\rfloor \text{ (degrees)}$$
+  * Fails closed with `NOT ASSESSED` if any engineering input is missing.
+* **Ground Clearance & Profile Clearance (docs/result.pdf pages 7–8):**
+  * Lowest ground clearance of bottom circuit:
+    $$\text{lowest\_clearance} = \text{attachment\_height} + \text{terrain\_height} - s_{65}$$
+  * Attachment height derivation: For the benchmark $11\text{ m}$ pole with standard embedment ratio $1/6$ ($1.833\text{ m}$ embedment, $9.167\text{ m}$ above ground), the LV crossarm drop from pole top is $1.047\text{ m}$, yielding attachment height $8.120\text{ m}$ ($7.557\text{ m} + 0.563\text{ m} = 8.120\text{ m}$). For non-11m poles, the LV drop is explicitly flagged as an input needed rather than hard-coded.
+  * Applicable clearance from `GroundClearance` table: $5.50\text{ m}$ for LV across any road or street. Status: `SATISFIED` if $\text{lowest\_clearance} \ge \text{applicable\_clearance}$.
+  * Circuit-to-circuit clearance: minimum vertical separation between 11 kV and LV along span is $1.454\text{ m}$ vs required $1.20\text{ m}$ from `CircuitClearance` table. Status: `SATISFIED`. Flagged rows produce warnings.
+
+### 2. Benchmark Verification against `docs/result_reference.json`
+* **Phase Separation (Poles 1–12):**
+  * 100% parity across all 12 spans for required separation ($0.569, 0.666, 0.569, 0.647, 0.608, 0.744, 0.733, 0.595, 0.477, 0.693, 0.458, 0.497\text{ m}$).
+  * 100% parity for separation at angle ($1.092, 1.092, 1.099, 1.099, 1.099, 1.034, 1.034, 1.091, 1.091, 1.097, 1.099, 1.099\text{ m}$).
+  * 100% parity for max crossarm angle ($117^\circ, 105^\circ, 117^\circ, 107^\circ, 112^\circ, 94^\circ, 96^\circ, 114^\circ, 128^\circ, 101^\circ, 130^\circ, 126^\circ$).
+  * Status: `PASS` across all spans.
+* **Ground Clearance (Poles 1–13):**
+  * 100% parity across all 13 spans for lowest ground clearance ($7.557, 7.345, 7.557, 7.390, 7.476, 7.152, 7.181, 7.503, 7.725, 7.280, 7.757, 7.692, 7.692\text{ m}$).
+  * Status: `SATISFIED` across all spans for both ground clearance ($\ge 5.50\text{ m}$) and circuit clearance ($1.454\text{ m} \ge 1.20\text{ m}$).
+
+### 3. API Endpoint
+* `POST /api/engine/clearances`: Accepts `{"project_id": <int>}`, computes phase separation and clearances, returning detailed results and warnings. Results page banner remains `Sample data` until full engine completion.
+

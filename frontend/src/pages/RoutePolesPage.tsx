@@ -115,6 +115,10 @@ export const RoutePolesPage: React.FC = () => {
   const handleRemovePole = (index: number) => {
     if (poles.length <= 1) return
     const updated = poles.filter((_, i) => i !== index)
+    // Re-stitch continuity: aft_span of each pole must equal fore_span of the previous pole
+    for (let i = 1; i < updated.length; i++) {
+      updated[i] = { ...updated[i], aft_span_m: updated[i - 1].fore_span_m }
+    }
     setPoles(updated)
   }
 

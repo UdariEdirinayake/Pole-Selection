@@ -3,7 +3,7 @@ import pytest
 from app.database import SessionLocal
 from app.models import User, Project
 from app.auth import hash_password, create_access_token
-from app.api.engine import compute_sag_tension, SagTensionRequest
+from app.api.engine import compute_sag_tension, SagTensionRequest, compute_clearances, ClearancesRequest
 
 
 @pytest.fixture
@@ -66,5 +66,64 @@ def test_sag_tension_endpoint(auth_context):
         assert p13.pole_no == 13
         assert p13.fore_span_m == 0.0
         assert p13.sag_27c_m == 0.306
+    finally:
+        db.close()
+
+
+def test_clearances_endpoint(auth_context):
+    """Test POST /api/engine/clearances for the sample line project."""
+    user, project = auth_context
+    assert project is not None, "Sample project not found in test DB"
+
+    db = SessionLocal()
+    try:
+        req = ClearancesRequest(project_id=project.id)
+        res = compute_clearances(req, current_user=user, db=db)
+
+        assert res.project_id == project.id
+        assert res.attachment_height_m == 8.120
+
+        # 13 poles in both lists
+        assert len(res.phase_separation) == 13
+        assert len(res.ground_clearance) == 13
+
+        # Phase separation: all 12 non-terminal poles (poles 1–12) should PASS
+        for item in res.phase_separation:
+            if item.pole_no <= 12:
+                assert item.separation_check == "PASS", (
+                    f"Pole {item.pole_no}: expected PASS, got {item.separation_check}"
+                )
+
+        # Spot check pole 1
+        p1_sep = next(i for i in res.phase_separation if i.pole_no == 1)
+        assert p1_sep.required_separation_m == 0.569
+        assert p1_sep.separation_actual_m == 1.092
+        assert p1_sep.max_angle_deg == 117
+
+        # Spot check pole 7 (large angle 40°)
+        p7_sep = next(i for i in res.phase_separation if i.pole_no == 7)
+        assert p7_sep.theta_start_deg == 40.0
+        assert p7_sep.separation_actual_m == 1.034
+
+        # Ground clearance: all 13 poles SATISFIED
+        for item in res.ground_clearance:
+            assert item.ground_clearance_check == "SATISFIED", (
+                f"Pole {item.pole_no}: ground_clearance_check expected SATISFIED"
+            )
+            assert item.circuit_clearance_check == "SATISFIED", (
+                f"Pole {item.pole_no}: circuit_clearance_check expected SATISFIED"
+            )
+
+        # Spot check pole 1 ground clearance: 8.120 - 0.563 = 7.557
+        p1_gc = next(i for i in res.ground_clearance if i.pole_no == 1)
+        assert abs(p1_gc.lowest_clearance_m - 7.557) < 0.001
+
+        # Applicable clearance = 5.50 m
+        assert p1_gc.applicable_clearance_m == 5.50
+
+        # Circuit clearance actual = 1.454 m, required = 1.20 m
+        assert p1_gc.min_vert_clear_m == 1.454
+        assert p1_gc.req_vert_clear_m == 1.20
+
     finally:
         db.close()

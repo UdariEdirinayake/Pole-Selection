@@ -1,4 +1,14 @@
 """Pole Engine - Pure Python Calculation and Evaluation Package."""
+from pole_engine.clearances import (
+    calculate_required_phase_separation_m,
+    calculate_separation_at_angle_m,
+    calculate_max_crossarm_angle_deg,
+    evaluate_phase_separation,
+    calculate_lowest_ground_clearance_m,
+    evaluate_ground_clearance,
+    evaluate_circuit_clearance,
+    PoleClearanceResult,
+)
 from pole_engine.units import (
     m_to_mm,
     mm_to_m,
@@ -47,4 +57,13 @@ __all__ = [
     "default_eds_assessment",
     "assess_eds_check",
     "assess_max_stress_15c_wind",
+    # Phase 4B – Clearances
+    "calculate_required_phase_separation_m",
+    "calculate_separation_at_angle_m",
+    "calculate_max_crossarm_angle_deg",
+    "evaluate_phase_separation",
+    "calculate_lowest_ground_clearance_m",
+    "evaluate_ground_clearance",
+    "evaluate_circuit_clearance",
+    "PoleClearanceResult",
 ]

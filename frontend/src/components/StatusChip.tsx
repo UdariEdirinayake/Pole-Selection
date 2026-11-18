@@ -36,6 +36,11 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status, label }) => {
     color = '#1e429f'
     border = '#a4cafe'
     dotColor = '#2563eb'
+  } else if (['NOT CALCULATED', 'NOT ASSESSED'].includes(normalized)) {
+    bg = '#f1f5f9'
+    color = '#475569'
+    border = '#cbd5e1'
+    dotColor = '#94a3b8'
   }
 
   return (

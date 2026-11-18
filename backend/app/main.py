@@ -10,6 +10,7 @@ from app.api.master import router as master_router
 from app.api.auth import router as auth_router
 from app.api.projects import router as projects_router
 from app.api.results import router as results_router
+from app.api.engine import router as engine_router
 
 # Initialize schema tables
 Base.metadata.create_all(bind=engine)
@@ -32,6 +33,7 @@ app.include_router(auth_router)
 app.include_router(master_router)
 app.include_router(projects_router)
 app.include_router(results_router)
+app.include_router(engine_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])

@@ -20,6 +20,11 @@ interface ProjectRowProps {
 }
 
 export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen }) => {
+  const displayStatus =
+    project.status && !['ready', 'draft', 'pending'].includes(project.status.toLowerCase())
+      ? project.status
+      : 'Not calculated'
+
   return (
     <div
       className="card"
@@ -47,7 +52,7 @@ export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen }) => {
           >
             {project.line_arrangement}
           </span>
-          <StatusChip status={project.status} />
+          <StatusChip status={displayStatus} />
         </div>
 
         <h4 style={{ margin: '0 0 0.35rem 0', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>

@@ -83,6 +83,41 @@ export function DataTable<T extends Record<string, any>>({
     return ''
   }
 
+  const hasGroups = columns.some((c) => !!c.group)
+
+  // Build grouped structure for the top header row
+  const groupHeaders: { title: string | null; colSpan: number; col?: Column<T> }[] = []
+  if (hasGroups) {
+    let currentGroup: string | null = null
+    let currentSpan = 0
+
+    for (let i = 0; i < columns.length; i++) {
+      const col = columns[i]
+      const grp = col.group || null
+      if (grp === null) {
+        if (currentGroup !== null) {
+          groupHeaders.push({ title: currentGroup, colSpan: currentSpan })
+          currentGroup = null
+          currentSpan = 0
+        }
+        groupHeaders.push({ title: null, colSpan: 1, col })
+      } else {
+        if (currentGroup === grp) {
+          currentSpan++
+        } else {
+          if (currentGroup !== null) {
+            groupHeaders.push({ title: currentGroup, colSpan: currentSpan })
+          }
+          currentGroup = grp
+          currentSpan = 1
+        }
+      }
+    }
+    if (currentGroup !== null) {
+      groupHeaders.push({ title: currentGroup, colSpan: currentSpan })
+    }
+  }
+
   return (
     <div className="datatable-container">
       <div className="datatable-header">
@@ -142,31 +177,118 @@ export function DataTable<T extends Record<string, any>>({
       <div className="table-responsive">
         <table className="datatable">
           <thead>
-            <tr>
-              {columns.map((col, idx) => {
-                const isSorted = sortKey === col.key
-                return (
-                  <th
-                    key={idx}
-                    onClick={() => handleSort(col.key as string)}
-                    style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
-                  >
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <span>{col.header}</span>
-                      {isSorted ? (
-                        sortOrder === 'asc' ? (
-                          <ArrowUp size={13} color="var(--primary)" />
+            {hasGroups ? (
+              <>
+                <tr>
+                  {groupHeaders.map((gh, idx) => {
+                    if (gh.title === null && gh.col) {
+                      const isSorted = sortKey === gh.col.key
+                      return (
+                        <th
+                          key={idx}
+                          rowSpan={2}
+                          onClick={() => handleSort(gh.col!.key as string)}
+                          style={{ cursor: 'pointer', whiteSpace: 'nowrap', verticalAlign: 'middle' }}
+                        >
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <span>{gh.col.header}</span>
+                            {isSorted ? (
+                              sortOrder === 'asc' ? (
+                                <ArrowUp size={13} color="var(--primary)" />
+                              ) : (
+                                <ArrowDown size={13} color="var(--primary)" />
+                              )
+                            ) : (
+                              <ArrowUpDown size={12} style={{ opacity: 0.4 }} />
+                            )}
+                          </div>
+                        </th>
+                      )
+                    }
+                    return (
+                      <th
+                        key={idx}
+                        colSpan={gh.colSpan}
+                        style={{
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          borderBottom: '1px solid var(--border-color)',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          color: 'var(--text-secondary, #475569)',
+                          backgroundColor: 'var(--bg-surface-elevated, #f8fafc)',
+                          padding: '0.5rem 0.75rem',
+                        }}
+                      >
+                        {gh.title}
+                      </th>
+                    )
+                  })}
+                </tr>
+                <tr>
+                  {columns
+                    .filter((col) => !!col.group)
+                    .map((col, idx) => {
+                      const isSorted = sortKey === col.key
+                      return (
+                        <th
+                          key={idx}
+                          onClick={() => handleSort(col.key as string)}
+                          style={{
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary, #475569)',
+                            padding: '0.5rem 0.75rem',
+                          }}
+                        >
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <span>{col.header}</span>
+                            {isSorted ? (
+                              sortOrder === 'asc' ? (
+                                <ArrowUp size={13} color="var(--primary)" />
+                              ) : (
+                                <ArrowDown size={13} color="var(--primary)" />
+                              )
+                            ) : (
+                              <ArrowUpDown size={12} style={{ opacity: 0.4 }} />
+                            )}
+                          </div>
+                        </th>
+                      )
+                    })}
+                </tr>
+              </>
+            ) : (
+              <tr>
+                {columns.map((col, idx) => {
+                  const isSorted = sortKey === col.key
+                  return (
+                    <th
+                      key={idx}
+                      onClick={() => handleSort(col.key as string)}
+                      style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <span>{col.header}</span>
+                        {isSorted ? (
+                          sortOrder === 'asc' ? (
+                            <ArrowUp size={13} color="var(--primary)" />
+                          ) : (
+                            <ArrowDown size={13} color="var(--primary)" />
+                          )
                         ) : (
-                          <ArrowDown size={13} color="var(--primary)" />
-                        )
-                      ) : (
-                        <ArrowUpDown size={12} style={{ opacity: 0.4 }} />
-                      )}
-                    </div>
-                  </th>
-                )
-              })}
-            </tr>
+                          <ArrowUpDown size={12} style={{ opacity: 0.4 }} />
+                        )}
+                      </div>
+                    </th>
+                  )
+                })}
+              </tr>
+            )}
           </thead>
           <tbody>
             {sortedData.length === 0 ? (

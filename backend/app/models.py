@@ -32,7 +32,7 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     line_arrangement = Column(String(50), default="11 kV + LV", nullable=False)  # "11 kV", "LV", "11 kV + LV"
-    status = Column(String(50), default="draft", nullable=False)
+    status = Column(String(50), default="Not calculated", nullable=False)
     owner_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)

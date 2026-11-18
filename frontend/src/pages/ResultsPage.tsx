@@ -75,20 +75,120 @@ export const ResultsPage: React.FC = () => {
     { key: 'bm_wind_pole_kn_m', header: 'BM Pole (kN·m)' },
     { key: 'bm_wind_equip_kn_m', header: 'BM Equip (kN·m)' },
     { key: 'total_bm_kn_m', header: 'Total BM (kN·m)' },
+    // POLE TOP LOADS (DAN)
     {
-      key: 'pole_top_loads',
-      header: 'Pole-Top Loads',
-      render: (row) => <StatusChip status="PENDING" label={row.pole_top_loads || 'Pending'} />,
+      key: 'pole_top_transverse_dan',
+      header: 'TRANSVERSE',
+      group: 'POLE TOP LOADS (DAN)',
+      render: (row) => row.pole_top_transverse_dan ?? '—',
     },
     {
-      key: 'buckling_capacity',
-      header: 'Buckling Check',
-      render: (row) => <StatusChip status="PENDING" label={row.buckling_capacity || 'Pending'} />,
+      key: 'pole_top_longitudinal_dan',
+      header: 'LONGITUDINAL',
+      group: 'POLE TOP LOADS (DAN)',
+      render: (row) => row.pole_top_longitudinal_dan ?? '—',
+    },
+    // UNGUYED
+    {
+      key: 'unguyed_rec',
+      header: 'UNGUYED',
+      group: 'UNGUYED',
+      render: (row) =>
+        row.unguyed_rec ? (
+          <span>{row.unguyed_rec}</span>
+        ) : (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2px 8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              borderRadius: '9999px',
+              backgroundColor: '#fee2e2',
+              color: '#dc2626',
+              border: '1px solid #fecaca',
+              letterSpacing: '2px',
+            }}
+          >
+            ✕✕
+          </span>
+        ),
+    },
+    // STRUTTED
+    {
+      key: 'strutted_rec',
+      header: 'STRUTTED',
+      group: 'STRUTTED',
+      render: (row) => row.strutted_rec ?? '—',
+    },
+    // GUY ARRANGEMENTS
+    {
+      key: 'guy_wire_load_dan',
+      header: 'GUY WIRE LOAD (DAN)',
+      group: 'GUY ARRANGEMENTS',
+      render: (row) => row.guy_wire_load_dan ?? '—',
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (row) => <StatusChip status={row.status} />,
+      key: 'load_without_tension_dan',
+      header: 'LOAD W/O TENSION',
+      group: 'GUY ARRANGEMENTS',
+      render: (row) => row.load_without_tension_dan ?? '—',
+    },
+    {
+      key: 'guy_arrangement',
+      header: 'GUY ARR.',
+      group: 'GUY ARRANGEMENTS',
+      render: (row) => row.guy_arrangement ?? '—',
+    },
+    {
+      key: 'rec_guy_unguy',
+      header: 'REC. GUY/UNGUY',
+      group: 'GUY ARRANGEMENTS',
+      render: (row) => row.rec_guy_unguy ?? '—',
+    },
+    // BUCKLING (GUYED)
+    {
+      key: 'buckling_v_star_kn',
+      header: 'BUCKLING V*',
+      group: 'BUCKLING (GUYED)',
+      render: (row) => (row.buckling_v_star_kn != null ? row.buckling_v_star_kn.toFixed(2) : '—'),
+    },
+    {
+      key: 'safety_factor_2_5_kn',
+      header: 'SAFETY×2.5',
+      group: 'BUCKLING (GUYED)',
+      render: (row) => (row.safety_factor_2_5_kn != null ? row.safety_factor_2_5_kn.toFixed(2) : '—'),
+    },
+    {
+      key: 'buckling_capacity_kn',
+      header: 'BUCK. CAP. (REC. GUY/UNGUY)',
+      group: 'BUCKLING (GUYED)',
+      render: (row) => (row.buckling_capacity_kn != null ? row.buckling_capacity_kn.toFixed(1) : '—'),
+    },
+    {
+      key: 'buckling_check',
+      header: 'BUCKLING CHECK',
+      group: 'BUCKLING (GUYED)',
+      render: (row) => <StatusChip status={row.buckling_check || 'PENDING'} />,
+    },
+    {
+      key: 'rec_on_buckling',
+      header: 'REC. ON BUCKLING',
+      group: 'BUCKLING (GUYED)',
+      render: (row) => row.rec_on_buckling ?? '—',
+    },
+    // FINAL
+    {
+      key: 'final_recommended',
+      header: 'RECOMMENDED',
+      group: 'FINAL',
+      render: (row) => (
+        <strong style={{ fontWeight: 700, color: 'var(--text-main)' }}>
+          {row.final_recommended || row.final_recommended_pole || '—'}
+        </strong>
+      ),
     },
   ]
 
@@ -316,7 +416,7 @@ export const ResultsPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div className="card">
                 <DataTable
-                  title="Structural Loading Analysis (Bending Moments)"
+                  title="Detailed Structural Loading & Moment Analysis"
                   columns={structuralLoadingColumns}
                   data={resultsData.structural_loading || []}
                   csvFilename="structural_loading.csv"

@@ -61,7 +61,7 @@ export const RoutePolesPage: React.FC = () => {
             fore_span_m: item.fore_span_m || 0,
             angle_deg: item.angle_deg || 0,
             equipment: item.equipment || 'None',
-            soil_class: item.soil_class || '3',
+            soil_class: String(item.soil_class_num || item.soil_class || '4'),
           }))
           setPoles(mapped)
         } else {

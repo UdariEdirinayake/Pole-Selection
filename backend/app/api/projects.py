@@ -80,7 +80,7 @@ def create_project(data: ProjectCreate, current_user: User = Depends(get_current
         description=data.description,
         line_arrangement=data.line_arrangement,
         owner_id=current_user.id,
-        status="draft",
+        status="Not calculated",
     )
     db.add(project)
     db.flush()
@@ -130,12 +130,12 @@ def seed_sample_project(current_user: User = Depends(get_current_user), db: Sess
         description="Demo line project with poles 1–13 transcribed from master sample schedule",
         line_arrangement="11 kV + LV",
         owner_id=current_user.id,
-        status="ready",
+        status="Not calculated",
     )
     db.add(sample_project)
     db.flush()
 
-    # Add default circuits
+    # Add default circuits - both use 70+16+N50 bundled conductor (LV) with table UQ matching docs/result.pdf
     db.add(Circuit(
         project_id=sample_project.id,
         circuit_name="C1 (11kV)",
@@ -150,9 +150,9 @@ def seed_sample_project(current_user: User = Depends(get_current_user), db: Sess
         circuit_name="C2 (LV)",
         nominal_voltage_kv=0.4,
         circuit_type="Overhead ABC",
-        conductor_code=2,
-        conductor_name="70+N50 bundled conductor (LV)",
-        lookup_table="UP"
+        conductor_code=1,
+        conductor_name="70+16+N50 bundled conductor (LV)",
+        lookup_table="UQ"
     ))
 
     # Pull sample line poles from database

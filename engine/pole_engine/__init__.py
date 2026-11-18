@@ -1,3 +1,48 @@
-"""Core engine package for pole-select."""
+"""Pole Engine - Pure Python Calculation and Evaluation Package."""
+from pole_engine.units import (
+    m_to_mm,
+    mm_to_m,
+    dan_to_kn,
+    kn_to_dan,
+    kg_to_n,
+    n_to_kn,
+    kn_to_n,
+    STANDARD_GRAVITY_M_PER_S2,
+)
+from pole_engine.models import (
+    EvaluationStatus,
+    ValidationResult,
+)
+from pole_engine.sag_tension import (
+    TableLookupPoint,
+    TableLookupResult,
+    calculate_equivalent_span_m,
+    lookup_sag_tension_table,
+    scale_sag_to_actual_span_m,
+    calculate_tension_pct_of_uts,
+    default_eds_assessment,
+    benchmark_eds_assessment,
+    assess_max_stress_15c_wind,
+)
 
-__version__ = "0.1.0"
+__all__ = [
+    "m_to_mm",
+    "mm_to_m",
+    "dan_to_kn",
+    "kn_to_dan",
+    "kg_to_n",
+    "n_to_kn",
+    "kn_to_n",
+    "STANDARD_GRAVITY_M_PER_S2",
+    "EvaluationStatus",
+    "ValidationResult",
+    "TableLookupPoint",
+    "TableLookupResult",
+    "calculate_equivalent_span_m",
+    "lookup_sag_tension_table",
+    "scale_sag_to_actual_span_m",
+    "calculate_tension_pct_of_uts",
+    "default_eds_assessment",
+    "benchmark_eds_assessment",
+    "assess_max_stress_15c_wind",
+]

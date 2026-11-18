@@ -27,8 +27,18 @@ export const SignInPage: React.FC = () => {
       })
 
       if (!res.ok) {
-        const errData = await res.json()
-        throw new Error(errData.detail || 'Sign in failed')
+        let errorMsg = 'Sign in failed'
+        try {
+          const errData = await res.json()
+          errorMsg = errData.detail || errorMsg
+        } catch {
+          if (res.status === 504 || res.status === 502 || res.status === 503) {
+            errorMsg = 'Cannot connect to backend server. Please verify the FastAPI backend is running on port 8000.'
+          } else {
+            errorMsg = `Server error (${res.status}): Please verify the backend is running on port 8000.`
+          }
+        }
+        throw new Error(errorMsg)
       }
 
       const userData = await res.json()

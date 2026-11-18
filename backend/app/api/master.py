@@ -90,6 +90,11 @@ def get_master_table_data(
 
     if version_id is not None and hasattr(model, "dataset_version_id"):
         query = query.filter(model.dataset_version_id == version_id)
+    elif hasattr(model, "dataset_version_id"):
+        # Default to latest dataset version so queries don't mix rows across multiple imports
+        latest_v = db.query(DatasetVersion.id).order_by(DatasetVersion.id.desc()).first()
+        if latest_v:
+            query = query.filter(model.dataset_version_id == latest_v[0])
 
     if needs_confirmation is not None and hasattr(model, "needs_confirmation"):
         query = query.filter(model.needs_confirmation == needs_confirmation)

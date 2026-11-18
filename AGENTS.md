@@ -40,3 +40,10 @@
 - **Secure Token Storage:** Authentication tokens must be transported in `httpOnly`, `SameSite=Lax` cookies.
 - **Status Indicators:** All UI status chips (PASS, OK, SATISFIED, CAUTION, FAIL, NOT ASSESSED, PENDING) must always render explicit text alongside color, never relying on color alone.
 
+## 8. Calculation Engine & Test Database Isolation Rules
+- **Pure Python Engine:** Calculation engines in `engine/pole_engine` must be pure Python with zero web framework dependencies.
+- **Sag-Tension Method:** Calculations follow LECO standard chart lookup with linear interpolation. Catenary and parabolic state-change equations are prohibited.
+- **Fail-Closed Table Lookups:** Any ruling span outside the bounds of a conductor's calibration table must return `NOT ASSESSED` with an explanatory reason. Extrapolation beyond calibrated bounds is strictly forbidden.
+- **Test Database Isolation:** Test suites must execute against isolated temporary databases (`test_pole_select.db`) and must never connect to or mutate the operational database `backend/pole_select.db`.
+
+

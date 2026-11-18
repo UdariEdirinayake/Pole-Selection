@@ -23,7 +23,7 @@ export const ProjectCircuitsPage: React.FC = () => {
   const [description, setDescription] = useState('Standard 11 kV + LV common pole line section')
   const [conductors, setConductors] = useState<ConductorOption[]>([])
   const [c1Conductor, setC1Conductor] = useState<number | ''>(1)
-  const [c2Conductor, setC2Conductor] = useState<number | ''>(2)
+  const [c2Conductor, setC2Conductor] = useState<number | ''>(1)
   const [saving, setSaving] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)
   const navigate = useNavigate()
@@ -211,7 +211,7 @@ export const ProjectCircuitsPage: React.FC = () => {
                   border: '1px solid var(--primary-border)',
                 }}
               >
-                11.0 kV Overhead ABC
+                {selectedC1 ? selectedC1.description : '11.0 kV Overhead ABC'}
               </span>
             }
           >
@@ -260,10 +260,10 @@ export const ProjectCircuitsPage: React.FC = () => {
                   {selectedC1?.lookup_table || 'None assigned'}
                 </div>
                 {selectedC1?.needs_confirmation && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <StatusChip status="CAUTION" label="Requires Confirmation" />
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <StatusChip status="CAUTION" label="REQUIRES CONFIRMATION" />
                     <span style={{ fontSize: '0.75rem', color: 'var(--warning-text)' }}>
-                      {selectedC1.confirmation_note || 'Source sheet note flag'}
+                      {selectedC1.confirmation_note || 'Requires confirmation'}
                     </span>
                   </div>
                 )}
@@ -289,7 +289,7 @@ export const ProjectCircuitsPage: React.FC = () => {
                   border: '1px solid var(--primary-border)',
                 }}
               >
-                0.4 kV Aerial Bundled Conductor
+                {selectedC2 ? selectedC2.description : '0.4 kV Aerial Bundled Conductor'}
               </span>
             }
           >
@@ -338,10 +338,10 @@ export const ProjectCircuitsPage: React.FC = () => {
                   {selectedC2?.lookup_table || 'None assigned'}
                 </div>
                 {selectedC2?.needs_confirmation && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <StatusChip status="CAUTION" label="Requires Confirmation" />
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <StatusChip status="CAUTION" label="REQUIRES CONFIRMATION" />
                     <span style={{ fontSize: '0.75rem', color: 'var(--warning-text)' }}>
-                      {selectedC2.confirmation_note || 'Source sheet note flag'}
+                      {selectedC2.confirmation_note || 'Requires confirmation'}
                     </span>
                   </div>
                 )}

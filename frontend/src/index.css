@@ -1,0 +1,110 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1a202c;
+  background-color: #f7fafc;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  color: #2b6cb0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  color: #2d3748;
+}
+
+.status-box {
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.status-ok {
+  color: #2f855a;
+}
+
+.status-error {
+  color: #c53030;
+}
+
+.badge {
+  background: #38a169;
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.btn-refresh {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-refresh:hover {
+  background-color: #2b6cb0;
+}
+
+.rules-list {
+  padding-left: 1.25rem;
+  line-height: 1.8;
+  color: #4a5568;
+}
+
+.rules-list code {
+  background-color: #edf2f7;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}

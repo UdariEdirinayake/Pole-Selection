@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Check, Layers, ArrowRight } from 'lucide-react'
+import { ArrowRight, Zap, Layers, Activity } from 'lucide-react'
+import {
+  PageHeader,
+  Card,
+  FormField,
+  SelectCard,
+  StatusChip,
+} from '../components/layout'
 
 interface ConductorOption {
   code: number
@@ -84,144 +91,281 @@ export const ProjectCircuitsPage: React.FC = () => {
     }
   }
 
+  const actions = (
+    <button
+      type="button"
+      onClick={handleSave}
+      disabled={saving}
+      className="btn-primary"
+    >
+      <span>{saving ? 'Saving Project...' : 'Save & Continue to Route'}</span>
+      <ArrowRight size={16} />
+    </button>
+  )
+
   return (
     <div className="page-wrapper">
-      <div className="page-header-row">
-        <div>
-          <h2>Project & Circuits Setup</h2>
-          <p className="page-subtitle">Configure line arrangement and conductor framing</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Project & Circuits Setup"
+        description="Configure line project identification, structural framing arrangement, and phase conductor specifications"
+        actions={actions}
+      />
 
-      <form onSubmit={handleSave} className="form-card">
-        {/* Project Details */}
-        <div className="form-section">
-          <h3>1. Project Identification</h3>
-          <div className="form-grid-2">
-            <div className="form-group">
-              <label htmlFor="projectName">Project Name / Reference</label>
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Card 1: Project Identification (2-column grid) */}
+        <Card
+          title="1. Project Identification"
+          subtitle="General administrative attributes and survey geographical references"
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.25rem',
+            }}
+          >
+            <FormField label="Project Name / Reference" htmlFor="projectName" required>
               <input
                 id="projectName"
                 type="text"
+                className="form-input"
                 required
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
+                placeholder="e.g. Kelaniya Feeder Section 1-2"
               />
-            </div>
-            <div className="form-group">
-              <label htmlFor="description">Description / Area</label>
+            </FormField>
+
+            <FormField
+              label="Description / Region Area"
+              htmlFor="description"
+              hint="Optional design brief or client reference code"
+            >
               <input
                 id="description"
                 type="text"
+                className="form-input"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Standard 11 kV + LV common pole line section"
               />
-            </div>
+            </FormField>
           </div>
-        </div>
+        </Card>
 
-        {/* Line Arrangement Choice */}
-        <div className="form-section">
-          <h3>2. Line Structure Arrangement</h3>
-          <p className="section-desc">Choose distribution line voltage configuration:</p>
-          <div className="arrangement-selector">
-            {(['11 kV', 'LV', '11 kV + LV'] as const).map((opt) => (
-              <label
-                key={opt}
-                className={`arrangement-option ${arrangement === opt ? 'selected' : ''}`}
+        {/* Card 2: Line Arrangement Options (3 SelectCards in one row) */}
+        <Card
+          title="2. Line Structure Arrangement"
+          subtitle="Select distribution line electrical voltage framing and circuit configuration"
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <SelectCard
+              selected={arrangement === '11 kV'}
+              onClick={() => setArrangement('11 kV')}
+              title="11 kV Only"
+              description="Single overhead 11 kV medium-voltage distribution circuit with crossarm framing."
+              badge="Medium Voltage"
+              icon={<Zap size={18} />}
+            />
+
+            <SelectCard
+              selected={arrangement === 'LV'}
+              onClick={() => setArrangement('LV')}
+              title="LV Only (0.4 kV)"
+              description="Single low-voltage aerial bundled conductor (ABC) distribution circuit."
+              badge="Low Voltage"
+              icon={<Activity size={18} />}
+            />
+
+            <SelectCard
+              selected={arrangement === '11 kV + LV'}
+              onClick={() => setArrangement('11 kV + LV')}
+              title="11 kV + LV (Combined)"
+              description="Dual circuit sharing common distribution poles. Upper 11 kV crossarm with lower LV ABC bracket."
+              badge="Standard Common Pole"
+              icon={<Layers size={18} />}
+            />
+          </div>
+        </Card>
+
+        {/* Circuit 1 Card: 11 kV */}
+        {(arrangement === '11 kV' || arrangement === '11 kV + LV') && (
+          <Card
+            title="Circuit 1 — 11 kV Medium Voltage"
+            subtitle="Conductor mechanical parameters and sag-tension lookup mapping"
+            actions={
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--primary-subtle)',
+                  color: 'var(--primary)',
+                  border: '1px solid var(--primary-border)',
+                }}
               >
-                <input
-                  type="radio"
-                  name="arrangement"
-                  value={opt}
-                  checked={arrangement === opt}
-                  onChange={() => setArrangement(opt)}
-                />
-                <span className="arrangement-label">{opt}</span>
-                <span className="arrangement-sub">
-                  {opt === '11 kV + LV'
-                    ? 'Shared common poles'
-                    : opt === '11 kV'
-                    ? 'Single 11 kV circuit'
-                    : 'Low voltage bundled'}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
+                11.0 kV Overhead ABC
+              </span>
+            }
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.25rem',
+              }}
+            >
+              <FormField
+                label="Primary Conductor Specification"
+                htmlFor="c1_cond"
+                required
+                hint="Loaded from versioned master database table 'conductor'"
+              >
+                <select
+                  id="c1_cond"
+                  className="form-select"
+                  value={c1Conductor}
+                  onChange={(e) => setC1Conductor(Number(e.target.value))}
+                >
+                  {conductors.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      Code {c.code}: {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
 
-        {/* Conductor Selection */}
-        <div className="form-section">
-          <h3>3. Circuit Conductors Selection</h3>
-          <div className="form-grid-2">
-            {/* Circuit 1 (11 kV) */}
-            {(arrangement === '11 kV' || arrangement === '11 kV + LV') && (
-              <div className="circuit-box">
-                <h4>Circuit 1 (11 kV)</h4>
-                <div className="form-group">
-                  <label htmlFor="c1_cond">Conductor</label>
-                  <select
-                    id="c1_cond"
-                    value={c1Conductor}
-                    onChange={(e) => setC1Conductor(Number(e.target.value))}
-                  >
-                    {conductors.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
-                      </option>
-                    ))}
-                  </select>
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                  Linked Sag-Tension Lookup Table
                 </div>
-
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
+                  {selectedC1?.lookup_table || 'None assigned'}
+                </div>
                 {selectedC1?.needs_confirmation && (
-                  <div className="warning-chip-box">
-                    <AlertTriangle size={15} color="#ca8a04" />
-                    <span>
-                      <strong>Warning:</strong> {selectedC1.confirmation_note || 'Requires confirmation'}
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <StatusChip status="CAUTION" label="Requires Confirmation" />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--warning-text)' }}>
+                      {selectedC1.confirmation_note || 'Source sheet note flag'}
                     </span>
                   </div>
                 )}
               </div>
-            )}
+            </div>
+          </Card>
+        )}
 
-            {/* Circuit 2 (LV) */}
-            {(arrangement === 'LV' || arrangement === '11 kV + LV') && (
-              <div className="circuit-box">
-                <h4>Circuit 2 (LV)</h4>
-                <div className="form-group">
-                  <label htmlFor="c2_cond">Conductor</label>
-                  <select
-                    id="c2_cond"
-                    value={c2Conductor}
-                    onChange={(e) => setC2Conductor(Number(e.target.value))}
-                  >
-                    {conductors.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
-                      </option>
-                    ))}
-                  </select>
+        {/* Circuit 2 Card: LV */}
+        {(arrangement === 'LV' || arrangement === '11 kV + LV') && (
+          <Card
+            title="Circuit 2 — Low Voltage (0.4 kV)"
+            subtitle="Conductor mechanical parameters and sag-tension lookup mapping"
+            actions={
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--primary-subtle)',
+                  color: 'var(--primary)',
+                  border: '1px solid var(--primary-border)',
+                }}
+              >
+                0.4 kV Aerial Bundled Conductor
+              </span>
+            }
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1.25rem',
+              }}
+            >
+              <FormField
+                label="Secondary Conductor Specification"
+                htmlFor="c2_cond"
+                required
+                hint="Loaded from versioned master database table 'conductor'"
+              >
+                <select
+                  id="c2_cond"
+                  className="form-select"
+                  value={c2Conductor}
+                  onChange={(e) => setC2Conductor(Number(e.target.value))}
+                >
+                  {conductors.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      Code {c.code}: {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                  Linked Sag-Tension Lookup Table
                 </div>
-
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
+                  {selectedC2?.lookup_table || 'None assigned'}
+                </div>
                 {selectedC2?.needs_confirmation && (
-                  <div className="warning-chip-box">
-                    <AlertTriangle size={15} color="#ca8a04" />
-                    <span>
-                      <strong>Warning:</strong> {selectedC2.confirmation_note || 'Requires confirmation'}
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <StatusChip status="CAUTION" label="Requires Confirmation" />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--warning-text)' }}>
+                      {selectedC2.confirmation_note || 'Source sheet note flag'}
                     </span>
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </Card>
+        )}
 
-        <div className="form-actions-bar">
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? 'Saving...' : 'Save & Continue to Route'}
-            <ArrowRight size={16} style={{ marginLeft: '6px' }} />
+        {/* Footer Actions Card */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
+          {savedSuccess && (
+            <span style={{ color: 'var(--success-main)', fontSize: '0.875rem', fontWeight: 600 }}>
+              Project configuration saved successfully! Navigating to route survey...
+            </span>
+          )}
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn-primary"
+            style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem' }}
+          >
+            <span>{saving ? 'Saving Project...' : 'Save & Continue to Route'}</span>
+            <ArrowRight size={17} />
           </button>
-          {savedSuccess && <span className="text-success"><Check size={16} /> Saved!</span>}
         </div>
       </form>
     </div>

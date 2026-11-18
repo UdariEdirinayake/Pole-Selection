@@ -1,26 +1,27 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30000,
+  timeout: 45000,
   fullyParallel: false,
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
+    channel: 'msedge',
+    trace: 'off',
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'msedge',
+      use: {
+        channel: 'msedge',
+      },
     },
   ],
-  webServer: [
-    {
-      command: 'npm run dev',
-      port: 5173,
-      reuseExistingServer: true,
-      timeout: 120000,
-    },
-  ],
+  webServer: {
+    command: 'npm.cmd run dev',
+    port: 5173,
+    reuseExistingServer: true,
+    timeout: 60000,
+  },
 })

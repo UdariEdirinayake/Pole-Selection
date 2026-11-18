@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Play, Info, ExternalLink } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Play } from 'lucide-react'
 
 interface ValidationItem {
   id: string

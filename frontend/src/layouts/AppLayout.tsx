@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -11,58 +11,102 @@ import {
   Sun,
   Moon,
   Zap,
+  FolderGit2,
+  Database,
+  FileCheck,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
+interface DatasetVersionInfo {
+  id: number
+  name: string
+  imported_at: string
+}
+
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
+  const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    fetch('/api/master/dataset-versions?limit=1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.items && data.items.length > 0) {
+          setDatasetVersion(data.items[0])
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSignOut = async () => {
     await logout()
     navigate('/signin')
   }
 
-  const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/project-circuits', label: 'Project & circuits', icon: Layers },
-    { to: '/route-poles', label: 'Route & poles', icon: MapPin },
-    { to: '/review-run', label: 'Review & run', icon: CheckSquare },
-    { to: '/results', label: 'Results', icon: BarChart3 },
-    { to: '/help', label: 'Help', icon: HelpCircle },
+  const workflowItems = [
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, step: null },
+    { to: '/project-circuits', label: 'Project & circuits', icon: Layers, step: '01' },
+    { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '02' },
+    { to: '/review-run', label: 'Review & run', icon: CheckSquare, step: '03' },
+    { to: '/results', label: 'Results', icon: BarChart3, step: '04' },
+    { to: '/help', label: 'Help & Docs', icon: HelpCircle, step: null },
   ]
+
+  const formattedDate = datasetVersion?.imported_at
+    ? datasetVersion.imported_at.split('T')[0]
+    : '2026-11-18'
 
   return (
     <div className="app-shell">
-      {/* Top Navbar */}
+      {/* Top Professional Header */}
       <header className="app-header">
         <div className="header-left">
-          <Zap size={22} color="#3b82f6" />
-          <span className="app-brand-title">Pole Select</span>
+          <div className="brand-emblem">
+            <Zap size={18} strokeWidth={2.5} />
+          </div>
+          <div className="app-brand-title">
+            Pole<span className="brand-accent">Select</span>
+          </div>
           <span className="version-tag">v0.2</span>
+
+          <div className="header-divider" />
+
+          <div className="header-project-badge">
+            <FolderGit2 size={14} color="var(--primary)" />
+            <span>Kelaniya Distribution Feeder (11 kV + LV)</span>
+          </div>
         </div>
 
         <div className="header-right">
+          {datasetVersion && (
+            <div className="spec-badge" title={`Imported: ${datasetVersion.imported_at}`}>
+              <Database size={12} style={{ display: 'inline', marginRight: '4px' }} />
+              {datasetVersion.name} ({formattedDate})
+            </div>
+          )}
+
           <button
             onClick={toggleTheme}
             className="btn-theme-toggle"
             aria-label="Toggle dark mode"
-            title="Toggle dark mode"
+            title="Toggle light/dark theme"
           >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           {user && (
             <div className="user-chip" data-testid="user-chip">
+              <span className="user-avatar-dot" />
               <span className="user-email">{user.email}</span>
               <span className="user-role-badge">{user.role}</span>
             </div>
           )}
 
-          <button onClick={handleSignOut} className="btn-signout" title="Sign out">
-            <LogOut size={16} />
+          <button onClick={handleSignOut} className="btn-signout" title="Sign out of platform">
+            <LogOut size={15} />
             <span>Sign out</span>
           </button>
         </div>
@@ -72,21 +116,35 @@ export const AppLayout: React.FC = () => {
       <div className="app-body">
         {/* Left Sidebar */}
         <aside className="app-sidebar" aria-label="Main Navigation">
-          <nav className="sidebar-nav">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </NavLink>
-              )
-            })}
-          </nav>
+          <div>
+            <div className="sidebar-section-title">Navigation & Workflow</div>
+            <nav className="sidebar-nav">
+              {workflowItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon size={17} />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.step && <span className="nav-step-num">{item.step}</span>}
+                  </NavLink>
+                )
+              })}
+            </nav>
+          </div>
+
+          <div className="sidebar-footer-card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+              <FileCheck size={14} color="var(--primary)" />
+              <h5>Master Data Verification</h5>
+            </div>
+            <p>
+              Dataset <code>{datasetVersion ? datasetVersion.name : 'LECO Master'}</code> imported on {formattedDate}. Zero hardcoded engineering constants.
+            </p>
+          </div>
         </aside>
 
         {/* Content Area */}

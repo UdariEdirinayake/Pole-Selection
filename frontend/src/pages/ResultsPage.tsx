@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { DataTable, Column } from '../components/DataTable'
 import { StatusChip } from '../components/StatusChip'
 import { RouteDiagram } from '../components/RouteDiagram'
-import { AlertCircle, FileSpreadsheet, CheckCircle2, Sliders, Layers } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 
 export const ResultsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'summary' | 'loads' | 'clearances'>('summary')

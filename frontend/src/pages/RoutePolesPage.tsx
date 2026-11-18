@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, AlertTriangle, CheckCircle, RefreshCw, ArrowRight, MapPin, Upload } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle, ArrowRight, MapPin, Upload } from 'lucide-react'
 import { RouteDiagram } from '../components/RouteDiagram'
 import { ImportDropzone } from '../components/ImportDropzone'
 
@@ -45,13 +45,10 @@ export const RoutePolesPage: React.FC = () => {
   const [poles, setPoles] = useState<PoleRow[]>([])
   const [soilClasses, setSoilClasses] = useState<string[]>(['1', '2', '3', '4', '5'])
   const [showUploader, setShowUploader] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     // Try to load sample line poles from master data or seed
-    setLoading(true)
     fetch('/api/master/sample-line-poles?limit=50')
       .then(res => res.json())
       .then(data => {
@@ -79,7 +76,6 @@ export const RoutePolesPage: React.FC = () => {
       .catch(err => {
         console.error('Error loading sample line poles:', err)
       })
-      .finally(() => setLoading(false))
 
     // Fetch soil classes from master API
     fetch('/api/master/soil-classes?limit=20')
@@ -132,10 +128,9 @@ export const RoutePolesPage: React.FC = () => {
   }
 
   const handleSaveAndProceed = () => {
-    setSaveStatus('Route configuration saved to session.')
     setTimeout(() => {
       navigate('/review-run')
-    }, 400)
+    }, 200)
   }
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowUpDown, Download } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, Search } from 'lucide-react'
 import { StatusChip } from './StatusChip'
 
 export interface Column<T> {
@@ -24,6 +24,7 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [filterText, setFilterText] = useState('')
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -34,7 +35,17 @@ export function DataTable<T extends Record<string, any>>({
     }
   }
 
-  const sortedData = [...data].sort((a, b) => {
+  // Filter across any string/number representation in the row
+  const filteredData = data.filter((row) => {
+    if (!filterText.trim()) return true
+    const q = filterText.toLowerCase()
+    return Object.values(row).some((val) => {
+      if (val === null || val === undefined) return false
+      return String(val).toLowerCase().includes(q)
+    })
+  })
+
+  const sortedData = [...filteredData].sort((a, b) => {
     if (!sortKey) return 0
     const valA = a[sortKey]
     const valB = b[sortKey]
@@ -75,39 +86,100 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div className="datatable-container">
       <div className="datatable-header">
-        {title && <h3 className="datatable-title">{title}</h3>}
-        <button
-          onClick={exportCSV}
-          className="btn-export-csv"
-          title="Export table as CSV"
-        >
-          <Download size={14} style={{ marginRight: '6px' }} /> Export CSV
-        </button>
+        <div className="datatable-title-wrap">
+          {title && <h3 className="datatable-title">{title}</h3>}
+          <span className="datatable-count">
+            {filteredData.length} {filteredData.length === 1 ? 'row' : 'rows'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Search
+              size={14}
+              style={{
+                position: 'absolute',
+                left: '0.65rem',
+                color: 'var(--text-tertiary)',
+                pointerEvents: 'none',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search table..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              style={{
+                height: '32px',
+                minHeight: '32px',
+                padding: '0 0.65rem 0 2rem',
+                fontSize: '0.8rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-main)',
+                width: '160px',
+              }}
+            />
+          </div>
+
+          <button
+            onClick={exportCSV}
+            className="btn-export-csv"
+            title="Export table as CSV"
+          >
+            <Download size={14} style={{ marginRight: '6px' }} /> Export CSV
+          </button>
+        </div>
       </div>
 
-      <div className="datatable-scroll">
+      <div className="table-responsive">
         <table className="datatable">
           <thead>
             <tr>
-              {columns.map((col, idx) => (
-                <th
-                  key={idx}
-                  onClick={() => handleSort(col.key as string)}
-                  style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    {col.header}
-                    <ArrowUpDown size={12} style={{ opacity: 0.6 }} />
-                  </div>
-                </th>
-              ))}
+              {columns.map((col, idx) => {
+                const isSorted = sortKey === col.key
+                return (
+                  <th
+                    key={idx}
+                    onClick={() => handleSort(col.key as string)}
+                    style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <span>{col.header}</span>
+                      {isSorted ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp size={13} color="var(--primary)" />
+                        ) : (
+                          <ArrowDown size={13} color="var(--primary)" />
+                        )
+                      ) : (
+                        <ArrowUpDown size={12} style={{ opacity: 0.4 }} />
+                      )}
+                    </div>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
             {sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} style={{ textAlign: 'center', padding: '1.5rem' }}>
-                  No data available
+                <td
+                  colSpan={columns.length}
+                  style={{
+                    textAlign: 'center',
+                    padding: '2.5rem 1rem',
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  {filterText ? 'No matching rows found for "' + filterText + '"' : 'No data available'}
                 </td>
               </tr>
             ) : (

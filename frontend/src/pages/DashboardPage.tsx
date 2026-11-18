@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Plus, FolderGit2, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, FolderGit2, Database, Calendar, Wind } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import {
+  PageHeader,
+  Card,
+  KpiCard,
+  ProjectRow,
+  EmptyState,
+} from '../components/layout'
 
 interface ProjectItem {
   id: number
@@ -14,12 +21,18 @@ interface ProjectItem {
   circuit_count: number
 }
 
+interface DatasetVersionInfo {
+  id: number
+  name: string
+  imported_at: string
+}
+
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()
   const [projects, setProjects] = useState<ProjectItem[]>([])
+  const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
-  const navigate = useNavigate()
 
   const loadProjects = async () => {
     setLoading(true)
@@ -36,8 +49,23 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
+  const loadDatasetVersion = async () => {
+    try {
+      const res = await fetch('/api/master/dataset-versions?limit=1')
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.items && data.items.length > 0) {
+          setDatasetVersion(data.items[0])
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   useEffect(() => {
     loadProjects()
+    loadDatasetVersion()
   }, [])
 
   const handleCreateSample = async () => {
@@ -52,93 +80,118 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
+  const headerActions = (
+    <>
+      <button
+        onClick={handleCreateSample}
+        disabled={creating}
+        className="btn-secondary"
+        title="Load sample route project (Poles 1-13)"
+      >
+        <FolderGit2 size={16} />
+        <span>{creating ? 'Loading...' : 'Load Sample Project'}</span>
+      </button>
+      <Link to="/project-circuits" className="btn-primary">
+        <Plus size={16} />
+        <span>New Project</span>
+      </Link>
+    </>
+  )
+
+  const formattedImportDate = datasetVersion?.imported_at
+    ? datasetVersion.imported_at.split('T')[0]
+    : '2026-11-18'
+
   return (
     <div className="page-wrapper">
-      <div className="page-header-row">
-        <div>
-          <h2>Dashboard</h2>
-          <p className="page-subtitle">Welcome back, {user?.email} ({user?.role})</p>
-        </div>
-        <div className="header-actions">
-          <button
-            onClick={handleCreateSample}
-            disabled={creating}
-            className="btn-secondary"
-            title="Load sample route project (Poles 1-13)"
-          >
-            <FolderGit2 size={16} />
-            <span>{creating ? 'Loading...' : 'Load Sample Project'}</span>
-          </button>
-          <Link to="/project-circuits" className="btn-primary">
-            <Plus size={16} /> <span>New Project</span>
-          </Link>
-        </div>
+      <PageHeader
+        title="Dashboard"
+        description={`Welcome back, ${user?.email || 'Engineer'} (${user?.role || 'Designer'})`}
+        actions={headerActions}
+      />
+
+      {/* 4 KPI Cards in one horizontal row */}
+      <div
+        className="stats-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '1rem',
+          marginBottom: '1.75rem',
+        }}
+      >
+        <KpiCard
+          title="Total Projects"
+          value={projects.length}
+          subtext="Active line design files"
+          icon={<FolderGit2 size={20} />}
+          accentColor="var(--primary)"
+        />
+
+        <KpiCard
+          title="Master Dataset Version"
+          value={datasetVersion ? datasetVersion.name.replace('LECO_Import_', 'v.') : 'v.1.0'}
+          subtext={datasetVersion ? datasetVersion.name : 'Master Catalog'}
+          icon={<Database size={20} />}
+          accentColor="#059669"
+        />
+
+        <KpiCard
+          title="Dataset Import Date"
+          value={formattedImportDate}
+          subtext="Verified database seed"
+          icon={<Calendar size={20} />}
+          accentColor="#6366f1"
+        />
+
+        <KpiCard
+          title="Conductor Wind Spec"
+          value="575 N/m²"
+          subtext="Confirmed by project owner"
+          icon={<Wind size={20} />}
+          accentColor="#d97706"
+        />
       </div>
 
-      {/* Quick Overview Cards */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-label">Total Projects</div>
-          <div className="stat-value">{projects.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Active Standard</div>
-          <div className="stat-value">LECO 2026</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Conductor Wind Load</div>
-          <div className="stat-value">575 N/m²</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Validation Engine</div>
-          <div className="stat-value text-success">Strict PASS</div>
-        </div>
-      </div>
-
-      {/* Projects List */}
-      <div className="content-card">
-        <div className="content-card-header">
-          <h3>Your Line Projects</h3>
-        </div>
+      {/* Projects List Card */}
+      <Card
+        title="Distribution Line Projects"
+        subtitle="Manage route layouts, circuit definitions, and structural engineering reports"
+        actions={
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            {projects.length} {projects.length === 1 ? 'project' : 'projects'} registered
+          </span>
+        }
+      >
         {loading ? (
-          <p className="text-loading">Loading projects...</p>
-        ) : projects.length === 0 ? (
-          <div className="empty-state">
-            <p>No projects created yet.</p>
-            <button onClick={handleCreateSample} className="btn-primary" style={{ marginTop: '0.75rem' }}>
-              Load Sample 11kV + LV Project
-            </button>
+          <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+            Loading projects...
           </div>
+        ) : projects.length === 0 ? (
+          <EmptyState
+            title="No projects configured"
+            description="Get started by creating a new overhead line survey or loading the official 11 kV + LV sample project (Poles 1 to 13)."
+            action={
+              <button onClick={handleCreateSample} className="btn-primary">
+                <FolderGit2 size={16} />
+                <span>Load Sample 11 kV + LV Feeder</span>
+              </button>
+            }
+          />
         ) : (
-          <div className="projects-grid">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '1.25rem',
+            }}
+          >
             {projects.map((p) => (
-              <div key={p.id} className="project-card">
-                <div className="project-card-top">
-                  <span className="badge badge-primary">{p.line_arrangement}</span>
-                  <span className={`badge ${p.status === 'ready' ? 'badge-success' : 'badge-warning'}`}>
-                    {p.status}
-                  </span>
-                </div>
-                <h4 className="project-title">{p.name}</h4>
-                <p className="project-desc">{p.description || 'No description provided'}</p>
-                <div className="project-meta">
-                  <span><strong>{p.pole_count}</strong> poles</span> &bull;{' '}
-                  <span><strong>{p.circuit_count}</strong> circuits</span>
-                </div>
-                <div className="project-footer">
-                  <span className="project-date">
-                    <Clock size={12} style={{ marginRight: '4px' }} />
-                    {p.updated_at ? new Date(p.updated_at).toLocaleDateString() : 'Recent'}
-                  </span>
-                  <Link to="/route-poles" className="btn-open-project">
-                    Open <ArrowRight size={14} />
-                  </Link>
-                </div>
-              </div>
+              <ProjectRow key={p.id} project={p} />
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

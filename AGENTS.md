@@ -33,3 +33,10 @@
 - Conductors without an associated lookup table must be flagged with `needs_confirmation = True` and note `'no sag-tension data'`.
 - Insulators with empty tension MFL must be flagged with `needs_confirmation = True`.
 - Re-running the master data importer must create a new `dataset_version` record, never duplicating or overwriting historical rows.
+
+## 7. Authentication, Access Control & UI State Rules
+- **No Credentials in Repository:** Initial administrative accounts must be provisioned via environment variables and CLI scripts (`cli_init_admin.py`). Passwords must never be hard-coded into repository files or test suites.
+- **Fail-Closed Access Control:** Protected backend routes and frontend views must fail closed when unauthenticated or when role requirements are not met (returning HTTP 401/403 and redirecting to `/signin`).
+- **Secure Token Storage:** Authentication tokens must be transported in `httpOnly`, `SameSite=Lax` cookies.
+- **Status Indicators:** All UI status chips (PASS, OK, SATISFIED, CAUTION, FAIL, NOT ASSESSED, PENDING) must always render explicit text alongside color, never relying on color alone.
+

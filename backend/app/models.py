@@ -4,6 +4,85 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+# ==========================================
+# Phase 2: Auth Models
+# ==========================================
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(50), default="designer", nullable=False)  # designer, reviewer, admin
+    active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
+
+
+# ==========================================
+# Phase 2: Project, Circuit, Pole Models
+# ==========================================
+
+class Project(Base):
+    __tablename__ = "project"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    line_arrangement = Column(String(50), default="11 kV + LV", nullable=False)  # "11 kV", "LV", "11 kV + LV"
+    status = Column(String(50), default="draft", nullable=False)
+    owner_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
+
+    owner = relationship("User", back_populates="projects")
+    circuits = relationship("Circuit", back_populates="project", cascade="all, delete-orphan")
+    poles = relationship("Pole", back_populates="project", cascade="all, delete-orphan", order_by="Pole.pole_no")
+
+
+class Circuit(Base):
+    __tablename__ = "circuit"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=False, index=True)
+    circuit_name = Column(String(100), nullable=False)  # "C1 (11kV)", "C2 (LV)"
+    nominal_voltage_kv = Column(Float, nullable=False)
+    circuit_type = Column(String(50), nullable=False)  # "Overhead ABC", "Bare"
+    conductor_code = Column(Integer, nullable=True)
+    conductor_name = Column(String(255), nullable=True)
+    lookup_table = Column(String(50), nullable=True)
+
+    project = relationship("Project", back_populates="circuits")
+
+
+class Pole(Base):
+    __tablename__ = "pole"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=False, index=True)
+    section = Column(Integer, default=1, nullable=False)
+    pole_no = Column(Integer, nullable=False)
+    pole_id_name = Column(String(50), nullable=True)
+    aft_span_m = Column(Float, default=0.0, nullable=False)
+    fore_span_m = Column(Float, default=0.0, nullable=False)
+    angle_deg = Column(Float, default=0.0, nullable=False)
+    soil_class_num = Column(Integer, default=4, nullable=False)
+    equipment = Column(String(100), nullable=True)
+    span_environment = Column(String(255), default="across any road or street", nullable=False)
+
+    project = relationship("Project", back_populates="poles")
+
+    __table_args__ = (
+        Index("ix_project_pole_no", "project_id", "pole_no"),
+    )
+
+
+# ==========================================
+# Master Data Models (Phase 1)
+# ==========================================
+
 class DatasetVersion(Base):
     __tablename__ = "dataset_version"
 
@@ -13,7 +92,6 @@ class DatasetVersion(Base):
     source_file = Column(String(255), nullable=False)
     file_hash = Column(String(64), nullable=False)
 
-    # Relationships
     conductors = relationship("Conductor", back_populates="dataset_version", cascade="all, delete-orphan")
     span_tension_points = relationship("SpanTensionPoint", back_populates="dataset_version", cascade="all, delete-orphan")
     pole_capacities = relationship("PoleCapacity", back_populates="dataset_version", cascade="all, delete-orphan")
@@ -30,7 +108,6 @@ class DatasetVersion(Base):
 
 
 class BaseMasterTable:
-    """Standard tracking columns for every master table."""
     id = Column(Integer, primary_key=True, index=True)
     source_sheet = Column(String(100), nullable=False)
     source_row = Column(Integer, nullable=False)
@@ -48,7 +125,6 @@ class Conductor(Base, BaseMasterTable):
     conductor_type = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
 
-    # Original values
     diameter_mm = Column(Float, nullable=True)
     stress_area_mm2 = Column(Float, nullable=True)
     everyday_tension_dan = Column(Float, nullable=True)
@@ -58,7 +134,6 @@ class Conductor(Base, BaseMasterTable):
     thermal_expansion_coeff_per_c = Column(Float, nullable=True)
     ultimate_tensile_strength_dan = Column(Float, nullable=True)
 
-    # Converted SI values + unit names
     diameter_m = Column(Float, nullable=True)
     diameter_m_unit = Column(String(20), default="m")
 
@@ -89,7 +164,6 @@ class SpanTensionPoint(Base, BaseMasterTable):
     table_id = Column(String(50), nullable=False, index=True)
     span_m = Column(Float, nullable=False, index=True)
 
-    # Tensions & Sags
     tension_kn = Column(Float, nullable=True)
     tension_kn_unit = Column(String(20), default="kN")
 
@@ -289,7 +363,6 @@ class SampleLinePole(Base, BaseMasterTable):
     dataset_version = relationship("DatasetVersion", back_populates="sample_line_poles")
 
 
-# Keep old PoleCatalogItem for backward compatibility
 class PoleCatalogItem(Base):
     __tablename__ = "pole_catalog"
 

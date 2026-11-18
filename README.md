@@ -95,9 +95,45 @@ Example tables: `conductors`, `span-tension-points`, `pole-capacities`, `soil-cl
 
 ---
 
+## Phase 2 – UI Shell with Mock Data & Authentication (Step 2A)
+
+### Authentication & Authorization (Step 2A)
+- **User Table & Migration:** `user` table storing `id`, `email`, `password_hash`, `role` (`designer`, `reviewer`, `admin`), `active`, and `created_at`.
+- **JWT Cookies:** Secure `httpOnly` JWT cookies (`pole_select_token`) with 24-hour expiration.
+- **Password Security:** Salted hashes generated using `bcrypt`.
+- **Role Enforcement:** Reusable FastAPI dependency `require_role(["designer", "reviewer", "admin"])`.
+- **CLI Admin Initialization:** Create an initial administrator without credentials stored in code:
+  ```bash
+  cd backend
+  python -m app.cli_init_admin
+  ```
+- **Auth API Endpoints:**
+  - `POST /api/auth/login`: verifies email & password, sets httpOnly cookie.
+  - `POST /api/auth/logout`: clears httpOnly cookie.
+  - `GET /api/auth/me`: retrieves active session profile.
+  - `GET /api/auth/admin-only`: role-guarded endpoint for admin operations.
+  - `GET /api/auth/reviewer-check`: role-guarded endpoint for reviewer/admin operations.
+- **Frontend Auth Integration:**
+  - `SignInPage`: accessible login form with email & password inputs and quick demo logins for testing.
+  - `ProtectedRoute`: route guard verifying authenticated state, redirecting unauthenticated visitors to `/signin`.
+  - Header user chip displaying email, role badge, and sign-out button.
+
+---
+
 ## Running Tests
 
 ### Backend & Master Data Tests
+```bash
+cd backend
+.venv\Scripts\python.exe -m pytest
+```
+
+### Frontend Vitest Tests
+```bash
+cd frontend
+npm.cmd test
+```
+
 ```bash
 cd backend
 pytest

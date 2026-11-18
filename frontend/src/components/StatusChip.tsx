@@ -1,0 +1,57 @@
+import React from 'react'
+
+export type StatusType = 'PASS' | 'OK' | 'SATISFIED' | 'CAUTION' | 'FAIL' | 'NOT ASSESSED' | 'PENDING'
+
+interface StatusChipProps {
+  status: string
+  label?: string
+}
+
+export const StatusChip: React.FC<StatusChipProps> = ({ status, label }) => {
+  const normalized = (status || '').toUpperCase()
+  const displayLabel = label || status || 'NOT ASSESSED'
+
+  let bg = '#e2e8f0'
+  let color = '#2d3748'
+  let border = '#cbd5e0'
+
+  if (['PASS', 'OK', 'SATISFIED'].includes(normalized)) {
+    bg = '#def7ec'
+    color = '#03543f'
+    border = '#84e1bc'
+  } else if (['CAUTION', 'WARNING'].includes(normalized)) {
+    bg = '#fef08a'
+    color = '#713f12'
+    border = '#fde047'
+  } else if (['FAIL'].includes(normalized)) {
+    bg = '#fde8e8'
+    color = '#9b1c1c'
+    border = '#f8b4b4'
+  } else if (['PENDING'].includes(normalized)) {
+    bg = '#e1effe'
+    color = '#1e429f'
+    border = '#a4cafe'
+  }
+
+  return (
+    <span
+      data-testid="status-chip"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0.2rem 0.55rem',
+        borderRadius: '9999px',
+        fontSize: '0.75rem',
+        fontWeight: '700',
+        lineHeight: 1,
+        backgroundColor: bg,
+        color: color,
+        border: `1px solid ${border}`,
+        textTransform: 'uppercase',
+        letterSpacing: '0.025em',
+      }}
+    >
+      {displayLabel}
+    </span>
+  )
+}

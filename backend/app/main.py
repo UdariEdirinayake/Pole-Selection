@@ -7,25 +7,31 @@ from sqlalchemy import text
 from app.database import get_db, Base, engine
 from app.schemas import HealthResponse
 from app.api.master import router as master_router
+from app.api.auth import router as auth_router
+from app.api.projects import router as projects_router
+from app.api.results import router as results_router
 
 # Initialize schema tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Pole Select API",
-    description="Backend API for pole selection with SQLite and Alembic",
-    version="0.1.0",
+    description="Backend API for pole selection with SQLite, Alembic, Auth, and Project Management",
+    version="0.2.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(master_router)
+app.include_router(projects_router)
+app.include_router(results_router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
@@ -40,7 +46,7 @@ def health_check(db: Session = Depends(get_db)):
     return HealthResponse(
         status="ok",
         database=db_status,
-        timestamp=datetime.datetime.utcnow().isoformat()
+        timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat()
     )
 
 

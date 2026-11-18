@@ -91,7 +91,7 @@
 | 46 | Owner = current user | ✅ Done | `backend/app/api/projects.py` `owner_id = current_user.id` |
 | 47 | Backend tests: auth, role checks, project CRUD | ✅ Done | `backend/tests/test_auth_projects.py` (14 tests) |
 | 48 | Frontend tests: StatusChip, DataTable sort, route continuity, login redirect | ✅ Done | `frontend/src/tests/` (13 tests) |
-| 49 | Playwright E2E smoke test | ❌ Missing | `frontend/e2e/` does not exist — deferred to end of Phase 2 |
+| 49 | Playwright E2E smoke test: sign in → open project → all 3 Results tabs | ✅ Done | `frontend/e2e/smoke.spec.ts`; `frontend/playwright.config.ts` |
 
 ---
 
@@ -116,5 +116,7 @@
 | 2C Mock data | 8/8 | 0 | 0 |
 | 2D Route diagram | 3/3 | 0 | 0 |
 | 2E Forms & components | 6/6 | 0 | 0 |
-| 2F Projects / tests | 8/9 | 0 | 1 (E2E deferred) |
+| 2F Projects / tests | 9/9 | 0 | 0 |
 | **Security items** | 5/5 | 0 | 0 |
+
+**Status:** All Phase 2 specifications (2A through 2F) and security criteria are 100% complete and verified.

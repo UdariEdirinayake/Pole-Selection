@@ -18,10 +18,11 @@ from pole_engine.sag_tension import (
     TableLookupResult,
     calculate_equivalent_span_m,
     lookup_sag_tension_table,
+    get_pole_sag_span_m,
     scale_sag_to_actual_span_m,
     calculate_tension_pct_of_uts,
     default_eds_assessment,
-    benchmark_eds_assessment,
+    assess_eds_check,
     assess_max_stress_15c_wind,
 )
 
@@ -40,9 +41,10 @@ __all__ = [
     "TableLookupResult",
     "calculate_equivalent_span_m",
     "lookup_sag_tension_table",
+    "get_pole_sag_span_m",
     "scale_sag_to_actual_span_m",
     "calculate_tension_pct_of_uts",
     "default_eds_assessment",
-    "benchmark_eds_assessment",
+    "assess_eds_check",
     "assess_max_stress_15c_wind",
 ]

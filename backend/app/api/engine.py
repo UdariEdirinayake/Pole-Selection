@@ -11,6 +11,7 @@ from pole_engine.sag_tension import (
     TableLookupPoint,
     calculate_equivalent_span_m,
     lookup_sag_tension_table,
+    get_pole_sag_span_m,
     scale_sag_to_actual_span_m,
     calculate_tension_pct_of_uts,
     default_eds_assessment,
@@ -174,12 +175,9 @@ def compute_sag_tension(
 
             # Sag schedule for poles in this section (only add once if multi-circuit or first circuit)
             if circuit == circuits[0]:
-                for idx, p in enumerate(sec_poles):
-                    actual_span = p.fore_span_m or 0.0
-                    # Terminal pole with span 0 takes previous span's sag
-                    if actual_span <= 0 and idx > 0:
-                        actual_span = sec_poles[idx - 1].fore_span_m or 0.0
-
+                for p in sec_poles:
+                    # Pole sag span rule: use fore span, and aft span when fore span is 0 (terminal pole, e.g. Pole 13)
+                    actual_span = get_pole_sag_span_m(p.fore_span_m or 0.0, p.aft_span_m or 0.0)
                     s27 = scale_sag_to_actual_span_m(lookup_res.sag_27c_m, actual_span, eq_span_m)
                     s65 = scale_sag_to_actual_span_m(lookup_res.sag_65c_m, actual_span, eq_span_m)
 

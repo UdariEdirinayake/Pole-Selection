@@ -60,5 +60,11 @@ def test_sag_tension_endpoint(auth_context):
         assert p1.pole_no == 1
         assert p1.sag_27c_m == 0.414
         assert p1.sag_65c_m == 0.563
+
+        # Pole 13 (fore span = 0) uses aft span (25.0m) via get_pole_sag_span_m rule
+        p13 = res.sag_schedule[12]
+        assert p13.pole_no == 13
+        assert p13.fore_span_m == 0.0
+        assert p13.sag_27c_m == 0.306
     finally:
         db.close()

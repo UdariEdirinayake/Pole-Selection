@@ -181,6 +181,24 @@ def lookup_sag_tension_table(
     )
 
 
+def get_pole_sag_span_m(fore_span_m: float, aft_span_m: float) -> float:
+    """Determine the effective span for pole sag calculation.
+
+    Rule from engineering specification:
+        Use the fore span, and the aft span when the fore span is 0 (terminal pole, e.g. Pole 13).
+
+    Args:
+        fore_span_m: Forward span length in meters.
+        aft_span_m: Aft / back span length in meters.
+
+    Returns:
+        Effective span length in meters for sag evaluation.
+    """
+    if fore_span_m and fore_span_m > 0:
+        return fore_span_m
+    return aft_span_m or 0.0
+
+
 def scale_sag_to_actual_span_m(
     sag_at_equivalent_span_m: float,
     actual_span_m: float,
@@ -191,10 +209,12 @@ def scale_sag_to_actual_span_m(
     Scaling rule derived from docs/result.pdf & docs/result_reference.json:
         S(L) = S(L_eq) * (L / L_eq)^2
 
+    Requires exact (unrounded) equivalent span for precision.
+
     Args:
         sag_at_equivalent_span_m: Sag at the equivalent span in meters (m).
         actual_span_m: The actual span length for the specific span in meters (m).
-        equivalent_span_m: The equivalent span of the strain section in meters (m).
+        equivalent_span_m: The exact (unrounded) equivalent span of the strain section in meters (m).
 
     Returns:
         Scaled sag at the actual span in meters (m).
@@ -226,29 +246,16 @@ def calculate_tension_pct_of_uts(
     return (tension_kn / ultimate_tensile_strength_kn) * 100.0
 
 
-# Configurable EDS check mapping function type
-EDSAssessmentFn = Callable[[float, float], str]
-
-
 def default_eds_assessment(ratio_pct: float, limit_pct: float = 20.0) -> str:
     """Default EDS check evaluator.
 
-    As specified: PASS/CAUTION/FAIL mapping for the EDS check is NOT decided yet.
-    Defaults to 'NOT ASSESSED'.
+    Production rule: EDS status must stay NOT ASSESSED until a rule is approved
+    by project engineering authorities.
     """
     return "NOT ASSESSED"
 
 
-def benchmark_eds_assessment(ratio_pct: float, limit_pct: float = 20.0, is_lv: bool = False) -> str:
-    """EDS check evaluator configured to match docs/result.pdf benchmark.
-
-    In docs/result.pdf:
-    - 11kV conductor at 21.0% vs 20.0% limit -> FAIL
-    - LV conductor at 21.0% vs 20.0% limit -> CAUTION
-    """
-    if ratio_pct <= limit_pct:
-        return "OK"
-    return "CAUTION" if is_lv else "FAIL"
+assess_eds_check = default_eds_assessment
 
 
 def assess_max_stress_15c_wind(ratio_pct: float, limit_pct: float = 40.0) -> str:

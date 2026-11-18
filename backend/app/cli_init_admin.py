@@ -1,3 +1,12 @@
+"""CLI tool for initialising the first administrator account.
+
+Usage:
+    ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=<strong-secret> python -m app.cli_init_admin
+
+All credentials MUST be provided via environment variables — no password
+literals exist in this file or anywhere else in the repository.
+"""
+
 import os
 import sys
 from app.database import SessionLocal
@@ -6,9 +15,19 @@ from app.auth import hash_password
 
 
 def init_admin():
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@pole-select.local").lower()
-    admin_password = os.getenv("ADMIN_PASSWORD", "AdminPass123!")
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    admin_password = os.getenv("ADMIN_PASSWORD", "").strip()
     admin_role = os.getenv("ADMIN_ROLE", "admin")
+
+    if not admin_email:
+        print("ERROR: ADMIN_EMAIL environment variable is required.")
+        print("  Example: ADMIN_EMAIL=admin@pole-select.local ADMIN_PASSWORD=YourStrongPass python -m app.cli_init_admin")
+        sys.exit(1)
+
+    if not admin_password:
+        print("ERROR: ADMIN_PASSWORD environment variable is required.")
+        print("  No default password is embedded in the code for security reasons.")
+        sys.exit(1)
 
     db = SessionLocal()
     try:
@@ -24,35 +43,14 @@ def init_admin():
             active=True,
         )
         db.add(user)
-
-        # Also create a default designer and reviewer for local testing if not exist
-        designer_email = "designer@pole-select.local"
-        if not db.query(User).filter(User.email == designer_email).first():
-            db.add(User(
-                email=designer_email,
-                password_hash=hash_password("DesignerPass123!"),
-                role="designer",
-                active=True
-            ))
-
-        reviewer_email = "reviewer@pole-select.local"
-        if not db.query(User).filter(User.email == reviewer_email).first():
-            db.add(User(
-                email=reviewer_email,
-                password_hash=hash_password("ReviewerPass123!"),
-                role="reviewer",
-                active=True
-            ))
-
         db.commit()
-        print(f"Successfully initialized admin user: {admin_email}")
-        print("Default test users initialized:")
-        print(f"  - {admin_email} (admin)")
-        print(f"  - {designer_email} (designer)")
-        print(f"  - {reviewer_email} (reviewer)")
+        print(f"Successfully initialized admin user: {admin_email} (role: {admin_role})")
+        print()
+        print("To create additional users (designer, reviewer), run this script again")
+        print("with the desired ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_ROLE values.")
     except Exception as e:
         db.rollback()
-        print(f"Error initializing users: {e}")
+        print(f"Error initializing user: {e}")
         sys.exit(1)
     finally:
         db.close()

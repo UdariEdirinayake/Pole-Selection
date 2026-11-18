@@ -8,11 +8,31 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 
-# Configuration
-JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-pole-select-dev-key-change-in-prod-1234567890")
+# ---------------------------------------------------------------------------
+# Configuration — all secrets MUST be supplied via environment variables.
+# In development (APP_ENV=development) a weak default is tolerated so that
+# `pytest` and `uvicorn` start without a .env file.  Any other environment
+# raises immediately so a misconfigured deployment cannot silently run with
+# an insecure key.
+# ---------------------------------------------------------------------------
+APP_ENV = os.getenv("APP_ENV", "development").lower()
+_jwt_secret_raw = os.getenv("JWT_SECRET", "")
+
+if not _jwt_secret_raw:
+    if APP_ENV == "development":
+        _jwt_secret_raw = "dev-only-insecure-jwt-secret-do-not-use-in-production"
+    else:
+        raise RuntimeError(
+            "JWT_SECRET environment variable is required when APP_ENV != 'development'. "
+            "Set a strong random secret before starting the server."
+        )
+
+JWT_SECRET: str = _jwt_secret_raw
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 COOKIE_NAME = "pole_select_token"
+# Cookie secure flag: set COOKIE_SECURE=true in production (HTTPS).
+COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 
 
 def hash_password(password: str) -> str:

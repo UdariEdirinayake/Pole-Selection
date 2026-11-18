@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+import os
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -9,6 +10,7 @@ from app.auth import (
     get_current_user,
     require_role,
     COOKIE_NAME,
+    COOKIE_SECURE,
     JWT_EXPIRATION_HOURS,
 )
 
@@ -48,7 +50,7 @@ def login(credentials: LoginRequest, response: Response, db: Session = Depends(g
         expires=max_age,
         httponly=True,
         samesite="lax",
-        secure=False,  # dev mode over HTTP
+        secure=COOKIE_SECURE,  # Set COOKIE_SECURE=true in production (HTTPS)
     )
 
     return UserResponse(
@@ -81,14 +83,18 @@ def get_me(current_user: User = Depends(get_current_user)):
     )
 
 
-@router.get("/admin-only")
-def admin_only_check(current_user: User = Depends(require_role(["admin"]))):
-    """Endpoint protected by admin role dependency."""
-    return {"message": "Admin access granted", "role": current_user.role}
+# ---------------------------------------------------------------------------
+# TEST-ONLY endpoints — registered only when TESTING=1 is set in environment.
+# These are never present in production deployments.
+# ---------------------------------------------------------------------------
+if os.getenv("TESTING", "0") == "1":
+    @router.get("/admin-only")
+    def admin_only_check(current_user: User = Depends(require_role(["admin"]))):
+        """Test-only: verify admin role enforcement."""
+        return {"message": "Admin access granted", "role": current_user.role}
 
-
-@router.get("/reviewer-check")
-def reviewer_role_check(current_user: User = Depends(require_role(["reviewer", "admin"]))):
-    """Endpoint protected by reviewer/admin role dependency."""
-    return {"message": "Reviewer access granted", "role": current_user.role}
+    @router.get("/reviewer-check")
+    def reviewer_role_check(current_user: User = Depends(require_role(["reviewer", "admin"]))):
+        """Test-only: verify reviewer/admin role enforcement."""
+        return {"message": "Reviewer access granted", "role": current_user.role}
 

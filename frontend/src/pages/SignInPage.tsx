@@ -96,6 +96,8 @@ export const SignInPage: React.FC = () => {
           </button>
         </form>
 
+        {/* Quick-login helpers — only rendered in development builds */}
+        {import.meta.env.DEV && (
         <div className="quick-logins">
           <p className="quick-logins-title">Quick demo logins:</p>
           <div className="quick-buttons">
@@ -122,6 +124,7 @@ export const SignInPage: React.FC = () => {
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

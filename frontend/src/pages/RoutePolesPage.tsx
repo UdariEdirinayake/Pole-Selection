@@ -46,7 +46,13 @@ export function validateRouteContinuity(poles: PoleRow[]): { valid: boolean; bro
 export const RoutePolesPage: React.FC = () => {
   const { activeProject, refreshProjects } = useProject()
   const [poles, setPoles] = useState<PoleRow[]>([])
-  const [soilClasses, setSoilClasses] = useState<string[]>(['1', '2', '3', '4', '5'])
+  const [soilClasses, setSoilClasses] = useState<{ num: string; desc: string }[]>([
+    { num: '1', desc: 'Soft clay / silt' },
+    { num: '2', desc: 'Firm clay' },
+    { num: '3', desc: 'Stiff clay' },
+    { num: '4', desc: 'Very stiff clay / dense sand' },
+    { num: '5', desc: 'Hard clay / rock' },
+  ])
   const [showUploader, setShowUploader] = useState(false)
   const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
@@ -87,7 +93,7 @@ export const RoutePolesPage: React.FC = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.items && data.items.length > 0) {
-          setSoilClasses(data.items.map((s: any) => String(s.soil_class_number || s.name || s.id)))
+          setSoilClasses(data.items.map((s: any) => ({ num: String(s.soil_class_num), desc: s.description || `Class ${s.soil_class_num}` })).filter((s: any) => s.num))
         }
       })
       .catch(() => {})
@@ -373,8 +379,8 @@ export const RoutePolesPage: React.FC = () => {
                         style={{ width: '100%', padding: '0.3rem 0.4rem' }}
                       >
                         {soilClasses.map((sc) => (
-                          <option key={sc} value={sc}>
-                            Class {sc}
+                          <option key={sc.num} value={sc.num}>
+                            Class {sc.num} — {sc.desc}
                           </option>
                         ))}
                       </select>

@@ -73,6 +73,7 @@ def get_master_table_data(
     table: str,
     version_id: int | None = Query(None, description="Optional dataset_version_id filter"),
     needs_confirmation: bool | None = Query(None, description="Filter by needs_confirmation"),
+    table_id: str | None = Query(None, description="Filter by table_id (for span-tension-points)"),
     limit: int = Query(500, le=1000, description="Max rows to return"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     db: Session = Depends(get_db),
@@ -95,6 +96,9 @@ def get_master_table_data(
         latest_v = db.query(DatasetVersion.id).order_by(DatasetVersion.id.desc()).first()
         if latest_v:
             query = query.filter(model.dataset_version_id == latest_v[0])
+
+    if table_id is not None and hasattr(model, "table_id"):
+        query = query.filter(model.table_id == table_id)
 
     if needs_confirmation is not None and hasattr(model, "needs_confirmation"):
         query = query.filter(model.needs_confirmation == needs_confirmation)

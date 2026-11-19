@@ -373,6 +373,29 @@ class TestMissingInputsFailClosed:
         assert res.circuit_clearance_check == "NOT ASSESSED"
         assert res.circuit_clearance_reason == "input needed"
 
+    def test_missing_terrain_height_returns_not_assessed(self):
+        """terrain_height_m=None → ground clearance NOT ASSESSED with 'input needed'."""
+        res = compute_pole_clearance(
+            pole_no=1,
+            section=1,
+            sag_65_m=0.563,
+            line_voltage_kv=11.0,
+            straight_sep_m=1.1,
+            theta_start_deg=0.0,
+            theta_end_deg=14.0,
+            pole_height_m=11.0,
+            embedment_ratio=1.0 / 6.0,
+            attachment_height_below_pole_top_m=1.047,  # back-calculated from result.pdf, source pending
+            terrain_height_m=None,  # MISSING
+            applicable_clearance_m=5.50,
+            vertical_spacing_11kv_lv_m=1.454,
+            req_vert_clear_m=1.20,
+        )
+        assert res.ground_clearance_check == "NOT ASSESSED"
+        assert res.ground_clearance_reason == "input needed"
+        assert res.lowest_clearance_m is None
+        assert any("terrain height" in w for w in res.warnings)
+
     def test_evaluate_ground_clearance_none_inputs(self):
         assert evaluate_ground_clearance(None, 5.50) == "NOT ASSESSED"
         assert evaluate_ground_clearance(7.557, None) == "NOT ASSESSED"

@@ -134,7 +134,7 @@ def calculate_attachment_height_above_ground_m(
 
 def calculate_lowest_ground_clearance_m(
     attachment_height_m: Optional[float],
-    terrain_height_m: float,
+    terrain_height_m: Optional[float],
     max_sag_65_m: Optional[float],
 ) -> Optional[float]:
     """
@@ -142,11 +142,11 @@ def calculate_lowest_ground_clearance_m(
         lowest = attachment_height + terrain_height - max_sag_65
 
     attachment_height_m : LV conductor attachment height above ground level.
-    terrain_height_m    : additional ground rise at mid-span (default 0.0).
+    terrain_height_m    : additional ground rise at mid-span.
     max_sag_65_m        : maximum sag at 65 °C in metres.
-    Returns None if attachment_height_m or max_sag_65_m is None.
+    Returns None if any input is None.
     """
-    if attachment_height_m is None or max_sag_65_m is None:
+    if attachment_height_m is None or terrain_height_m is None or max_sag_65_m is None:
         return None
     return round(attachment_height_m + terrain_height_m - max_sag_65_m, 3)
 
@@ -242,7 +242,7 @@ class PoleClearanceResult:
     # Ground clearance
     attachment_height_m: Optional[float] = None
     attachment_height_below_pole_top_m: Optional[float] = None
-    terrain_height_m: Optional[float] = 0.0
+    terrain_height_m: Optional[float] = None
     lowest_clearance_m: Optional[float] = None
     applicable_clearance_m: Optional[float] = None
     ground_clearance_check: str = "NOT ASSESSED"
@@ -269,7 +269,7 @@ def compute_pole_clearance(
     pole_height_m: Optional[float],
     embedment_ratio: Optional[float],
     attachment_height_below_pole_top_m: Optional[float],
-    terrain_height_m: float = 0.0,
+    terrain_height_m: Optional[float] = None,
     applicable_clearance_m: Optional[float] = None,
     vertical_spacing_11kv_lv_m: Optional[float] = None,
     req_vert_clear_m: Optional[float] = None,
@@ -316,6 +316,10 @@ def compute_pole_clearance(
         gc_check = "NOT ASSESSED"
         gc_reason = "input needed"
         warnings.append(f"Pole {pole_no}: ground clearance NOT ASSESSED (input needed: pole height or embedment ratio)")
+    elif terrain_height_m is None:
+        gc_check = "NOT ASSESSED"
+        gc_reason = "input needed"
+        warnings.append(f"Pole {pole_no}: ground clearance NOT ASSESSED (input needed: terrain height)")
     else:
         attachment_height_m = calculate_attachment_height_above_ground_m(
             pole_height_m, embedment_ratio, attachment_height_below_pole_top_m

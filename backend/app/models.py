@@ -36,6 +36,7 @@ class Project(Base):
     owner_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
     attachment_height_below_pole_top_m = Column(Float, nullable=True)
     vertical_spacing_11kv_lv_m = Column(Float, nullable=True)
+    terrain_height_m = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
 

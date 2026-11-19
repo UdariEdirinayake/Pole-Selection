@@ -82,6 +82,7 @@ def test_clearances_endpoint(auth_context):
             project_id=project.id,
             attachment_height_below_pole_top_m=1.047,  # back-calculated from result.pdf, source pending
             vertical_spacing_11kv_lv_m=1.454,          # back-calculated from result.pdf, source pending
+            terrain_height_m=0.0,                      # flat terrain for sample line
         )
         res = compute_clearances(req, current_user=user, db=db)
 

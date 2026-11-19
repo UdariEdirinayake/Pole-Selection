@@ -92,8 +92,8 @@ Status: ✅ Complete & Verified
   * Removed literal voltage `11.0 kV` default; voltage $V$ is read strictly from the circuit's `nominal_voltage_kv`.
   * Removed literal `1/6` fallback; embedment ratio is read strictly from `design_parameter` (`embedment_ratio`).
 * **Explicit Project Inputs:**
-  * `attachment_height_below_pole_top_m` (m) and `vertical_spacing_11kv_lv_m` (m) are now explicit inputs with **no default**.
-  * When either input is missing, the engine fails closed: ground clearance and circuit clearance return `NOT ASSESSED` with the reason `'input needed'`.
+  * `attachment_height_below_pole_top_m` (m), `vertical_spacing_11kv_lv_m` (m), and `terrain_height_m` (m) are now explicit inputs with **no default**.
+  * When any input is missing, the engine fails closed: ground clearance and circuit clearance return `NOT ASSESSED` with the reason `'input needed'`.
 * **Test Isolation & Traceability:**
   * In unit tests, `1.047 m` and `1.454 m` are supplied strictly as explicit test inputs commented `'back-calculated from result.pdf, source pending'`.
   * Unit tests assert that missing inputs return `NOT ASSESSED` with reason `'input needed'`.
@@ -109,6 +109,13 @@ The following engineering parameters and configuration values originate strictly
 | **Sample line geotechnical soil class** | Class 4 | Page 1 & geotechnical summary | Default soil class 4 for sample project poles. |
 | **Distribution Transformer (Pole 4)** | TF-160kVA ($750\text{ kg}$, $0.84\text{ m}^2$) | Pages 1, 5, 6 | Equipment record associated with Pole 4. |
 | **Crossarm phase separation formula** | $D = 0.75\sqrt{s} + V^2 / 20000$ | Page 9 (formula note at bottom of table) | Implemented directly in `engine/pole_engine/clearances.py` per PDF specification. |
-| **Terrain height along span** | $0.0\text{ m}$ | Pages 7–8 (`max_terrain_height_m`) | Default terrain rise in flat terrain sample calculation. |
+| **Terrain height along span** | $0.0\text{ m}$ | Pages 7–8 (`max_terrain_height_m`) | `terrain_height_m`: explicit project input (no default). Returns `NOT ASSESSED` with `'input needed'` if omitted. Sample line uses $0.0\text{ m}$ (flat terrain). |
 
+### 6. Phase 4B Follow-up: Alembic Migration & Terrain Height
+* **Alembic Migration (`553e9dfdea8f`):** Created proper Alembic migration for all three clearance input columns (`attachment_height_below_pole_top_m`, `vertical_spacing_11kv_lv_m`, `terrain_height_m`). Previously these were added via raw SQL `ALTER TABLE` commands. Migration handles idempotent upgrade/downgrade with column-existence checks. Backfilled the base migration `a5fde500532f` with proper `CREATE TABLE` DDL for `user`, `project`, `circuit`, `pole` tables. Fresh database upgrade verified clean (upgrade → downgrade → re-upgrade).
+* **Terrain Height as Explicit Input:** `terrain_height_m` added to the `Project` SQLAlchemy model, `ClearancesRequest` Pydantic model, engine `compute_pole_clearance()` signature, and `PoleClearanceResult` dataclass — all with no default. Missing terrain height fails closed with `NOT ASSESSED` / `'input needed'`.
+* **Test Coverage:**
+  * `test_fresh_database_upgrades_cleanly_to_head` — Alembic migration lifecycle test.
+  * `test_missing_terrain_height_returns_not_assessed` — engine-level fail-closed test.
+  * Backend endpoint tests pass `terrain_height_m=0.0` explicitly for the sample line.
 

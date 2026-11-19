@@ -223,6 +223,7 @@ class ClearancesRequest(BaseModel):
     project_id: int
     attachment_height_below_pole_top_m: Optional[float] = None
     vertical_spacing_11kv_lv_m: Optional[float] = None
+    terrain_height_m: Optional[float] = None
     pole_height_m: Optional[float] = None
 
 
@@ -247,7 +248,7 @@ class GroundClearanceItem(BaseModel):
     section: int
     pole_no: int
     attachment_height_m: Optional[float]
-    terrain_height_m: float
+    terrain_height_m: Optional[float] = None
     max_sag_65_m: Optional[float]
     lowest_clearance_m: Optional[float]
     applicable_clearance_m: Optional[float]
@@ -320,6 +321,12 @@ def compute_clearances(
     vertical_spacing_m = req.vertical_spacing_11kv_lv_m
     if vertical_spacing_m is None and getattr(project, "vertical_spacing_11kv_lv_m", None) is not None:
         vertical_spacing_m = project.vertical_spacing_11kv_lv_m
+
+    # terrain_height_m: explicit project input, no default; None → NOT ASSESSED for ground clearance
+    terrain_height_m_input = req.terrain_height_m
+    if terrain_height_m_input is None and getattr(project, "terrain_height_m", None) is not None:
+        terrain_height_m_input = project.terrain_height_m
+    # terrain_height_m_input remains None if not supplied → ground clearance returns NOT ASSESSED
 
     # Pole height: from request or default to 11.0 m (standard catalog pole for this line)
     pole_height_m = req.pole_height_m if req.pole_height_m is not None else 11.0
@@ -527,7 +534,7 @@ def compute_clearances(
         )
 
         # 2. Ground clearance
-        terrain_m = 0.0
+        # terrain_height_m_input is None if not supplied; fail closed → NOT ASSESSED
         lowest_m = None
         gc_check = "NOT ASSESSED"
         gc_reason = None
@@ -541,8 +548,12 @@ def compute_clearances(
             gc_check = "NOT ASSESSED"
             gc_reason = "input needed"
             ground_warnings.append("Ground clearance: input needed (embedment ratio missing from design parameters)")
+        elif terrain_height_m_input is None:
+            gc_check = "NOT ASSESSED"
+            gc_reason = "input needed"
+            ground_warnings.append("Ground clearance: input needed (terrain height)")
         elif sag_65 is not None:
-            lowest_m = calculate_lowest_ground_clearance_m(attachment_m, terrain_m, sag_65)
+            lowest_m = calculate_lowest_ground_clearance_m(attachment_m, terrain_height_m_input, sag_65)
             if applicable_clearance_m is not None:
                 gc_check, gc_reason = assess_ground_clearance(lowest_m, applicable_clearance_m)
             else:
@@ -573,7 +584,7 @@ def compute_clearances(
                 section=sec,
                 pole_no=pole_no,
                 attachment_height_m=attachment_m,
-                terrain_height_m=terrain_m,
+                terrain_height_m=terrain_height_m_input,
                 max_sag_65_m=sag_65,
                 lowest_clearance_m=lowest_m,
                 applicable_clearance_m=applicable_clearance_m,

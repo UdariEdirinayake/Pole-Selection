@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, AlertTriangle, CheckCircle, ArrowRight, MapPin, Upload } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle, ArrowRight, MapPin, Upload, Loader2 } from 'lucide-react'
+import { useProject } from '../context/ProjectContext'
+import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
 import { RouteDiagram } from '../components/RouteDiagram'
 import { ImportDropzone } from '../components/ImportDropzone'
 
@@ -42,51 +44,54 @@ export function validateRouteContinuity(poles: PoleRow[]): { valid: boolean; bro
 }
 
 export const RoutePolesPage: React.FC = () => {
+  const { activeProject, refreshProjects } = useProject()
   const [poles, setPoles] = useState<PoleRow[]>([])
   const [soilClasses, setSoilClasses] = useState<string[]>(['1', '2', '3', '4', '5'])
   const [showUploader, setShowUploader] = useState(false)
+  const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Try to load sample line poles from master data or seed
-    fetch('/api/master/sample-line-poles?limit=50')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.items && data.items.length > 0) {
-          const mapped: PoleRow[] = data.items.map((item: any) => ({
-            id: item.id,
-            pole_no: item.pole_no,
-            section: item.section || 1,
-            aft_span_m: item.aft_span_m || 0,
-            fore_span_m: item.fore_span_m || 0,
-            angle_deg: item.angle_deg || 0,
-            equipment: item.equipment || 'None',
-            soil_class: String(item.soil_class_num || item.soil_class || '4'),
-          }))
-          setPoles(mapped)
-        } else {
-          // Default initial rows if table empty
-          setPoles([
-            { pole_no: 1, section: 1, aft_span_m: 0, fore_span_m: 45, angle_deg: 0, equipment: 'None', soil_class: '3' },
-            { pole_no: 2, section: 1, aft_span_m: 45, fore_span_m: 50, angle_deg: 5, equipment: 'None', soil_class: '3' },
-            { pole_no: 3, section: 1, aft_span_m: 50, fore_span_m: 0, angle_deg: 0, equipment: 'Transformer', soil_class: '3' },
-          ])
-        }
-      })
-      .catch(err => {
-        console.error('Error loading sample line poles:', err)
-      })
+    // If activeProject has poles, load from project; otherwise default to standard poles
+    if (activeProject?.id) {
+      fetch(`/api/projects/${activeProject.id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.poles && data.poles.length > 0) {
+            const mapped: PoleRow[] = data.poles.map((item: any) => ({
+              id: item.id,
+              pole_no: item.pole_no,
+              section: item.section || 1,
+              aft_span_m: item.aft_span_m || 0,
+              fore_span_m: item.fore_span_m || 0,
+              angle_deg: item.angle_deg || 0,
+              equipment: item.equipment || 'None',
+              soil_class: String(item.soil_class_num || item.soil_class || '4'),
+            }))
+            setPoles(mapped)
+            return
+          }
+          // If project has no poles, initialize with DEFAULT_LINE_POLES
+          setPoles(DEFAULT_LINE_POLES.map((p) => ({ ...p })))
+        })
+        .catch((err) => {
+          console.error('Error loading project poles:', err)
+          setPoles(DEFAULT_LINE_POLES.map((p) => ({ ...p })))
+        })
+    } else {
+      setPoles(DEFAULT_LINE_POLES.map((p) => ({ ...p })))
+    }
 
     // Fetch soil classes from master API
     fetch('/api/master/soil-classes?limit=20')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data && data.items && data.items.length > 0) {
           setSoilClasses(data.items.map((s: any) => String(s.soil_class_number || s.name || s.id)))
         }
       })
       .catch(() => {})
-  }, [])
+  }, [activeProject?.id])
 
   const continuityResult = validateRouteContinuity(poles)
 
@@ -131,10 +136,52 @@ export const RoutePolesPage: React.FC = () => {
     setPoles(fixed)
   }
 
-  const handleSaveAndProceed = () => {
-    setTimeout(() => {
+  const handleSaveAndProceed = async () => {
+    if (!continuityResult.valid) {
+      alert(`Please resolve route continuity before proceeding:\n${continuityResult.message}`)
+      return
+    }
+
+    if (!activeProject?.id) {
       navigate('/review-run')
-    }, 200)
+      return
+    }
+
+    setSaving(true)
+    try {
+      const polePayload = poles.map((p) => ({
+        section: Number(p.section) || 1,
+        pole_no: Number(p.pole_no),
+        pole_id_name: `Pole ${p.pole_no}`,
+        aft_span_m: Number(p.aft_span_m) || 0,
+        fore_span_m: Number(p.fore_span_m) || 0,
+        angle_deg: Number(p.angle_deg) || 0,
+        soil_class_num: Number(p.soil_class) || 4,
+        equipment: p.equipment && p.equipment !== 'None' ? p.equipment : null,
+        span_environment: 'across any road or street',
+      }))
+
+      const res = await fetch(`/api/projects/${activeProject.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          poles: polePayload,
+        }),
+      })
+
+      if (res.ok) {
+        await refreshProjects()
+        navigate('/review-run')
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert(err.detail || 'Failed to save route poles to the project.')
+      }
+    } catch (e) {
+      console.error('Error saving route poles:', e)
+      alert('Network error while saving route poles.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -160,10 +207,11 @@ export const RoutePolesPage: React.FC = () => {
             type="button"
             className="btn-primary"
             onClick={handleSaveAndProceed}
+            disabled={saving}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <span>Save & Review</span>
-            <ArrowRight size={16} />
+            {saving ? <Loader2 size={16} className="spin" /> : <ArrowRight size={16} />}
+            <span>{saving ? 'Saving Route...' : 'Save & Review'}</span>
           </button>
         </div>
       </div>

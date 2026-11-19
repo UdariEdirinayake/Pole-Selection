@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Zap, Layers, Activity } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
+import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
 import {
   PageHeader,
   Card,
@@ -126,7 +127,19 @@ export const ProjectCircuitsPage: React.FC = () => {
           setTimeout(() => navigate('/route-poles'), 600)
         }
       } else {
-        // Create new project
+        // Create new project with standard 13 route poles
+        const initialPoles = DEFAULT_LINE_POLES.map((p) => ({
+          section: p.section,
+          pole_no: p.pole_no,
+          pole_id_name: `Pole ${p.pole_no}`,
+          aft_span_m: p.aft_span_m,
+          fore_span_m: p.fore_span_m,
+          angle_deg: p.angle_deg,
+          soil_class_num: Number(p.soil_class) || 4,
+          equipment: p.equipment !== 'None' ? p.equipment : null,
+          span_environment: 'across any road or street',
+        }))
+
         const res = await fetch('/api/projects/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -135,7 +148,7 @@ export const ProjectCircuitsPage: React.FC = () => {
             description: description,
             line_arrangement: arrangement,
             circuits: circuits,
-            poles: [],
+            poles: initialPoles,
           }),
         })
         if (res.ok) {
@@ -151,7 +164,7 @@ export const ProjectCircuitsPage: React.FC = () => {
               description: description,
               line_arrangement: arrangement,
               status: 'Not calculated',
-              pole_count: 0,
+              pole_count: initialPoles.length,
               circuit_count: circuits.length,
             })
           }

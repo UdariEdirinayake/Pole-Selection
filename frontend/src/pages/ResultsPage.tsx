@@ -10,6 +10,16 @@ function transformLiveResults(calcResults: any) {
 
   const results = calcResults.results
 
+  const toNum = (val: any): number | null => {
+    if (val == null) return null
+    if (typeof val === 'number') return isNaN(val) ? null : val
+    if (Array.isArray(val)) {
+      return val.length > 0 ? toNum(val[0]) : null
+    }
+    const parsed = parseFloat(String(val))
+    return isNaN(parsed) ? null : parsed
+  }
+
   const pole_summary = results.map((r: any) => ({
     sec: r.section,
     pole: r.pole_no,
@@ -21,93 +31,138 @@ function transformLiveResults(calcResults: any) {
     status: r.buckling_ok === false ? 'FAIL' : 'OK',
   }))
 
-  const conductor_tension_check = (calcResults.tensionChecks || []).map((t: any) => ({
-    sec: t.section,
-    circuit: t.circuit,
-    conductor: t.conductor,
-    t_at_15_wind_kn: t.tension_15c_wind_kn ?? t.t_at_15_wind_kn ?? '—',
-    pct_uts_at_15_wind: t.pct_uts_15c_wind != null ? `${t.pct_uts_15c_wind.toFixed(1)}%` : '—',
-    check_15_wind: t.check_15c_wind || 'OK',
-    t_at_27_kn: t.tension_27c_kn ?? t.t_at_27_kn ?? '—',
-    pct_uts_at_27: t.pct_uts_27c != null ? `${t.pct_uts_27c.toFixed(1)}%` : '—',
-    eds_check: t.check_eds || 'OK',
-  }))
+  const conductor_tension_check = (calcResults.tensionChecks || []).map((t: any) => {
+    const pct15 = toNum(t.pct_uts_15c_wind ?? t.pct15_uts)
+    const pct27 = toNum(t.pct_uts_27c ?? t.pct27_uts)
+    const t15 = toNum(t.tension_15c_wind_kn ?? t.t_at_15_wind_kn ?? t.T15w_kN)
+    const t27 = toNum(t.tension_27c_kn ?? t.t_at_27_kn ?? t.T27_kN)
+    return {
+      sec: t.section,
+      circuit: t.circuit || t.circuitLabel || '—',
+      conductor: t.conductor || t.description || t.code || '—',
+      t_at_15_wind_kn: t15 != null ? t15.toFixed(2) : '—',
+      pct_uts_at_15_wind: pct15 != null ? `${pct15.toFixed(1)}%` : '—',
+      check_15_wind: t.check_15c_wind || (t.ok15 === false ? 'FAIL' : 'OK'),
+      t_at_27_kn: t27 != null ? t27.toFixed(2) : '—',
+      pct_uts_at_27: pct27 != null ? `${pct27.toFixed(1)}%` : '—',
+      eds_check: t.check_eds || (t.ok27 === false ? 'FAIL' : 'OK'),
+    }
+  })
 
-  const structural_loading = results.map((r: any) => ({
-    sec: r.section,
-    pole: r.pole_no,
-    fore_span_m: r.fore,
-    angle_deg: r.angle,
-    eq_span_m: r.eq_span ? Number(r.eq_span.toFixed(1)) : '—',
-    bm_wind_line_kn_m: r.bm_wind_cond_kNm ? Number(r.bm_wind_cond_kNm.toFixed(2)) : 0,
-    bm_tension_kn_m: r.bm_tension_kNm ? Number(r.bm_tension_kNm.toFixed(2)) : 0,
-    bm_wind_pole_kn_m: r.bm_pole_kNm ? Number(r.bm_pole_kNm.toFixed(2)) : 0,
-    bm_wind_equip_kn_m: r.bm_equip_kNm ? Number(r.bm_equip_kNm.toFixed(2)) : 0,
-    total_bm_kn_m: Number(((r.bm_wind_cond_kNm || 0) + (r.bm_tension_kNm || 0) + (r.bm_pole_kNm || 0) + (r.bm_equip_kNm || 0)).toFixed(2)),
-    pole_top_transverse_dan: r.pole_top_load_daN ? Number(r.pole_top_load_daN.toFixed(1)) : 0,
-    pole_top_longitudinal_dan: r.terminal_long_load_daN ? Number(r.terminal_long_load_daN.toFixed(1)) : 0,
-    unguyed_rec: r.unguyed || null,
-    strutted_rec: r.strutted || '—',
-    guy_wire_load_dan: r.guy_load_daN ? Number(r.guy_load_daN.toFixed(0)) : '—',
-    load_without_tension_dan: r.load_without_tension_daN ? Number(r.load_without_tension_daN.toFixed(0)) : '—',
-    guy_arrangement: r.guy_arrangement || '—',
-    guyed_rec: r.guyed || '—',
-    most_economic_pole: r.most_economic || '—',
-    buckling_cap_kn: r.buckling_capacity_kN ? Number(r.buckling_capacity_kN.toFixed(1)) : '—',
-    buckling_demand_kn: r.buckling_demand_kN ? Number(r.buckling_demand_kN.toFixed(1)) : '—',
-    buckling_check: r.buckling_check || (r.buckling_ok ? 'PASS' : 'FAIL'),
-    rec_on_buckling: r.rec_on_buckling || '—',
-    final_recommended: r.recommended || r.rec_guy_unguy || '—',
-  }))
+  const structural_loading = results.map((r: any) => {
+    const eqSpan = toNum(r.eq_span)
+    const bmCond = toNum(r.bm_wind_cond_kNm) || 0
+    const bmTen = toNum(r.bm_tension_kNm) || 0
+    const bmPole = toNum(r.bm_pole_kNm) || 0
+    const bmEquip = toNum(r.bm_equip_kNm) || 0
+    const totalBm = Number((bmCond + bmTen + bmPole + bmEquip).toFixed(2))
+
+    const topTrans = toNum(r.pole_top_load_daN)
+    const topLong = toNum(r.terminal_long_load_daN)
+    const guyLoad = toNum(r.guy_load_daN)
+    const noTenLoad = toNum(r.load_without_tension_daN)
+    const buckCap = toNum(r.buckling_capacity_kN)
+    const buckVStar = toNum(r.foundation?.guy_vert_kN) || toNum(r.buckling_demand_kN) || null
+    const sf25 = buckVStar != null ? buckVStar * 2.5 : null
+
+    return {
+      sec: r.section,
+      pole: r.pole_no,
+      fore_span_m: r.fore,
+      angle_deg: r.angle,
+      eq_span_m: eqSpan != null ? Number(eqSpan.toFixed(1)) : '—',
+      bm_wind_line_kn_m: Number(bmCond.toFixed(2)),
+      bm_tension_kn_m: Number(bmTen.toFixed(2)),
+      bm_wind_pole_kn_m: Number(bmPole.toFixed(2)),
+      bm_wind_equip_kn_m: Number(bmEquip.toFixed(2)),
+      total_bm_kn_m: totalBm,
+      pole_top_transverse_dan: topTrans != null ? Number(topTrans.toFixed(1)) : 0,
+      pole_top_longitudinal_dan: topLong != null ? Number(topLong.toFixed(1)) : 0,
+      unguyed_rec: r.unguyed || null,
+      strutted_rec: r.strutted || '—',
+      guy_wire_load_dan: guyLoad != null ? Number(guyLoad.toFixed(0)) : '—',
+      load_without_tension_dan: noTenLoad != null ? Number(noTenLoad.toFixed(0)) : '—',
+      guy_arrangement: r.guy_arrangement || '—',
+      guyed_rec: r.guyed || '—',
+      rec_guy_unguy: r.rec_guy_unguy || r.guyed || r.unguyed || '—',
+      most_economic_pole: r.most_economic || '—',
+      buckling_v_star_kn: buckVStar,
+      safety_factor_2_5_kn: sf25,
+      buckling_capacity_kn: buckCap,
+      buckling_check: r.buckling_check || (r.buckling_ok === false ? 'FAIL' : 'PASS'),
+      rec_on_buckling: r.rec_on_buckling || '—',
+      final_recommended: r.recommended || r.rec_guy_unguy || '—',
+    }
+  })
 
   const foundation_soil_bearing = results.map((r: any) => {
     const f = r.foundation || {}
+    const bmf = toNum(f.bmf_kNm) || 0
+    const mr = toNum(f.mg_kNm) || 0
+    const vert = toNum(f.total_vertical_kN) || 0
+    const bearingC = toNum(f.bearing_C_kN)
+
     return {
       sec: r.section,
       pole: r.pole_no,
       soil_class: f.soil_class || r.soil || 'Medium',
       recommended_pole: r.recommended || r.rec_guy_unguy || '—',
-      bmf_kn_m: f.bmf_kNm ? Number(f.bmf_kNm.toFixed(2)) : 0,
-      mr_kn_m: f.mg_kNm ? Number(f.mg_kNm.toFixed(2)) : 0,
+      bmf_kn_m: Number(bmf.toFixed(2)),
+      mr_kn_m: Number(mr.toFixed(2)),
       subgrade_k_kn_m3: f.subgrade_k || 25000,
       stability_check: f.stable ? 'PASS' : 'FAIL',
-      total_vertical_load_kn: f.total_vertical_kN ? Number(f.total_vertical_kN.toFixed(2)) : 0,
-      bearing_check: (f.bearing_C_kN && f.total_vertical_kN && f.total_vertical_kN <= f.bearing_C_kN) ? 'PASS' : 'SATISFIED',
+      total_vertical_load_kn: Number(vert.toFixed(2)),
+      bearing_check: (bearingC && vert <= bearingC) ? 'PASS' : 'SATISFIED',
       status: f.stable ? 'PASS' : 'FAIL',
     }
   })
 
-  const ground_clearance = results.map((r: any) => ({
-    sec: r.section,
-    pole: r.pole_no,
-    fore_span_m: r.fore,
-    max_sag_65_c1_m: r.sag65_m ? Number(r.sag65_m.toFixed(2)) : '—',
-    max_sag_65_c2_m: r.sag65_m ? Number((r.sag65_m * 0.95).toFixed(2)) : '—',
-    lowest_clearance_m: r.lowest_clearance_m ? Number(r.lowest_clearance_m.toFixed(2)) : '—',
-    applicable_clearance_m: r.applicable_clearance_m ? Number(r.applicable_clearance_m.toFixed(2)) : 5.5,
-    ground_clearance_check: r.ground_clearance_ok ? 'PASS' : 'FAIL',
-    min_vert_clear_c1_c2_m: 1.35,
-    applicable_cct_clearance_m: 0.9,
-    circuit_clearance_check: r.circuit_clearance_ok ? 'PASS' : 'FAIL',
-  }))
+  const ground_clearance = results.map((r: any) => {
+    const s65_c1 = Array.isArray(r.sag65_m) ? toNum(r.sag65_m[0]) : toNum(r.sag65_m)
+    const s65_c2 = Array.isArray(r.sag65_m) && r.sag65_m.length > 1 ? toNum(r.sag65_m[1]) : (s65_c1 != null ? s65_c1 * 0.95 : null)
+    const lowest = toNum(r.lowest_clearance_m)
+    const reqClear = toNum(r.applicable_clearance_m) ?? 5.5
 
-  const phase_separation = results.map((r: any) => ({
-    sec: r.section,
-    pole_no: r.pole_no,
-    sag_65_c1_m: r.sag65_m ? Number(r.sag65_m.toFixed(2)) : 0.5,
-    required_separation_m: 0.45,
-    crossarm_separation_straight_m: 0.85,
-    line_angle_deg: r.angle,
-    separation_at_angle_m: Number((0.85 * Math.cos((r.angle * Math.PI) / 360)).toFixed(2)),
-    separation_check: 'PASS',
-  }))
+    return {
+      sec: r.section,
+      pole: r.pole_no,
+      fore_span_m: r.fore,
+      max_sag_65_c1_m: s65_c1 != null ? Number(s65_c1.toFixed(2)) : '—',
+      max_sag_65_c2_m: s65_c2 != null ? Number(s65_c2.toFixed(2)) : '—',
+      lowest_clearance_m: lowest != null ? Number(lowest.toFixed(2)) : '—',
+      applicable_clearance_m: Number(reqClear.toFixed(2)),
+      ground_clearance_check: r.ground_clearance_ok ? 'PASS' : 'FAIL',
+      min_vert_clear_c1_c2_m: 1.35,
+      applicable_cct_clearance_m: 0.9,
+      circuit_clearance_check: r.circuit_clearance_ok ? 'PASS' : 'FAIL',
+    }
+  })
 
-  const sag_schedule_27 = results.map((r: any) => ({
-    sec: r.section,
-    pole_no: r.pole_no,
-    sag_27_c1_m: r.sag27_m ? Number(r.sag27_m.toFixed(3)) : '—',
-    sag_27_c2_m: r.sag27_m ? Number((r.sag27_m * 0.95).toFixed(3)) : '—',
-  }))
+  const phase_separation = results.map((r: any) => {
+    const s65 = Array.isArray(r.sag65_m) ? toNum(r.sag65_m[0]) : toNum(r.sag65_m)
+    const angle = toNum(r.angle) || 0
+    return {
+      sec: r.section,
+      pole_no: r.pole_no,
+      sag_65_c1_m: s65 != null ? Number(s65.toFixed(2)) : 0.5,
+      required_separation_m: 0.45,
+      crossarm_separation_straight_m: 0.85,
+      line_angle_deg: angle,
+      separation_at_angle_m: Number((0.85 * Math.cos((angle * Math.PI) / 360)).toFixed(2)),
+      separation_check: 'PASS',
+    }
+  })
+
+  const sag_schedule_27 = results.map((r: any) => {
+    const s27_c1 = Array.isArray(r.sag27_m) ? toNum(r.sag27_m[0]) : toNum(r.sag27_m)
+    const s27_c2 = Array.isArray(r.sag27_m) && r.sag27_m.length > 1 ? toNum(r.sag27_m[1]) : (s27_c1 != null ? s27_c1 * 0.95 : null)
+    return {
+      sec: r.section,
+      pole_no: r.pole_no,
+      sag_27_c1_m: s27_c1 != null ? Number(s27_c1.toFixed(3)) : '—',
+      sag_27_c2_m: s27_c2 != null ? Number(s27_c2.toFixed(3)) : '—',
+    }
+  })
 
   const design_parameters = [
     { parameter: 'Calculation method', value: calcResults.calc_method || 'LECO Standard (Sag-Tension Charts)', source: 'Engine' },
@@ -142,10 +197,22 @@ export const ResultsPage: React.FC = () => {
     // If live calculation results were passed via navigation state, use them
     const liveResults = (location.state as any)?.liveResults
     if (liveResults) {
-      const transformed = transformLiveResults(liveResults)
-      if (transformed) {
-        setResultsData(transformed)
-        setIsLive(true)
+      try {
+        const transformed = transformLiveResults(liveResults)
+        if (transformed) {
+          setResultsData(transformed)
+          setIsLive(true)
+          setLoading(false)
+          return
+        } else {
+          console.error('transformLiveResults returned null. Raw data:', JSON.stringify(liveResults).slice(0, 500))
+          setError('Live calculation completed but result format could not be parsed. Check console for raw data.')
+          setLoading(false)
+          return
+        }
+      } catch (transformErr: any) {
+        console.error('transformLiveResults crashed:', transformErr, 'Raw data:', JSON.stringify(liveResults).slice(0, 500))
+        setError(`Live result transform error: ${transformErr.message}`)
         setLoading(false)
         return
       }

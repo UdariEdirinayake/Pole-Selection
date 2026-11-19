@@ -73,51 +73,53 @@
   --shadow-drawer: -4px 0 20px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='dark'] {
-  --bg-app: #090d16;
-  --bg-surface: #111827;
-  --bg-surface-elevated: #1e293b;
-  --bg-subtle: #1a2234;
-  --bg-muted: #243046;
-  --bg-hover: #1e293b;
+[data-theme='dark'],
+html.dark,
+.dark {
+  --bg-app: #0b1329;
+  --bg-surface: #131d35;
+  --bg-surface-elevated: #182442;
+  --bg-subtle: #16203b;
+  --bg-muted: #1e2c4d;
+  --bg-hover: #1c2a4a;
 
-  --border-light: #1f293d;
-  --border-color: #2b3952;
-  --border-strong: #3e506d;
-  --border-focus: #60a5fa;
+  --border-light: #1b2744;
+  --border-color: #243456;
+  --border-strong: #334770;
+  --border-focus: #3b82f6;
 
-  --text-main: #f8fafc;
+  --text-main: #f1f5f9;
   --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-tertiary: #64748b;
-  --text-inverse: #090d16;
+  --text-muted: #8c9eb9;
+  --text-tertiary: #5e7292;
+  --text-inverse: #0b1329;
 
   --primary: #3b82f6;
   --primary-hover: #60a5fa;
-  --primary-subtle: rgba(59, 130, 246, 0.12);
-  --primary-border: rgba(59, 130, 246, 0.3);
+  --primary-subtle: rgba(59, 130, 246, 0.15);
+  --primary-border: rgba(59, 130, 246, 0.35);
 
-  --success-bg: rgba(16, 185, 129, 0.12);
-  --success-text: #6ee7b7;
-  --success-border: rgba(16, 185, 129, 0.28);
+  --success-bg: rgba(16, 185, 129, 0.16);
+  --success-text: #34d399;
+  --success-border: rgba(16, 185, 129, 0.35);
 
-  --warning-bg: rgba(245, 158, 11, 0.12);
-  --warning-text: #fcd34d;
-  --warning-border: rgba(245, 158, 11, 0.28);
+  --warning-bg: rgba(245, 158, 11, 0.16);
+  --warning-text: #fbbf24;
+  --warning-border: rgba(245, 158, 11, 0.35);
 
-  --danger-bg: rgba(239, 68, 68, 0.12);
-  --danger-text: #fca5a5;
-  --danger-border: rgba(239, 68, 68, 0.28);
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --danger-text: #f87171;
+  --danger-border: rgba(239, 68, 68, 0.35);
 
-  --info-bg: rgba(59, 130, 246, 0.12);
+  --info-bg: rgba(59, 130, 246, 0.16);
   --info-text: #93c5fd;
-  --info-border: rgba(59, 130, 246, 0.28);
+  --info-border: rgba(59, 130, 246, 0.35);
 
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
-  --shadow-drawer: -6px 0 24px rgba(0, 0, 0, 0.6);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+  --shadow-drawer: -6px 0 24px rgba(0, 0, 0, 0.7);
 }
 
 /* Base Resets */
@@ -701,7 +703,7 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   font-variant-numeric: tabular-nums;
 }
 
-.data-table tr:hover, .datatable tr:hover {
+.data-table tr:hover, .datatable tr:hover, .table-row-hover:hover {
   background-color: var(--bg-hover);
 }
 

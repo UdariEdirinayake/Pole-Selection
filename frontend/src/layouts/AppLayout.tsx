@@ -12,7 +12,6 @@ import {
   Moon,
   Zap,
   Database,
-  FileCheck,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -47,12 +46,15 @@ export const AppLayout: React.FC = () => {
 
   const workflowItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, step: null },
-    { to: '/project-circuits', label: 'Project & circuits', icon: Layers, step: '01' },
-    { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '02' },
-    { to: '/review-run', label: 'Review & run', icon: CheckSquare, step: '03' },
-    { to: '/results', label: 'Results', icon: BarChart3, step: '04' },
-    { to: '/construction-data', label: 'Construction Data', icon: Database, step: null },
-    { to: '/help', label: 'Help & Docs', icon: HelpCircle, step: null },
+    { to: '/project-circuits', label: 'Project & circuits', icon: Layers, step: '1' },
+    { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '2' },
+    { to: '/review-run', label: 'Review & run', icon: CheckSquare, step: '3' },
+    { to: '/results', label: 'Results', icon: BarChart3, step: '4' },
+  ]
+
+  const secondaryNavItems = [
+    { to: '/construction-data', label: 'Construction data', icon: Database },
+    { to: '/help', label: 'Help & docs', icon: HelpCircle },
   ]
 
   const formattedDate = datasetVersion?.imported_at
@@ -64,23 +66,36 @@ export const AppLayout: React.FC = () => {
       {/* Top Professional Header */}
       <header className="app-header">
         <div className="header-left">
-          <div className="brand-emblem">
-            <Zap size={18} strokeWidth={2.5} />
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '6px',
+              backgroundColor: '#facc15',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0f172a',
+              fontWeight: 900,
+              fontSize: '0.62rem',
+              lineHeight: 1,
+              letterSpacing: '0.02em',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+              padding: '2px',
+            }}
+            title="Lanka Electricity Company"
+          >
+            <Zap size={14} fill="#0f172a" strokeWidth={1} />
+            <span style={{ fontSize: '0.55rem', fontWeight: 800, marginTop: '1px' }}>LECO</span>
           </div>
-          <div className="app-brand-title">
-            Pole<span className="brand-accent">Select</span>
+          <div className="app-brand-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+            Pole Select
           </div>
-          <span className="version-tag">v0.2</span>
+          <span className="version-tag" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>v0.2</span>
         </div>
 
         <div className="header-right">
-          {datasetVersion && (
-            <div className="spec-badge" title={`Imported: ${datasetVersion.imported_at}`}>
-              <Database size={12} style={{ display: 'inline', marginRight: '4px' }} />
-              {datasetVersion.name} ({formattedDate})
-            </div>
-          )}
-
           <button
             onClick={toggleTheme}
             className="btn-theme-toggle"
@@ -110,7 +125,7 @@ export const AppLayout: React.FC = () => {
         {/* Left Sidebar */}
         <aside className="app-sidebar" aria-label="Main Navigation">
           <div>
-            <div className="sidebar-section-title">Navigation & Workflow</div>
+            <div className="sidebar-section-title">Workflow</div>
             <nav className="sidebar-nav">
               {workflowItems.map((item) => {
                 const Icon = item.icon
@@ -127,15 +142,31 @@ export const AppLayout: React.FC = () => {
                 )
               })}
             </nav>
+
+            <div style={{ margin: '1.25rem 0 0.5rem', borderTop: '1px solid var(--border-light)' }} />
+
+            <nav className="sidebar-nav">
+              {secondaryNavItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon size={17} />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                  </NavLink>
+                )
+              })}
+            </nav>
           </div>
 
           <div className="sidebar-footer-card">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
-              <FileCheck size={14} color="var(--primary)" />
-              <h5>Master Data Verification</h5>
-            </div>
-            <p>
-              Dataset <code>{datasetVersion ? datasetVersion.name : 'LECO Master'}</code> imported on {formattedDate}. Zero hardcoded engineering constants.
+            <h5 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>Pole Select v0.2</h5>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+              Master data: {datasetVersion ? datasetVersion.name : 'LECO Master'}.<br />
+              Imported {formattedDate}. All engineering constants come from the dataset.
             </p>
           </div>
         </aside>

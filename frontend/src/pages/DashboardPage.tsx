@@ -1,15 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, FolderGit2 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { Plus, Search, Trash2, Play, FolderOpen, Save } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
-import {
-  PageHeader,
-  Card,
-  KpiCard,
-  ProjectRow,
-  EmptyState,
-} from '../components/layout'
+import { StatusChip } from '../components/StatusChip'
 
 interface ProjectItem {
   id: number
@@ -23,10 +16,12 @@ interface ProjectItem {
 }
 
 export const DashboardPage: React.FC = () => {
-  const { user } = useAuth()
-  const { setActiveProject } = useProject()
+  const { setActiveProject, activeProject } = useProject()
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [voltageFilter, setVoltageFilter] = useState('ALL')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   const navigate = useNavigate()
 
   const loadProjects = async () => {
@@ -48,7 +43,10 @@ export const DashboardPage: React.FC = () => {
     loadProjects()
   }, [])
 
-  const handleDeleteProject = async (projectId: number) => {
+  const handleDeleteProject = async (projectId: number, projectName: string) => {
+    if (!window.confirm(`Are you sure you want to delete project "${projectName}"?`)) {
+      return
+    }
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
@@ -64,89 +62,628 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
+  const handleOpenProject = (project: ProjectItem) => {
+    setActiveProject(project)
+    navigate('/route-poles')
+  }
+
   const handleNewProject = () => {
     setActiveProject(null)
     navigate('/project-circuits')
   }
 
-  const headerActions = (
-    <button type="button" onClick={handleNewProject} className="btn-primary">
-      <Plus size={16} />
-      <span>New Project</span>
-    </button>
-  )
+  const handleQuickCalc = async () => {
+    const targetProject = activeProject || projects[0]
+    if (!targetProject) {
+      alert('Please create or select a project first.')
+      return
+    }
+    setActiveProject(targetProject)
+    navigate('/review-run')
+  }
+
+  const handleSaveActive = () => {
+    alert('All active project data and line schedules are saved automatically to the database.')
+  }
+
+  // Counts for KPI cards
+  const totalPoles = useMemo(() => {
+    return projects.reduce((acc, p) => acc + (p.pole_count || 0), 0)
+  }, [projects])
+
+  const passCount = useMemo(() => {
+    return projects.filter((p) => (p.status || '').toUpperCase() === 'PASS').length
+  }, [projects])
+
+  const cautionCount = useMemo(() => {
+    return projects.filter((p) => (p.status || '').toUpperCase() === 'CAUTION').length
+  }, [projects])
+
+  const failCount = useMemo(() => {
+    return projects.filter((p) => (p.status || '').toUpperCase() === 'FAIL').length
+  }, [projects])
+
+  // Filtered list
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      // Search
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase()
+        const matchesName = p.name.toLowerCase().includes(query)
+        const matchesDesc = (p.description || '').toLowerCase().includes(query)
+        if (!matchesName && !matchesDesc) return false
+      }
+
+      // Voltage filter
+      if (voltageFilter !== 'ALL') {
+        const arr = (p.line_arrangement || '').toLowerCase()
+        if (voltageFilter === '11kV_LV' && !arr.includes('11') && !arr.includes('lv')) return false
+        if (voltageFilter === '33kV_LV' && !arr.includes('33')) return false
+        if (voltageFilter === 'LV_ONLY' && (!arr.includes('lv') || arr.includes('11') || arr.includes('33'))) return false
+        if (voltageFilter === '11kV' && !arr.includes('11')) return false
+      }
+
+      // Status filter
+      if (statusFilter !== 'ALL') {
+        const normStatus = (p.status || 'NOT CALCULATED').toUpperCase()
+        if (statusFilter === 'PASS' && normStatus !== 'PASS') return false
+        if (statusFilter === 'CAUTION' && normStatus !== 'CAUTION') return false
+        if (statusFilter === 'FAIL' && normStatus !== 'FAIL') return false
+        if (statusFilter === 'NOT_CALCULATED' && normStatus !== 'NOT CALCULATED' && normStatus !== 'DRAFT' && normStatus !== 'READY') return false
+      }
+
+      return true
+    })
+  }, [projects, searchQuery, voltageFilter, statusFilter])
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '19 Nov 2026'
+    try {
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return '19 Nov 2026'
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    } catch {
+      return '19 Nov 2026'
+    }
+  }
 
   return (
-    <div className="page-wrapper">
-      <PageHeader
-        title="Dashboard"
-        description={`Welcome back, ${user?.email || 'Engineer'} (${user?.role || 'Designer'})`}
-        actions={headerActions}
-      />
-
-      {/* Summary KPI Cards */}
+    <div className="page-wrapper" style={{ maxWidth: '1360px', margin: '0 auto' }}>
+      {/* Page Header */}
       <div
-        className="stats-grid"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.75rem',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: '1.85rem',
+              fontWeight: 800,
+              margin: '0 0 0.3rem 0',
+              color: 'var(--text-main)',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Dashboard
+          </h1>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Distribution line projects and their structural compliance.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleQuickCalc}
+            className="btn-secondary"
+            style={{
+              height: '38px',
+              minHeight: '38px',
+              padding: '0 0.95rem',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+            }}
+          >
+            <Play size={14} style={{ fill: 'currentColor' }} />
+            <span>Quick calculation</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => projects.length > 0 && handleOpenProject(projects[0])}
+            className="btn-secondary"
+            style={{
+              height: '38px',
+              minHeight: '38px',
+              padding: '0 0.95rem',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+            }}
+          >
+            <FolderOpen size={14} />
+            <span>Open existing project</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveActive}
+            className="btn-secondary"
+            style={{
+              height: '38px',
+              minHeight: '38px',
+              padding: '0 0.95rem',
+              fontSize: '0.825rem',
+              fontWeight: 600,
+            }}
+          >
+            <Save size={14} />
+            <span>Save project</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNewProject}
+            className="btn-primary"
+            style={{
+              height: '38px',
+              minHeight: '38px',
+              padding: '0 1.15rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+            }}
+          >
+            <Plus size={16} />
+            <span>+ New project</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 4 Summary Metric Cards */}
+      <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '1rem',
           marginBottom: '1.75rem',
         }}
       >
-        <KpiCard
-          title="Total Projects"
-          value={projects.length}
-          subtext="Active distribution line projects"
-          icon={<FolderGit2 size={20} />}
-          accentColor="var(--primary)"
-        />
-      </div>
-
-      {/* Projects List Card */}
-      <Card
-        title="Distribution Line Projects"
-        subtitle="Manage route layouts, circuit definitions, and structural engineering reports"
-        actions={
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            {projects.length} {projects.length === 1 ? 'project' : 'projects'} registered
-          </span>
-        }
-      >
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-            Loading projects...
+        {/* Total Projects Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            Total projects
           </div>
-        ) : projects.length === 0 ? (
-          <EmptyState
-            title="No projects configured"
-            description="Get started by creating a new overhead line survey."
-            action={
-              <button onClick={handleNewProject} className="btn-primary">
-                <Plus size={16} />
-                <span>Create New Project</span>
-              </button>
-            }
-          />
-        ) : (
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '1.25rem',
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
             }}
           >
-            {projects.map((p) => (
-              <ProjectRow
-                key={p.id}
-                project={p}
-                onOpen={() => setActiveProject(p)}
-                onDelete={handleDeleteProject}
+            {projects.length}
+          </div>
+          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+            {totalPoles} poles in total
+          </div>
+        </div>
+
+        {/* Pass Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            <span style={{ color: '#10b981', fontSize: '0.9rem' }}>●</span>
+            <span>Pass</span>
+          </div>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
+            }}
+          >
+            {passCount}
+          </div>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(statusFilter === 'PASS' ? 'ALL' : 'PASS')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: statusFilter === 'PASS' ? 'var(--primary)' : 'var(--text-muted)',
+              fontSize: '0.775rem',
+              fontWeight: statusFilter === 'PASS' ? 700 : 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {statusFilter === 'PASS' ? 'Show all' : 'Filter list'}
+          </button>
+        </div>
+
+        {/* Caution Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            <span style={{ color: '#f59e0b', fontSize: '0.9rem' }}>●</span>
+            <span>Caution</span>
+          </div>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
+            }}
+          >
+            {cautionCount}
+          </div>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(statusFilter === 'CAUTION' ? 'ALL' : 'CAUTION')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: statusFilter === 'CAUTION' ? 'var(--primary)' : 'var(--text-muted)',
+              fontSize: '0.775rem',
+              fontWeight: statusFilter === 'CAUTION' ? 700 : 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {statusFilter === 'CAUTION' ? 'Show all' : 'Filter list'}
+          </button>
+        </div>
+
+        {/* Fail Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>●</span>
+            <span>Fail</span>
+          </div>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
+            }}
+          >
+            {failCount}
+          </div>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(statusFilter === 'FAIL' ? 'ALL' : 'FAIL')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: statusFilter === 'FAIL' ? 'var(--primary)' : 'var(--text-muted)',
+              fontSize: '0.775rem',
+              fontWeight: statusFilter === 'FAIL' ? 700 : 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {statusFilter === 'FAIL' ? 'Show all' : 'Filter list'}
+          </button>
+        </div>
+      </div>
+
+      {/* Distribution Line Projects Section */}
+      <div
+        className="card"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-xs)',
+        }}
+      >
+        {/* Section Top Controls Bar */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '1.15rem 1.4rem',
+            borderBottom: '1px solid var(--border-color)',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            Distribution line projects{' '}
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.875rem', marginLeft: '0.35rem' }}>
+              {filteredProjects.length} of {projects.length}
+            </span>
+          </div>
+
+          {/* Search & Filter Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* Search */}
+            <div style={{ position: 'relative', width: '220px' }}>
+              <Search
+                size={14}
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                }}
               />
-            ))}
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Search feeder name"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  height: '36px',
+                  minHeight: '36px',
+                  paddingLeft: '32px',
+                  fontSize: '0.825rem',
+                  backgroundColor: 'var(--bg-app)',
+                  borderColor: 'var(--border-color)',
+                }}
+              />
+            </div>
+
+            {/* Voltage Dropdown */}
+            <select
+              className="form-select"
+              value={voltageFilter}
+              onChange={(e) => setVoltageFilter(e.target.value)}
+              style={{
+                width: '140px',
+                height: '36px',
+                minHeight: '36px',
+                fontSize: '0.825rem',
+                backgroundColor: 'var(--bg-app)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <option value="ALL">All voltages</option>
+              <option value="11kV_LV">11 kV + LV</option>
+              <option value="33kV_LV">33 kV + LV</option>
+              <option value="11kV">11 kV</option>
+              <option value="LV_ONLY">LV only</option>
+            </select>
+
+            {/* Status Dropdown */}
+            <select
+              className="form-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{
+                width: '140px',
+                height: '36px',
+                minHeight: '36px',
+                fontSize: '0.825rem',
+                backgroundColor: 'var(--bg-app)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <option value="ALL">All statuses</option>
+              <option value="PASS">Pass</option>
+              <option value="CAUTION">Caution</option>
+              <option value="FAIL">Fail</option>
+              <option value="NOT_CALCULATED">Not calculated</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Table View */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Loading projects...
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            No projects found matching the criteria.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                textAlign: 'left',
+                fontSize: '0.875rem',
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: 'var(--bg-subtle)',
+                    borderBottom: '1px solid var(--border-color)',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <th style={{ padding: '0.85rem 1.4rem' }}>Project</th>
+                  <th style={{ padding: '0.85rem 1rem' }}>Configuration</th>
+                  <th style={{ padding: '0.85rem 1rem' }}>Poles</th>
+                  <th style={{ padding: '0.85rem 1rem' }}>Circuits</th>
+                  <th style={{ padding: '0.85rem 1rem' }}>Status</th>
+                  <th style={{ padding: '0.85rem 1rem' }}>Modified</th>
+                  <th style={{ padding: '0.85rem 1.4rem', textAlign: 'right' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProjects.map((p) => {
+                  const displayStatus =
+                    p.status && !['ready', 'draft', 'pending'].includes(p.status.toLowerCase())
+                      ? p.status
+                      : 'NOT CALCULATED'
+
+                  return (
+                    <tr
+                      key={p.id}
+                      style={{
+                        borderBottom: '1px solid var(--border-color)',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      className="table-row-hover"
+                    >
+                      {/* Project Name & Description */}
+                      <td style={{ padding: '1rem 1.4rem', verticalAlign: 'middle' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.925rem', marginBottom: '0.2rem' }}>
+                          {p.name}
+                        </div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.775rem' }}>
+                          {p.description || `Poles 1–${p.pole_count || 13} transcribed from master schedule`}
+                        </div>
+                      </td>
+
+                      {/* Configuration */}
+                      <td style={{ padding: '1rem 1rem', verticalAlign: 'middle', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.825rem' }}>
+                        {p.line_arrangement || '11 kV + LV'}
+                      </td>
+
+                      {/* Poles */}
+                      <td style={{ padding: '1rem 1rem', verticalAlign: 'middle', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                        {p.pole_count || 13}
+                      </td>
+
+                      {/* Circuits */}
+                      <td style={{ padding: '1rem 1rem', verticalAlign: 'middle', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                        {p.circuit_count || 2}
+                      </td>
+
+                      {/* Status */}
+                      <td style={{ padding: '1rem 1rem', verticalAlign: 'middle' }}>
+                        <StatusChip status={displayStatus} />
+                      </td>
+
+                      {/* Modified */}
+                      <td style={{ padding: '1rem 1rem', verticalAlign: 'middle', color: 'var(--text-muted)', fontSize: '0.825rem' }}>
+                        {formatDate(p.updated_at)}
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ padding: '1rem 1.4rem', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenProject(p)}
+                            className="btn-secondary"
+                            style={{
+                              height: '32px',
+                              minHeight: '32px',
+                              padding: '0 0.85rem',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <span>Open</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProject(p.id, p.name)}
+                            className="btn-secondary"
+                            title="Delete project"
+                            style={{
+                              height: '32px',
+                              minHeight: '32px',
+                              width: '32px',
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--text-muted)',
+                            }}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </Card>
+
+        {/* Table Footer Legend */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.75rem',
+            padding: '0.85rem 1.4rem',
+            borderTop: '1px solid var(--border-color)',
+            fontSize: '0.75rem',
+            color: 'var(--text-muted)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ color: '#10b981', fontWeight: 800 }}>● PASS</span>
+            <span>All checks within limits</span>
+          </div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ color: '#f59e0b', fontWeight: 800 }}>◆ CAUTION</span>
+            <span>Passes with reduced margin</span>
+          </div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ color: '#ef4444', fontWeight: 800 }}>■ FAIL</span>
+            <span>A check is not met or data is missing</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

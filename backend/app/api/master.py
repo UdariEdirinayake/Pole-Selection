@@ -71,11 +71,11 @@ def get_dataset_versions(db: Session = Depends(get_db)):
 @router.get("/{table}")
 def get_master_table_data(
     table: str,
-    version_id: int | None = Query(None, description="Optional dataset_version_id filter"),
-    needs_confirmation: bool | None = Query(None, description="Filter by needs_confirmation"),
-    table_id: str | None = Query(None, description="Filter by table_id (for span-tension-points)"),
-    limit: int = Query(500, le=1000, description="Max rows to return"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
+    version_id: int | None = None,
+    needs_confirmation: bool | None = None,
+    table_id: str | None = None,
+    limit: int = 500,
+    offset: int = 0,
     db: Session = Depends(get_db),
 ):
     """Read-only API endpoint to query master data tables with filtering and confirmation tracking."""

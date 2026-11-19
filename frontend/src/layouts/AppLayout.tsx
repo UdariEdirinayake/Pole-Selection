@@ -11,13 +11,11 @@ import {
   Sun,
   Moon,
   Zap,
-  FolderGit2,
   Database,
   FileCheck,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { useProject } from '../context/ProjectContext'
 
 interface DatasetVersionInfo {
   id: number
@@ -28,7 +26,6 @@ interface DatasetVersionInfo {
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
-  const { activeProject } = useProject()
   const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const navigate = useNavigate()
 
@@ -74,17 +71,6 @@ export const AppLayout: React.FC = () => {
             Pole<span className="brand-accent">Select</span>
           </div>
           <span className="version-tag">v0.2</span>
-
-          <div className="header-divider" />
-
-          <div className="header-project-badge">
-            <FolderGit2 size={14} color="var(--primary)" />
-            <span>
-              {activeProject
-                ? `${activeProject.name} (${activeProject.line_arrangement})`
-                : 'No active project'}
-            </span>
-          </div>
         </div>
 
         <div className="header-right">

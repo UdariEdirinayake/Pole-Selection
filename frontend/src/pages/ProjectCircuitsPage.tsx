@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Zap, Layers, Activity } from 'lucide-react'
+import { useProject } from '../context/ProjectContext'
 import {
   PageHeader,
   Card,
@@ -18,6 +19,7 @@ interface ConductorOption {
 }
 
 export const ProjectCircuitsPage: React.FC = () => {
+  const { activeProject, setActiveProject, refreshProjects } = useProject()
   const [arrangement, setArrangement] = useState<'11 kV' | 'LV' | '11 kV + LV'>('11 kV + LV')
   const [projectName, setProjectName] = useState('Kelaniya Distribution Feeder')
   const [description, setDescription] = useState('Standard 11 kV + LV common pole line section')
@@ -37,14 +39,49 @@ export const ProjectCircuitsPage: React.FC = () => {
           setConductors(data.items)
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => console.error('Failed to fetch conductors:', err))
   }, [])
 
-  const selectedC1 = conductors.find((c) => c.code === Number(c1Conductor))
-  const selectedC2 = conductors.find((c) => c.code === Number(c2Conductor))
+  // If an active project exists, load its settings
+  useEffect(() => {
+    if (!activeProject?.id) return
+    fetch(`/api/projects/${activeProject.id}`)
+      .then((res) => {
+        if (res.ok) return res.json()
+        return null
+      })
+      .then((proj) => {
+        if (proj) {
+          if (proj.name) setProjectName(proj.name)
+          if (proj.description !== undefined) setDescription(proj.description || '')
+          if (proj.line_arrangement) {
+            setArrangement(proj.line_arrangement as '11 kV' | 'LV' | '11 kV + LV')
+          }
+          if (proj.circuits && proj.circuits.length > 0) {
+            const c1 = proj.circuits.find(
+              (c: any) => (c.circuit_name && c.circuit_name.includes('11')) || (c.nominal_voltage_kv && c.nominal_voltage_kv > 1)
+            ) || proj.circuits[0]
+            const c2 = proj.circuits.find(
+              (c: any) => (c.circuit_name && c.circuit_name.includes('LV')) || (c.nominal_voltage_kv && c.nominal_voltage_kv < 1)
+            ) || (proj.circuits.length > 1 ? proj.circuits[1] : proj.circuits[0])
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+            if (c1 && c1.conductor_code != null) {
+              setC1Conductor(Number(c1.conductor_code))
+            }
+            if (c2 && c2.conductor_code != null) {
+              setC2Conductor(Number(c2.conductor_code))
+            }
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to load project details:', err))
+  }, [activeProject?.id])
+
+  const selectedC1 = conductors.find((c) => Number(c.code) === Number(c1Conductor))
+  const selectedC2 = conductors.find((c) => Number(c.code) === Number(c2Conductor))
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     setSaving(true)
     setSavedSuccess(false)
 
@@ -54,9 +91,9 @@ export const ProjectCircuitsPage: React.FC = () => {
         circuit_name: 'C1 (11kV)',
         nominal_voltage_kv: 11.0,
         circuit_type: 'Overhead ABC',
-        conductor_code: selectedC1?.code,
-        conductor_name: selectedC1?.description,
-        lookup_table: selectedC1?.lookup_table,
+        conductor_code: selectedC1 ? Number(selectedC1.code) : (c1Conductor ? Number(c1Conductor) : 1),
+        conductor_name: selectedC1?.description || '',
+        lookup_table: selectedC1?.lookup_table || null,
       })
     }
     if (arrangement === 'LV' || arrangement === '11 kV + LV') {
@@ -64,28 +101,66 @@ export const ProjectCircuitsPage: React.FC = () => {
         circuit_name: 'C2 (LV)',
         nominal_voltage_kv: 0.4,
         circuit_type: 'Overhead ABC',
-        conductor_code: selectedC2?.code,
-        conductor_name: selectedC2?.description,
-        lookup_table: selectedC2?.lookup_table,
+        conductor_code: selectedC2 ? Number(selectedC2.code) : (c2Conductor ? Number(c2Conductor) : 1),
+        conductor_name: selectedC2?.description || '',
+        lookup_table: selectedC2?.lookup_table || null,
       })
     }
 
     try {
-      const res = await fetch('/api/projects/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: projectName,
-          description: description,
-          line_arrangement: arrangement,
-          circuits: circuits,
-          poles: [],
-        }),
-      })
-      if (res.ok) {
-        setSavedSuccess(true)
-        setTimeout(() => navigate('/route-poles'), 800)
+      if (activeProject?.id) {
+        // Update existing active project
+        const res = await fetch(`/api/projects/${activeProject.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projectName,
+            description: description,
+            line_arrangement: arrangement,
+            circuits: circuits,
+          }),
+        })
+        if (res.ok) {
+          await refreshProjects()
+          setSavedSuccess(true)
+          setTimeout(() => navigate('/route-poles'), 600)
+        }
+      } else {
+        // Create new project
+        const res = await fetch('/api/projects/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projectName,
+            description: description,
+            line_arrangement: arrangement,
+            circuits: circuits,
+            poles: [],
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const projs = await refreshProjects()
+          const matched = projs.find((p) => p.id === data.id)
+          if (matched) {
+            setActiveProject(matched)
+          } else if (data.id) {
+            setActiveProject({
+              id: data.id,
+              name: projectName,
+              description: description,
+              line_arrangement: arrangement,
+              status: 'Not calculated',
+              pole_count: 0,
+              circuit_count: circuits.length,
+            })
+          }
+          setSavedSuccess(true)
+          setTimeout(() => navigate('/route-poles'), 600)
+        }
       }
+    } catch (err) {
+      console.error('Error saving project circuits:', err)
     } finally {
       setSaving(false)
     }
@@ -94,7 +169,7 @@ export const ProjectCircuitsPage: React.FC = () => {
   const actions = (
     <button
       type="button"
-      onClick={handleSave}
+      onClick={() => handleSave()}
       disabled={saving}
       className="btn-primary"
     >
@@ -231,12 +306,12 @@ export const ProjectCircuitsPage: React.FC = () => {
                 <select
                   id="c1_cond"
                   className="form-select"
-                  value={c1Conductor}
+                  value={c1Conductor ?? ''}
                   onChange={(e) => setC1Conductor(Number(e.target.value))}
                 >
                   {conductors.map((c) => (
                     <option key={c.code} value={c.code}>
-                      Code {c.code}: {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
+                      {c.description}
                     </option>
                   ))}
                 </select>
@@ -309,12 +384,12 @@ export const ProjectCircuitsPage: React.FC = () => {
                 <select
                   id="c2_cond"
                   className="form-select"
-                  value={c2Conductor}
+                  value={c2Conductor ?? ''}
                   onChange={(e) => setC2Conductor(Number(e.target.value))}
                 >
                   {conductors.map((c) => (
                     <option key={c.code} value={c.code}>
-                      Code {c.code}: {c.description} {c.lookup_table ? `(Table: ${c.lookup_table})` : '(No Table)'}
+                      {c.description}
                     </option>
                   ))}
                 </select>

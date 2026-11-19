@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Clock, ArrowRight, Layers, MapPin } from 'lucide-react'
+import { Clock, ArrowRight, Layers, MapPin, Trash2 } from 'lucide-react'
 import { StatusChip } from '../StatusChip'
 
 export interface ProjectData {
@@ -17,9 +17,10 @@ export interface ProjectData {
 interface ProjectRowProps {
   project: ProjectData
   onOpen?: () => void
+  onDelete?: (projectId: number) => void
 }
 
-export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen }) => {
+export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen, onDelete }) => {
   const displayStatus =
     project.status && !['ready', 'draft', 'pending'].includes(project.status.toLowerCase())
       ? project.status
@@ -83,7 +84,7 @@ export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen }) => {
           </span>
         </div>
 
-        <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
+        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Link
             to="/route-poles"
             onClick={onOpen}
@@ -93,14 +94,41 @@ export const ProjectRow: React.FC<ProjectRowProps> = ({ project, onOpen }) => {
               minHeight: '32px',
               fontSize: '0.8rem',
               padding: '0 0.85rem',
-              width: '100%',
+              flex: 1,
               display: 'inline-flex',
               justifyContent: 'center',
+              alignItems: 'center',
+              gap: '0.4rem',
             }}
           >
             <span>Open Project</span>
             <ArrowRight size={14} />
           </Link>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete project "${project.name}"?`)) {
+                  onDelete(project.id)
+                }
+              }}
+              className="btn-secondary"
+              title="Delete project"
+              style={{
+                height: '32px',
+                minHeight: '32px',
+                width: '32px',
+                padding: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--danger, #ef4444)',
+                borderColor: 'var(--border-color)',
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
     </div>

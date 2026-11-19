@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, FolderGit2, Database, Calendar, Wind } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, FolderGit2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import {
@@ -22,19 +22,12 @@ interface ProjectItem {
   circuit_count: number
 }
 
-interface DatasetVersionInfo {
-  id: number
-  name: string
-  imported_at: string
-}
-
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()
   const { setActiveProject } = useProject()
   const [projects, setProjects] = useState<ProjectItem[]>([])
-  const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
+  const navigate = useNavigate()
 
   const loadProjects = async () => {
     setLoading(true)
@@ -51,58 +44,37 @@ export const DashboardPage: React.FC = () => {
     }
   }
 
-  const loadDatasetVersion = async () => {
+  useEffect(() => {
+    loadProjects()
+  }, [])
+
+  const handleDeleteProject = async (projectId: number) => {
     try {
-      const res = await fetch('/api/master/dataset-versions?limit=1')
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+      })
       if (res.ok) {
-        const data = await res.json()
-        if (data && data.items && data.items.length > 0) {
-          setDatasetVersion(data.items[0])
-        }
+        await loadProjects()
+      } else {
+        alert('Failed to delete project.')
       }
     } catch (e) {
       console.error(e)
+      alert('Error deleting project.')
     }
   }
 
-  useEffect(() => {
-    loadProjects()
-    loadDatasetVersion()
-  }, [])
-
-  const handleCreateSample = async () => {
-    setCreating(true)
-    try {
-      const res = await fetch('/api/projects/seed-sample')
-      if (res.ok) {
-        await loadProjects()
-      }
-    } finally {
-      setCreating(false)
-    }
+  const handleNewProject = () => {
+    setActiveProject(null)
+    navigate('/project-circuits')
   }
 
   const headerActions = (
-    <>
-      <button
-        onClick={handleCreateSample}
-        disabled={creating}
-        className="btn-secondary"
-        title="Load sample route project (Poles 1-13)"
-      >
-        <FolderGit2 size={16} />
-        <span>{creating ? 'Loading...' : 'Load Sample Project'}</span>
-      </button>
-      <Link to="/project-circuits" className="btn-primary">
-        <Plus size={16} />
-        <span>New Project</span>
-      </Link>
-    </>
+    <button type="button" onClick={handleNewProject} className="btn-primary">
+      <Plus size={16} />
+      <span>New Project</span>
+    </button>
   )
-
-  const formattedImportDate = datasetVersion?.imported_at
-    ? datasetVersion.imported_at.split('T')[0]
-    : '2026-11-18'
 
   return (
     <div className="page-wrapper">
@@ -112,12 +84,12 @@ export const DashboardPage: React.FC = () => {
         actions={headerActions}
       />
 
-      {/* 4 KPI Cards in one horizontal row */}
+      {/* Summary KPI Cards */}
       <div
         className="stats-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '1rem',
           marginBottom: '1.75rem',
         }}
@@ -125,33 +97,9 @@ export const DashboardPage: React.FC = () => {
         <KpiCard
           title="Total Projects"
           value={projects.length}
-          subtext="Active line design files"
+          subtext="Active distribution line projects"
           icon={<FolderGit2 size={20} />}
           accentColor="var(--primary)"
-        />
-
-        <KpiCard
-          title="Master Dataset Version"
-          value={datasetVersion ? datasetVersion.name.replace('LECO_Import_', 'v.') : 'v.1.0'}
-          subtext={datasetVersion ? datasetVersion.name : 'Master Catalog'}
-          icon={<Database size={20} />}
-          accentColor="#059669"
-        />
-
-        <KpiCard
-          title="Dataset Import Date"
-          value={formattedImportDate}
-          subtext="Verified database seed"
-          icon={<Calendar size={20} />}
-          accentColor="#6366f1"
-        />
-
-        <KpiCard
-          title="Conductor Wind Spec"
-          value="575 N/m²"
-          subtext="Confirmed by project owner"
-          icon={<Wind size={20} />}
-          accentColor="#d97706"
         />
       </div>
 
@@ -172,11 +120,11 @@ export const DashboardPage: React.FC = () => {
         ) : projects.length === 0 ? (
           <EmptyState
             title="No projects configured"
-            description="Get started by creating a new overhead line survey or loading the official 11 kV + LV sample project (Poles 1 to 13)."
+            description="Get started by creating a new overhead line survey."
             action={
-              <button onClick={handleCreateSample} className="btn-primary">
-                <FolderGit2 size={16} />
-                <span>Load Sample 11 kV + LV Feeder</span>
+              <button onClick={handleNewProject} className="btn-primary">
+                <Plus size={16} />
+                <span>Create New Project</span>
               </button>
             }
           />
@@ -189,7 +137,12 @@ export const DashboardPage: React.FC = () => {
             }}
           >
             {projects.map((p) => (
-              <ProjectRow key={p.id} project={p} onOpen={() => setActiveProject(p)} />
+              <ProjectRow
+                key={p.id}
+                project={p}
+                onOpen={() => setActiveProject(p)}
+                onDelete={handleDeleteProject}
+              />
             ))}
           </div>
         )}

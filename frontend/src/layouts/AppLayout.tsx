@@ -54,6 +54,7 @@ export const AppLayout: React.FC = () => {
     { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '02' },
     { to: '/review-run', label: 'Review & run', icon: CheckSquare, step: '03' },
     { to: '/results', label: 'Results', icon: BarChart3, step: '04' },
+    { to: '/construction-data', label: 'Construction Data', icon: Database, step: null },
     { to: '/help', label: 'Help & Docs', icon: HelpCircle, step: null },
   ]
 

@@ -11,6 +11,7 @@ import { ProjectCircuitsPage } from './pages/ProjectCircuitsPage'
 import { RoutePolesPage } from './pages/RoutePolesPage'
 import { ReviewRunPage } from './pages/ReviewRunPage'
 import { ResultsPage } from './pages/ResultsPage'
+import { ConstructionDataPage } from './pages/ConstructionDataPage'
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="/route-poles" element={<RoutePolesPage />} />
                 <Route path="/review-run" element={<ReviewRunPage />} />
                 <Route path="/results" element={<ResultsPage />} />
+                <Route path="/construction-data" element={<ConstructionDataPage />} />
                 <Route path="/help" element={<HelpPage />} />
               </Route>
 

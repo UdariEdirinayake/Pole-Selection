@@ -119,3 +119,53 @@ def get_master_table_data(
         "limit": limit,
         "items": items,
     }
+
+
+@router.put("/{table}/{item_id}")
+def update_master_table_item(
+    table: str,
+    item_id: int,
+    payload: dict[str, Any],
+    db: Session = Depends(get_db),
+):
+    """Update a specific row in a master data table with updated engineering parameters."""
+    table_lower = table.lower()
+    if table_lower not in TABLE_MAP:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Master table '{table}' not found. Available tables: {list(TABLE_MAP.keys())}"
+        )
+
+    model = TABLE_MAP[table_lower]
+    item = db.query(model).filter(model.id == item_id).first()
+    if not item:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Item with id {item_id} not found in table '{table}'."
+        )
+
+    # Protect immutable identity fields
+    protected_fields = {"id", "dataset_version_id", "created_at"}
+
+    for key, val in payload.items():
+        if key not in protected_fields and hasattr(item, key):
+            # If empty string passed for a numeric or optional field, convert to None
+            if val == "":
+                val = None
+            setattr(item, key, val)
+
+    db.commit()
+    db.refresh(item)
+
+    d = {}
+    for col in item.__table__.columns:
+        v = getattr(item, col.name)
+        if hasattr(v, "isoformat"):
+            v = v.isoformat()
+        d[col.name] = v
+
+    return {
+        "table": table,
+        "message": f"Row {item_id} updated successfully.",
+        "item": d,
+    }

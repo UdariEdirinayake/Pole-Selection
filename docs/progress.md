@@ -119,3 +119,27 @@ The following engineering parameters and configuration values originate strictly
   * `test_missing_terrain_height_returns_not_assessed` — engine-level fail-closed test.
   * Backend endpoint tests pass `terrain_height_m=0.0` explicitly for the sample line.
 
+
+
+## Phase 4C – Complete Calculation Engine Ported from Original Tool (`engine/pole_engine`)
+Status: ✅ Complete & Verified
+
+### 1. Port Architecture & Strict Copy Boundary
+* **Strict Copy Boundary Adherence:** Scanned and verified that no embedded data tables (`NOMINAL`, `BUCKLING`, `BREADTH`, `unitWeight` map) or UI strings/formatting were ported into `engine/pole_engine/`. Covered by `engine/tests/test_strict_copy_boundary.py`.
+* **Zero Missing / Todo Functions:** All 112 in-scope items inventoried in `docs/calc_coverage.md` are ported and marked Ported/NA with complete traceability. Verified by `engine/tests/test_calc_coverage.py`.
+* **External Oracle Integration:** Built `tools/oracle/run_original_calc.mjs` running the original JS Calc module in a Node.js sandbox vm to cross-verify mathematical equivalence and boundary behavior.
+
+### 2. Stage Breakdown & Module Structure
+* **Stage A (Tension & Sag):** `engine/pole_engine/sag_tension.py` with Martin cubic state-change equation, catenary unequal elevation profile solver, horizontal tension inversion, effective wind mass density, and clamped table interpolation with warning `'outside chart range'`.
+* **Stage B (Loads & Moments):** `engine/pole_engine/loads.py` with conductor wind moments, angle tension moments, full terminal moments, pole shaft wind moments, equipment wind & weight eccentricity moments, and GL-to-pole-top load conversion.
+* **Stage C (Pole Selection, Strut, Guy, Buckling):** `engine/pole_engine/selection.py`, `guys.py`, and `buckling.py` with unguyed pole selection, strutted pair selection with exact rule thresholds (745.41, 1349.74, 1601.5, 2441.83 daN), guy wire load & longitudinal force formulas, and critical buckling capacity lookups.
+* **Stage D (Insulators & Ties):** `engine/pole_engine/insulators.py` with angle-based insulator and tie selection (TTIE, STIE, 2STIE, TEN**), cantilever strength checks, and severity ranking.
+* **Stage E (Foundation & Bearing):** `engine/pole_engine/foundation.py` with overturning moment about fulcrum at depth $\delta = P / \sqrt{2}$, soil subgrade moment of resistance $M_g$, minimum breadth $B_{\min}$, and bearing footprint enlargement types A, B, C.
+* **Stage F (Clearances & Phase Separation):** `engine/pole_engine/clearances.py` with creepage allowances, ground and circuit-to-circuit clearance checks, structure clearances, and angle-adjusted phase separation $D_{\text{eff}} = \min(D_A \cos(\theta_A / 2), D_B \cos(\theta_B / 2))$.
+* **Stage G (Circuits, Spur, Earth, Common Mode):** `engine/pole_engine/circuits.py` with circuit identification, HV grouping (vertical double, equilateral triangle), earth conductor handling, and configuration row normalization.
+* **Stage H (Orchestrator & API):** `engine/pole_engine/line.py` implementing `compute_line()` orchestrating all stages in exact sequence of `computeLine`, plus `POST /api/engine/run` endpoint in `backend/app/api/engine.py`.
+
+### 3. Test Verification
+* **All Tests Passing:**
+  * Engine test suite: 76/76 passed.
+  * Backend test suite: 25/25 passed.

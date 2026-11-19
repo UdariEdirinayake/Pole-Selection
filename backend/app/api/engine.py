@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 
 from app.database import get_db
 from app.auth import get_current_user
@@ -806,8 +807,31 @@ def run_full_engine(
     }
 
     res = compute_line(line_rows, settings, data_payload)
+
+    # Determine project calculation evaluation status
+    has_blocking_fail = any(
+        r.get("ground_clearance_ok") is False or
+        r.get("circuit_clearance_ok") is False or
+        r.get("foundation", {}).get("stable") is False
+        for r in res.get("results", [])
+    )
+    tension_fail = any(t.get("ok15") is False or t.get("ok27") is False for t in res.get("tensionChecks", []))
+
+    if has_blocking_fail:
+        calc_status = "FAIL"
+    elif tension_fail:
+        calc_status = "CAUTION"
+    else:
+        calc_status = "PASS"
+
+    project.status = calc_status
+    project.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(project)
+
     return {
         "project_id": project.id,
         "project_name": project.name,
+        "status": calc_status,
         "calculation_results": res
     }

@@ -13,7 +13,7 @@ interface ValidationItem {
 
 export const ReviewRunPage: React.FC = () => {
   const navigate = useNavigate()
-  const { activeProject } = useProject()
+  const { activeProject, refreshProjects } = useProject()
   const [isRunning, setIsRunning] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
   const [projectDetails, setProjectDetails] = useState<any>(null)
@@ -246,6 +246,7 @@ export const ReviewRunPage: React.FC = () => {
                   }
 
                   const data = await res.json()
+                  await refreshProjects()
                   navigate('/results', { state: { liveResults: data.calculation_results, projectName: data.project_name } })
                 } catch (err: any) {
                   console.error('Calculation run error:', err)

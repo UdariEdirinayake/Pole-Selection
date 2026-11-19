@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ProjectProvider } from './context/ProjectContext'
 import { AppLayout } from './layouts/AppLayout'
 import { SignInPage } from './pages/SignInPage'
 import { HomePage, AboutPage, HelpPage } from './pages/PublicPages'
@@ -33,33 +34,35 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Pages */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/about" element={<AboutPage />} />
+        <ProjectProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Pages */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/signin" element={<SignInPage />} />
+              <Route path="/about" element={<AboutPage />} />
 
-            {/* Authenticated Application Shell */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/project-circuits" element={<ProjectCircuitsPage />} />
-              <Route path="/route-poles" element={<RoutePolesPage />} />
-              <Route path="/review-run" element={<ReviewRunPage />} />
-              <Route path="/results" element={<ResultsPage />} />
-              <Route path="/help" element={<HelpPage />} />
-            </Route>
+              {/* Authenticated Application Shell */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/project-circuits" element={<ProjectCircuitsPage />} />
+                <Route path="/route-poles" element={<RoutePolesPage />} />
+                <Route path="/review-run" element={<ReviewRunPage />} />
+                <Route path="/results" element={<ResultsPage />} />
+                <Route path="/help" element={<HelpPage />} />
+              </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ProjectProvider>
       </AuthProvider>
     </ThemeProvider>
   )

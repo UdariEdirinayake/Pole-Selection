@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useProject } from '../context/ProjectContext'
 
 interface DatasetVersionInfo {
   id: number
@@ -27,6 +28,7 @@ interface DatasetVersionInfo {
 export const AppLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
+  const { activeProject } = useProject()
   const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const navigate = useNavigate()
 
@@ -76,7 +78,11 @@ export const AppLayout: React.FC = () => {
 
           <div className="header-project-badge">
             <FolderGit2 size={14} color="var(--primary)" />
-            <span>Kelaniya Distribution Feeder (11 kV + LV)</span>
+            <span>
+              {activeProject
+                ? `${activeProject.name} (${activeProject.line_arrangement})`
+                : 'No active project'}
+            </span>
           </div>
         </div>
 

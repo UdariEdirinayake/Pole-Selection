@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, FolderGit2, Database, Calendar, Wind } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useProject } from '../context/ProjectContext'
 import {
   PageHeader,
   Card,
@@ -29,6 +30,7 @@ interface DatasetVersionInfo {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth()
+  const { setActiveProject } = useProject()
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [datasetVersion, setDatasetVersion] = useState<DatasetVersionInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -187,7 +189,7 @@ export const DashboardPage: React.FC = () => {
             }}
           >
             {projects.map((p) => (
-              <ProjectRow key={p.id} project={p} />
+              <ProjectRow key={p.id} project={p} onOpen={() => setActiveProject(p)} />
             ))}
           </div>
         )}

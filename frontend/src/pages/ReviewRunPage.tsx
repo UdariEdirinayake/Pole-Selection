@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Play, Loader2 } from 'lucide-react'
+import { useProject } from '../context/ProjectContext'
 
 interface ValidationItem {
   id: string
@@ -12,6 +13,7 @@ interface ValidationItem {
 
 export const ReviewRunPage: React.FC = () => {
   const navigate = useNavigate()
+  const { activeProject } = useProject()
   const [isRunning, setIsRunning] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
 
@@ -128,15 +130,20 @@ export const ReviewRunPage: React.FC = () => {
                 setIsRunning(true)
                 setRunError(null)
                 try {
-                  const projRes = await fetch('/api/projects/')
-                  let projectId = 1
-                  if (projRes.ok) {
-                    const projs = await projRes.json()
-                    if (Array.isArray(projs) && projs.length > 0) {
-                      projectId = projs[0].id
-                    } else if (projs && Array.isArray(projs.items) && projs.items.length > 0) {
-                      projectId = projs.items[0].id
+                  let projectId: number | null = activeProject?.id ?? null
+
+                  if (!projectId) {
+                    const projRes = await fetch('/api/projects/')
+                    if (projRes.ok) {
+                      const projs = await projRes.json()
+                      const arr: any[] = Array.isArray(projs) ? projs : (projs.items || [])
+                      const withPoles = arr.find((p: any) => (p.pole_count || 0) > 0) || arr[0]
+                      if (withPoles) projectId = withPoles.id
                     }
+                  }
+
+                  if (!projectId) {
+                    throw new Error('No project with route poles found. Please configure poles in Route & Poles first.')
                   }
 
                   const res = await fetch('/api/engine/run', {

@@ -481,7 +481,11 @@ export const ConstructionDataPage: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
                   <Edit2 size={16} color="var(--primary)" />
-                  <span>Edit Record (ID: {editingRow.id} {activeTableMeta.spanTensionTableId ? `• Span: ${editingRow.span_m} m` : ''})</span>
+                  <span>
+                    {activeTableMeta.spanTensionTableId
+                      ? `Edit Calibration Point (${editingRow.span_m} m Span)`
+                      : `Edit Record (ID: ${editingRow.id})`}
+                  </span>
                 </h4>
                 <button
                   type="button"
@@ -558,7 +562,7 @@ export const ConstructionDataPage: React.FC = () => {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '60px' }}>ID</th>
+                      <th style={{ width: '50px', textAlign: 'center' }}>#</th>
                       {activeTableMeta.editableFields.map((f) => (
                         <th key={f.key}>{f.label}</th>
                       ))}
@@ -566,9 +570,11 @@ export const ConstructionDataPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredItems.map((row) => (
+                    {filteredItems.map((row, idx) => (
                       <tr key={row.id}>
-                        <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.id}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 600, textAlign: 'center', color: 'var(--text-muted)' }}>
+                          {idx + 1}
+                        </td>
                         {activeTableMeta.editableFields.map((f) => {
                           const val = row[f.key]
                           return (

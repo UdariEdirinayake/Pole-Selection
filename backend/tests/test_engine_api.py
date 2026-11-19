@@ -71,17 +71,26 @@ def test_sag_tension_endpoint(auth_context):
 
 
 def test_clearances_endpoint(auth_context):
-    """Test POST /api/engine/clearances for the sample line project."""
+    """Test POST /api/engine/clearances for the sample line project with explicit inputs."""
     user, project = auth_context
     assert project is not None, "Sample project not found in test DB"
 
     db = SessionLocal()
     try:
-        req = ClearancesRequest(project_id=project.id)
+        # Explicit test inputs (not in Excel master data)
+        req = ClearancesRequest(
+            project_id=project.id,
+            attachment_height_below_pole_top_m=1.047,  # back-calculated from result.pdf, source pending
+            vertical_spacing_11kv_lv_m=1.454,          # back-calculated from result.pdf, source pending
+        )
         res = compute_clearances(req, current_user=user, db=db)
 
         assert res.project_id == project.id
-        assert res.attachment_height_m == 8.120
+        assert abs(res.attachment_height_m - 8.120) < 0.001
+        assert res.attachment_height_below_pole_top_m == 1.047
+        assert res.vertical_spacing_11kv_lv_m == 1.454
+        assert res.line_voltage_kv == 11.0
+        assert res.embedment_ratio is not None
 
         # 13 poles in both lists
         assert len(res.phase_separation) == 13
@@ -125,5 +134,35 @@ def test_clearances_endpoint(auth_context):
         assert p1_gc.min_vert_clear_m == 1.454
         assert p1_gc.req_vert_clear_m == 1.20
 
+    finally:
+        db.close()
+
+
+def test_clearances_endpoint_missing_inputs_returns_not_assessed(auth_context):
+    """Test that missing explicit project inputs fail closed and return NOT ASSESSED with reason 'input needed'."""
+    user, project = auth_context
+    assert project is not None, "Sample project not found in test DB"
+
+    db = SessionLocal()
+    try:
+        # Request with NO attachment_height_below_pole_top_m and NO vertical_spacing_11kv_lv_m
+        req = ClearancesRequest(project_id=project.id)
+        res = compute_clearances(req, current_user=user, db=db)
+
+        assert res.attachment_height_m is None
+        assert res.attachment_height_below_pole_top_m is None
+        assert res.vertical_spacing_11kv_lv_m is None
+
+        for item in res.ground_clearance:
+            assert item.ground_clearance_check == "NOT ASSESSED", (
+                f"Pole {item.pole_no}: expected NOT ASSESSED when attachment height is missing"
+            )
+            assert item.ground_clearance_reason == "input needed"
+            assert item.lowest_clearance_m is None
+            assert item.circuit_clearance_check == "NOT ASSESSED", (
+                f"Pole {item.pole_no}: expected NOT ASSESSED when vertical spacing is missing"
+            )
+            assert item.circuit_clearance_reason == "input needed"
+            assert item.min_vert_clear_m is None
     finally:
         db.close()

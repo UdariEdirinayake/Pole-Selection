@@ -25,8 +25,11 @@ from pole_engine.clearances import (
     calculate_separation_at_angle_m,
     calculate_max_crossarm_angle_deg,
     evaluate_phase_separation,
+    calculate_attachment_height_above_ground_m,
     calculate_lowest_ground_clearance_m,
+    assess_ground_clearance,
     evaluate_ground_clearance,
+    assess_circuit_clearance,
     evaluate_circuit_clearance,
 )
 
@@ -218,6 +221,9 @@ def compute_sag_tension(
 
 class ClearancesRequest(BaseModel):
     project_id: int
+    attachment_height_below_pole_top_m: Optional[float] = None
+    vertical_spacing_11kv_lv_m: Optional[float] = None
+    pole_height_m: Optional[float] = None
 
 
 class PhaseSeparationItem(BaseModel):
@@ -233,6 +239,7 @@ class PhaseSeparationItem(BaseModel):
     separation_actual_m: Optional[float]
     max_angle_deg: Optional[int]
     separation_check: str
+    separation_reason: Optional[str] = None
     warnings: List[str] = []
 
 
@@ -245,16 +252,22 @@ class GroundClearanceItem(BaseModel):
     lowest_clearance_m: Optional[float]
     applicable_clearance_m: Optional[float]
     ground_clearance_check: str
+    ground_clearance_reason: Optional[str] = None
     min_vert_clear_m: Optional[float]
     req_vert_clear_m: Optional[float]
     circuit_clearance_check: str
+    circuit_clearance_reason: Optional[str] = None
     warnings: List[str] = []
 
 
 class ClearancesResponse(BaseModel):
     project_id: int
     project_name: str
-    attachment_height_m: Optional[float]
+    attachment_height_m: Optional[float] = None
+    attachment_height_below_pole_top_m: Optional[float] = None
+    vertical_spacing_11kv_lv_m: Optional[float] = None
+    line_voltage_kv: Optional[float] = None
+    embedment_ratio: Optional[float] = None
     attachment_height_note: str
     phase_separation: List[PhaseSeparationItem]
     ground_clearance: List[GroundClearanceItem]
@@ -270,18 +283,15 @@ def compute_clearances(
     """
     Compute phase separation and ground/circuit clearances for all poles in a project.
 
-    Attachment height derivation
-    -----------------------------
-    Per docs/result.pdf page 7 reference calculation: for an 11 m pole with
-    embedment = 1/6 of pole height, the LV crossarm sits 1.047 m below the
-    top of the pole, giving an attachment height of 8.120 m above ground.
-    The LV crossarm vertical offset from the pole top is not stored in the
-    master data tables (CrossarmConfig stores horizontal spacing only), so it
-    is derived here from the PDF reference and reported as an input needed if
-    the pole height is not 11 m.
-
-    The 'Sample data' banner on the Results page remains until the full engine
-    (including pole structural checks and foundation) is complete.
+    Engineering constraints (Phase 4B corrections):
+    ------------------------------------------------
+    1. 'attachment_height_below_pole_top_m' and 'vertical_spacing_11kv_lv_m'
+       are explicit project inputs (in metres) with NO default.
+       If missing, ground clearance and circuit clearance return NOT ASSESSED
+       with the reason 'input needed'.
+    2. Voltage V is taken from the selected circuit's nominal voltage band, NEVER a literal.
+    3. Embedment ratio is loaded strictly from the design_parameter table, NEVER a literal.
+    4. The 'Sample data' banner on Results remains until full engine integration is complete.
     """
     project = db.query(Project).filter(Project.id == req.project_id).first()
     if not project:
@@ -301,6 +311,18 @@ def compute_clearances(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Project '{project.name}' has no route poles.",
         )
+
+    # Resolve explicit project inputs (request overrides stored project inputs, no default)
+    attachment_below_top_m = req.attachment_height_below_pole_top_m
+    if attachment_below_top_m is None and getattr(project, "attachment_height_below_pole_top_m", None) is not None:
+        attachment_below_top_m = project.attachment_height_below_pole_top_m
+
+    vertical_spacing_m = req.vertical_spacing_11kv_lv_m
+    if vertical_spacing_m is None and getattr(project, "vertical_spacing_11kv_lv_m", None) is not None:
+        vertical_spacing_m = project.vertical_spacing_11kv_lv_m
+
+    # Pole height: from request or default to 11.0 m (standard catalog pole for this line)
+    pole_height_m = req.pole_height_m if req.pole_height_m is not None else 11.0
 
     # --- Load master data from latest dataset version ---
     latest_v = db.query(DatasetVersion).order_by(DatasetVersion.id.desc()).first()
@@ -332,7 +354,7 @@ def compute_clearances(
             f"{cc_row.confirmation_note or 'confirm'}"
         )
 
-    # DesignParameter: embedment_ratio
+    # DesignParameter: embedment_ratio loaded strictly from table, NEVER a literal
     emb_param = None
     if v_id:
         emb_param = (
@@ -340,26 +362,26 @@ def compute_clearances(
             .filter_by(dataset_version_id=v_id, parameter_name="embedment_ratio")
             .first()
         )
-    embedment_ratio = float(emb_param.value) if emb_param else (1.0 / 6.0)
+    embedment_ratio = float(emb_param.value) if emb_param else None
 
-    # Attachment height: derived from PDF reference for 11 m poles.
-    # LV crossarm drop from pole top = pole_above_ground - 8.120
-    # = 11*(1 - 1/6) - 8.120 = 9.1667 - 8.120 = 1.0467 m
-    # This offset is documented in docs/result.pdf page 7 and cannot be
-    # read from CrossarmConfig (horizontal spacing only).
-    POLE_HEIGHT_REF_M = 11.0
-    LV_DROP_FROM_TOP_M = round(POLE_HEIGHT_REF_M * (1.0 - embedment_ratio) - 8.120, 4)
-    attachment_height_note = (
-        "Derived from docs/result.pdf page 7: 11 m pole, embedment = 1/6 pole height, "
-        f"LV crossarm {LV_DROP_FROM_TOP_M:.4f} m below pole top → "
-        f"attachment = 8.120 m above ground. "
-        "For non-11 m poles the LV crossarm drop from pole top is an input needed."
-    )
+    # Attachment height calculation: pure calculation from explicit project inputs
+    attachment_m = None
+    if attachment_below_top_m is not None and embedment_ratio is not None and pole_height_m is not None:
+        attachment_m = calculate_attachment_height_above_ground_m(
+            pole_height_m=pole_height_m,
+            embedment_ratio=embedment_ratio,
+            attachment_height_below_pole_top_m=attachment_below_top_m,
+        )
+        attachment_height_note = (
+            f"attachment_height = {pole_height_m}m * (1 - {embedment_ratio:.4f}) - "
+            f"{attachment_below_top_m}m = {attachment_m:.3f}m above ground."
+        )
+    else:
+        attachment_height_note = (
+            "NOT ASSESSED: attachment height below pole top is an explicit project input needed (in metres) with no default."
+        )
 
     # Ground clearance: applicable from GroundClearance master table (LV, road)
-    # We use the span_environment stored on the project's first pole (if available)
-    # Fallback to 'across any road or street' per sample line.
-    # NOTE: This is a project-level selection; a future enhancement can make it per-span.
     gc_row = None
     if v_id:
         gc_row = (
@@ -371,14 +393,16 @@ def compute_clearances(
     applicable_clearance_m = gc_row.min_clearance_m if gc_row else None
 
     # --- Build pole angle list for theta_start / theta_end lookup ---
-    # theta_start = angle of current pole, theta_end = angle of next pole (0 if terminal)
     pole_list = sorted(poles, key=lambda p: (p.section or 1, p.pole_no))
     angle_by_idx = {i: float(p.angle_deg or 0.0) for i, p in enumerate(pole_list)}
 
-    # --- Sag-tension: we need sag_65_m per pole (from the sag-tension engine result).
-    # We re-compute inline here from the first circuit.
-    # This avoids duplicating the sag_tension endpoint but keeps clearances self-contained.
+    # --- Line voltage V taken strictly from selected circuit's nominal_voltage_kv, NEVER a literal ---
     circuits = db.query(Circuit).filter(Circuit.project_id == project.id).all()
+    hv_circuit = next(
+        (c for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv >= 1.0),
+        circuits[0] if circuits else None,
+    )
+    line_voltage_kv = float(hv_circuit.nominal_voltage_kv) if (hv_circuit and hv_circuit.nominal_voltage_kv) else None
 
     # Compute sag_65_m per pole
     sag_65_by_pole_no_section: dict[tuple[int, int], float | None] = {}
@@ -433,7 +457,6 @@ def compute_clearances(
                 actual_span = get_pole_sag_span_m(p.fore_span_m or 0.0, p.aft_span_m or 0.0)
                 s65 = scale_sag_to_actual_span_m(lookup_res.sag_65c_m, actual_span, eq_span_m)
                 key = (p.section or 1, p.pole_no)
-                # First circuit wins (sample line is single-circuit)
                 if key not in sag_65_by_pole_no_section:
                     sag_65_by_pole_no_section[key] = round(s65, 3)
 
@@ -451,33 +474,33 @@ def compute_clearances(
         key = (sec, pole_no)
 
         sag_65 = sag_65_by_pole_no_section.get(key)
-
-        # Phase angles
         theta_start = angle_by_idx.get(i, 0.0)
         theta_end = angle_by_idx.get(i + 1, 0.0)
 
-        # Determine if this pole is in the final section and is the last pole
-        # Terminal end pole: fore_span = 0, so theta_end stays 0 (already 0 for last)
-
         pole_warnings: list[str] = []
 
-        # Phase separation
+        # 1. Phase separation
         req_sep_m = None
         sep_start = sep_end = sep_actual = None
         max_angle = None
         sep_check = "NOT ASSESSED"
+        sep_reason = None
 
-        if sag_65 is not None and straight_sep_m is not None:
+        if line_voltage_kv is None:
+            sep_check = "NOT ASSESSED"
+            sep_reason = "input needed"
+            pole_warnings.append("Phase separation: input needed (line voltage missing from circuit)")
+        elif sag_65 is not None and straight_sep_m is not None:
             try:
                 req_sep_m = round(
-                    calculate_required_phase_separation_m(sag_65, 11.0), 3
+                    calculate_required_phase_separation_m(sag_65, line_voltage_kv), 3
                 )
                 sep_start, sep_end, sep_actual = calculate_separation_at_angle_m(
                     straight_sep_m, theta_start, theta_end
                 )
                 max_angle = calculate_max_crossarm_angle_deg(req_sep_m, straight_sep_m)
                 sep_check = evaluate_phase_separation(
-                    sag_65, 11.0, straight_sep_m, theta_start, theta_end
+                    sag_65, line_voltage_kv, straight_sep_m, theta_start, theta_end
                 )
             except Exception as exc:
                 pole_warnings.append(f"Phase separation error: {exc}")
@@ -498,31 +521,52 @@ def compute_clearances(
                 separation_actual_m=sep_actual,
                 max_angle_deg=max_angle,
                 separation_check=sep_check,
+                separation_reason=sep_reason,
                 warnings=pole_warnings[:],
             )
         )
 
-        # Ground clearance
-        # Attachment height: 8.120 m for 11 m pole
-        attachment_m = 8.120  # Derived from PDF – see note above
-        terrain_m = 0.0  # No terrain data in current project model; future input
+        # 2. Ground clearance
+        terrain_m = 0.0
         lowest_m = None
         gc_check = "NOT ASSESSED"
-        circuit_check = "NOT ASSESSED"
+        gc_reason = None
         ground_warnings = pole_warnings[:]
 
-        # Circuit clearance actual = 1.454 m (documented constant from result_reference.json)
-        # This is the vertical distance between the 11 kV and LV crossarm on the same pole,
-        # which is a fixed construction standard, not span-dependent.
-        # It equals the vertical separation between the two crossarms.
-        MIN_VERT_CLEAR_M = 1.454
-
-        if sag_65 is not None:
+        if attachment_below_top_m is None:
+            gc_check = "NOT ASSESSED"
+            gc_reason = "input needed"
+            ground_warnings.append("Ground clearance: input needed (attachment height below pole top)")
+        elif attachment_m is None:
+            gc_check = "NOT ASSESSED"
+            gc_reason = "input needed"
+            ground_warnings.append("Ground clearance: input needed (embedment ratio missing from design parameters)")
+        elif sag_65 is not None:
             lowest_m = calculate_lowest_ground_clearance_m(attachment_m, terrain_m, sag_65)
             if applicable_clearance_m is not None:
-                gc_check = evaluate_ground_clearance(lowest_m, applicable_clearance_m)
+                gc_check, gc_reason = assess_ground_clearance(lowest_m, applicable_clearance_m)
+            else:
+                gc_check = "NOT ASSESSED"
+                gc_reason = "input needed"
+                ground_warnings.append("Ground clearance: input needed (applicable clearance standard missing)")
+
+        # 3. Circuit-to-circuit clearance
+        min_vert_clear_m = None
+        cc_check = "NOT ASSESSED"
+        cc_reason = None
+
+        if vertical_spacing_m is None:
+            cc_check = "NOT ASSESSED"
+            cc_reason = "input needed"
+            ground_warnings.append("Circuit clearance: input needed (vertical spacing between the 11 kV and LV attachments)")
+        else:
+            min_vert_clear_m = vertical_spacing_m
             if req_vert_clear_m is not None:
-                circuit_check = evaluate_circuit_clearance(MIN_VERT_CLEAR_M, req_vert_clear_m)
+                cc_check, cc_reason = assess_circuit_clearance(min_vert_clear_m, req_vert_clear_m)
+            else:
+                cc_check = "NOT ASSESSED"
+                cc_reason = "input needed"
+                ground_warnings.append("Circuit clearance: input needed (required circuit clearance missing from master data)")
 
         ground_clr_items.append(
             GroundClearanceItem(
@@ -534,9 +578,11 @@ def compute_clearances(
                 lowest_clearance_m=lowest_m,
                 applicable_clearance_m=applicable_clearance_m,
                 ground_clearance_check=gc_check,
-                min_vert_clear_m=MIN_VERT_CLEAR_M,
+                ground_clearance_reason=gc_reason,
+                min_vert_clear_m=min_vert_clear_m,
                 req_vert_clear_m=req_vert_clear_m,
-                circuit_clearance_check=circuit_check,
+                circuit_clearance_check=cc_check,
+                circuit_clearance_reason=cc_reason,
                 warnings=ground_warnings,
             )
         )
@@ -544,7 +590,11 @@ def compute_clearances(
     return ClearancesResponse(
         project_id=project.id,
         project_name=project.name,
-        attachment_height_m=8.120,
+        attachment_height_m=attachment_m,
+        attachment_height_below_pole_top_m=attachment_below_top_m,
+        vertical_spacing_11kv_lv_m=vertical_spacing_m,
+        line_voltage_kv=line_voltage_kv,
+        embedment_ratio=embedment_ratio,
         attachment_height_note=attachment_height_note,
         phase_separation=phase_sep_items,
         ground_clearance=ground_clr_items,

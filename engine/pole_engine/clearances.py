@@ -2,8 +2,11 @@
 Phase 4B – Clearances and Phase Separation Engine.
 
 All formulas trace to docs/result.pdf (pages 7–9).
-No hard-coded engineering constants; parameters come from master data or
-are reported as 'input needed' when unavailable.
+No hard-coded engineering constants or fitted defaults.
+Inputs not available in master data ('attachment height below pole top' and
+'vertical spacing between 11 kV and LV') must be supplied as explicit project
+inputs; if missing, ground clearance and circuit clearance return NOT ASSESSED
+with the reason 'input needed'.
 
 Unit conventions
 ----------------
@@ -25,14 +28,15 @@ from typing import Optional
 
 def calculate_required_phase_separation_m(
     sag_65_m: float,
-    line_voltage_kv: float = 11.0,
+    line_voltage_kv: float,
 ) -> float:
     """
     Required phase separation D (metres):
         D = 0.75 * sqrt(sag_65_m) + V^2 / 20 000
 
-    Where sag_65_m is the maximum sag at 65 °C in metres and V is the
-    line voltage in kV.  Formula sourced from docs/result.pdf page 9 note.
+    Where sag_65_m is the maximum sag at 65 °C in metres and line_voltage_kv (V)
+    is the line voltage in kV taken from the circuit's voltage band.
+    No literal default is assumed. Sourced from docs/result.pdf page 9 note.
     """
     if sag_65_m < 0:
         raise ValueError(f"sag_65_m must be >= 0, got {sag_65_m}")
@@ -76,11 +80,10 @@ def calculate_max_crossarm_angle_deg(
     if required_sep_m >= straight_sep_m:
         return 0
     ratio = required_sep_m / straight_sep_m
-    # Clamp numerical noise
     ratio = max(-1.0, min(1.0, ratio))
     angle_rad = 2.0 * math.acos(ratio)
     angle_deg = math.degrees(angle_rad)
-    return int(angle_deg)  # floor (truncate) to match reference
+    return int(angle_deg)
 
 
 def evaluate_phase_separation(
@@ -111,11 +114,29 @@ def evaluate_phase_separation(
 # 2. Ground Clearance (PDF pages 7–8)
 # ---------------------------------------------------------------------------
 
+def calculate_attachment_height_above_ground_m(
+    pole_height_m: Optional[float],
+    embedment_ratio: Optional[float],
+    attachment_height_below_pole_top_m: Optional[float],
+) -> Optional[float]:
+    """
+    Calculate attachment height above ground level (m):
+        attachment_height = pole_height * (1 - embedment_ratio) - attachment_height_below_pole_top_m
+
+    All three inputs must be explicitly provided. No default constants are assumed.
+    Returns None if any input is None.
+    """
+    if pole_height_m is None or embedment_ratio is None or attachment_height_below_pole_top_m is None:
+        return None
+    above_ground_m = pole_height_m * (1.0 - embedment_ratio)
+    return round(above_ground_m - attachment_height_below_pole_top_m, 3)
+
+
 def calculate_lowest_ground_clearance_m(
-    attachment_height_m: float,
+    attachment_height_m: Optional[float],
     terrain_height_m: float,
-    max_sag_65_m: float,
-) -> float:
+    max_sag_65_m: Optional[float],
+) -> Optional[float]:
     """
     Lowest clearance of the bottom circuit above ground:
         lowest = attachment_height + terrain_height - max_sag_65
@@ -123,32 +144,75 @@ def calculate_lowest_ground_clearance_m(
     attachment_height_m : LV conductor attachment height above ground level.
     terrain_height_m    : additional ground rise at mid-span (default 0.0).
     max_sag_65_m        : maximum sag at 65 °C in metres.
+    Returns None if attachment_height_m or max_sag_65_m is None.
     """
+    if attachment_height_m is None or max_sag_65_m is None:
+        return None
     return round(attachment_height_m + terrain_height_m - max_sag_65_m, 3)
 
 
+def assess_ground_clearance(
+    lowest_clearance_m: Optional[float],
+    applicable_clearance_m: Optional[float],
+) -> tuple[str, Optional[str]]:
+    """
+    Assess ground clearance.
+    Returns (status, reason):
+      ('SATISFIED', None) if lowest >= applicable
+      ('FAIL', 'lowest clearance below applicable standard') if lowest < applicable
+      ('NOT ASSESSED', 'input needed') if any input is None
+    """
+    if lowest_clearance_m is None or applicable_clearance_m is None:
+        return "NOT ASSESSED", "input needed"
+    if lowest_clearance_m >= applicable_clearance_m:
+        return "SATISFIED", None
+    return "FAIL", "lowest clearance below applicable standard"
+
+
 def evaluate_ground_clearance(
-    lowest_clearance_m: float,
-    applicable_clearance_m: float,
+    lowest_clearance_m: Optional[float],
+    applicable_clearance_m: Optional[float],
 ) -> str:
     """
     'SATISFIED' if lowest_clearance_m >= applicable_clearance_m, else 'FAIL'.
+    Returns 'NOT ASSESSED' if any input is None.
     """
-    return "SATISFIED" if lowest_clearance_m >= applicable_clearance_m else "FAIL"
+    status, _ = assess_ground_clearance(lowest_clearance_m, applicable_clearance_m)
+    return status
 
 
 # ---------------------------------------------------------------------------
 # 3. Circuit-to-Circuit Clearance (PDF page 8)
 # ---------------------------------------------------------------------------
 
+def assess_circuit_clearance(
+    actual_clearance_m: Optional[float],
+    required_clearance_m: Optional[float],
+) -> tuple[str, Optional[str]]:
+    """
+    Assess circuit-to-circuit clearance.
+    Returns (status, reason):
+      ('SATISFIED', None) if actual >= required
+      ('FAIL', 'circuit clearance below required threshold') if actual < required
+      ('NOT ASSESSED', 'input needed') if any input is None
+    """
+    if actual_clearance_m is None or required_clearance_m is None:
+        return "NOT ASSESSED", "input needed"
+    if actual_clearance_m >= required_clearance_m:
+        return "SATISFIED", None
+    return "FAIL", "circuit clearance below required threshold"
+
+
 def evaluate_circuit_clearance(
-    actual_clearance_m: float,
-    required_clearance_m: float,
+    actual_clearance_m: Optional[float],
+    required_clearance_m: Optional[float],
 ) -> str:
     """
     'SATISFIED' if actual >= required, else 'FAIL'.
+    Returns 'NOT ASSESSED' if any input is None.
     """
-    return "SATISFIED" if actual_clearance_m >= required_clearance_m else "FAIL"
+    status, _ = assess_circuit_clearance(actual_clearance_m, required_clearance_m)
+    return status
 
 
 # ---------------------------------------------------------------------------
@@ -173,18 +237,130 @@ class PoleClearanceResult:
     max_angle_start_deg: Optional[int]
     max_angle_end_deg: Optional[int]
     separation_check: str
+    separation_reason: Optional[str] = None
 
     # Ground clearance
-    attachment_height_m: Optional[float]
-    terrain_height_m: Optional[float]
-    lowest_clearance_m: Optional[float]
-    applicable_clearance_m: Optional[float]
-    ground_clearance_check: str
+    attachment_height_m: Optional[float] = None
+    attachment_height_below_pole_top_m: Optional[float] = None
+    terrain_height_m: Optional[float] = 0.0
+    lowest_clearance_m: Optional[float] = None
+    applicable_clearance_m: Optional[float] = None
+    ground_clearance_check: str = "NOT ASSESSED"
+    ground_clearance_reason: Optional[str] = None
 
     # Circuit-to-circuit clearance
-    min_vert_clear_m: Optional[float]
-    req_vert_clear_m: Optional[float]
-    circuit_clearance_check: str
+    min_vert_clear_m: Optional[float] = None
+    req_vert_clear_m: Optional[float] = None
+    circuit_clearance_check: str = "NOT ASSESSED"
+    circuit_clearance_reason: Optional[str] = None
 
-    # Warnings from needs_confirmation rows
+    # Warnings from needs_confirmation rows or missing inputs
     warnings: list[str] = field(default_factory=list)
+
+
+def compute_pole_clearance(
+    pole_no: int,
+    section: int,
+    sag_65_m: Optional[float],
+    line_voltage_kv: Optional[float],
+    straight_sep_m: Optional[float],
+    theta_start_deg: Optional[float],
+    theta_end_deg: Optional[float],
+    pole_height_m: Optional[float],
+    embedment_ratio: Optional[float],
+    attachment_height_below_pole_top_m: Optional[float],
+    terrain_height_m: float = 0.0,
+    applicable_clearance_m: Optional[float] = None,
+    vertical_spacing_11kv_lv_m: Optional[float] = None,
+    req_vert_clear_m: Optional[float] = None,
+) -> PoleClearanceResult:
+    """
+    Pure-Python calculation of clearances for a single pole.
+    Fails closed: if any input is missing, checks return 'NOT ASSESSED' with reason 'input needed'.
+    No constants or defaults are assumed.
+    """
+    warnings: list[str] = []
+
+    # 1. Phase separation
+    req_sep_m = None
+    sep_start = sep_end = sep_actual = None
+    max_angle = None
+    sep_check = "NOT ASSESSED"
+    sep_reason = None
+
+    if any(v is None for v in [sag_65_m, line_voltage_kv, straight_sep_m, theta_start_deg, theta_end_deg]):
+        sep_check = "NOT ASSESSED"
+        sep_reason = "input needed"
+    else:
+        try:
+            req_sep_m = round(calculate_required_phase_separation_m(sag_65_m, line_voltage_kv), 3)
+            sep_start, sep_end, sep_actual = calculate_separation_at_angle_m(straight_sep_m, theta_start_deg, theta_end_deg)
+            max_angle = calculate_max_crossarm_angle_deg(req_sep_m, straight_sep_m)
+            sep_check = evaluate_phase_separation(sag_65_m, line_voltage_kv, straight_sep_m, theta_start_deg, theta_end_deg)
+        except Exception as exc:
+            sep_check = "NOT ASSESSED"
+            sep_reason = f"calculation error: {exc}"
+            warnings.append(f"Pole {pole_no}: phase separation error: {exc}")
+
+    # 2. Ground clearance
+    attachment_height_m = None
+    lowest_clearance_m = None
+    gc_check = "NOT ASSESSED"
+    gc_reason = None
+
+    if attachment_height_below_pole_top_m is None:
+        gc_check = "NOT ASSESSED"
+        gc_reason = "input needed"
+        warnings.append(f"Pole {pole_no}: ground clearance NOT ASSESSED (input needed: attachment height below pole top)")
+    elif pole_height_m is None or embedment_ratio is None:
+        gc_check = "NOT ASSESSED"
+        gc_reason = "input needed"
+        warnings.append(f"Pole {pole_no}: ground clearance NOT ASSESSED (input needed: pole height or embedment ratio)")
+    else:
+        attachment_height_m = calculate_attachment_height_above_ground_m(
+            pole_height_m, embedment_ratio, attachment_height_below_pole_top_m
+        )
+        lowest_clearance_m = calculate_lowest_ground_clearance_m(attachment_height_m, terrain_height_m, sag_65_m)
+        gc_check, gc_reason = assess_ground_clearance(lowest_clearance_m, applicable_clearance_m)
+
+    # 3. Circuit-to-circuit clearance
+    min_vert_clear_m = None
+    cc_check = "NOT ASSESSED"
+    cc_reason = None
+
+    if vertical_spacing_11kv_lv_m is None:
+        cc_check = "NOT ASSESSED"
+        cc_reason = "input needed"
+        warnings.append(f"Pole {pole_no}: circuit clearance NOT ASSESSED (input needed: vertical spacing between the 11 kV and LV attachments)")
+    else:
+        min_vert_clear_m = vertical_spacing_11kv_lv_m
+        cc_check, cc_reason = assess_circuit_clearance(min_vert_clear_m, req_vert_clear_m)
+
+    return PoleClearanceResult(
+        pole_no=pole_no,
+        section=section,
+        sag_65_m=sag_65_m,
+        required_separation_m=req_sep_m,
+        crossarm_straight_m=straight_sep_m,
+        theta_start_deg=theta_start_deg,
+        theta_end_deg=theta_end_deg,
+        separation_start_m=sep_start,
+        separation_end_m=sep_end,
+        separation_actual_m=sep_actual,
+        max_angle_start_deg=max_angle,
+        max_angle_end_deg=max_angle,
+        separation_check=sep_check,
+        separation_reason=sep_reason,
+        attachment_height_m=attachment_height_m,
+        attachment_height_below_pole_top_m=attachment_height_below_pole_top_m,
+        terrain_height_m=terrain_height_m,
+        lowest_clearance_m=lowest_clearance_m,
+        applicable_clearance_m=applicable_clearance_m,
+        ground_clearance_check=gc_check,
+        ground_clearance_reason=gc_reason,
+        min_vert_clear_m=min_vert_clear_m,
+        req_vert_clear_m=req_vert_clear_m,
+        circuit_clearance_check=cc_check,
+        circuit_clearance_reason=cc_reason,
+        warnings=warnings,
+    )

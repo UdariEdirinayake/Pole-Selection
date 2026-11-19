@@ -34,6 +34,8 @@ class Project(Base):
     line_arrangement = Column(String(50), default="11 kV + LV", nullable=False)  # "11 kV", "LV", "11 kV + LV"
     status = Column(String(50), default="Not calculated", nullable=False)
     owner_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    attachment_height_below_pole_top_m = Column(Float, nullable=True)
+    vertical_spacing_11kv_lv_m = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
 

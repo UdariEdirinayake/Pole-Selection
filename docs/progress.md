@@ -85,3 +85,30 @@ Status: ✅ Complete & Verified
 ### 3. API Endpoint
 * `POST /api/engine/clearances`: Accepts `{"project_id": <int>}`, computes phase separation and clearances, returning detailed results and warnings. Results page banner remains `Sample data` until full engine completion.
 
+### 4. Phase 4B Corrections (Removal of Fitted Constants & Fail-Closed Inputs)
+* **Removed Fitted Constants from Engine:**
+  * Removed hard-coded `1.047 m` LV drop offset from engine code.
+  * Removed hard-coded `1.454 m` circuit clearance spacing from engine code.
+  * Removed literal voltage `11.0 kV` default; voltage $V$ is read strictly from the circuit's `nominal_voltage_kv`.
+  * Removed literal `1/6` fallback; embedment ratio is read strictly from `design_parameter` (`embedment_ratio`).
+* **Explicit Project Inputs:**
+  * `attachment_height_below_pole_top_m` (m) and `vertical_spacing_11kv_lv_m` (m) are now explicit inputs with **no default**.
+  * When either input is missing, the engine fails closed: ground clearance and circuit clearance return `NOT ASSESSED` with the reason `'input needed'`.
+* **Test Isolation & Traceability:**
+  * In unit tests, `1.047 m` and `1.454 m` are supplied strictly as explicit test inputs commented `'back-calculated from result.pdf, source pending'`.
+  * Unit tests assert that missing inputs return `NOT ASSESSED` with reason `'input needed'`.
+
+### 5. Audit Record: Every Value from docs/result.pdf Not Present in Master Data
+The following engineering parameters and configuration values originate strictly from `docs/result.pdf` and have no corresponding source row in the imported Excel master data (`data/source/`):
+
+| Parameter / Value | Value in Reference | PDF Citation | Status / Handling in System |
+|---|---|---|---|
+| **Attachment height below pole top** | `1.047 m` | Pages 7–8 (Attachment height $8.120\text{ m} = 9.167\text{ m} - 1.047\text{ m}$) | `attachment_height_below_pole_top_m`: explicit project input (no default). Returns `NOT ASSESSED` with `'input needed'` if omitted. |
+| **Circuit-to-circuit vertical spacing** | `1.454 m` | Page 8 (Clearance table column `min_vert_clear_c1_c2_m`) | `vertical_spacing_11kv_lv_m`: explicit project input (no default). Returns `NOT ASSESSED` with `'input needed'` if omitted. |
+| **Crossarm selection for sample line** | Config 10 (P621-MS, $1.100\text{ m}$) | Page 9 (Phase separation table `crossarm_separation_straight_m`) | Selected based on PDF reference. `CrossarmConfig` contains dimension $1.1\text{ m}$, but association to this project is from PDF. |
+| **Sample line geotechnical soil class** | Class 4 | Page 1 & geotechnical summary | Default soil class 4 for sample project poles. |
+| **Distribution Transformer (Pole 4)** | TF-160kVA ($750\text{ kg}$, $0.84\text{ m}^2$) | Pages 1, 5, 6 | Equipment record associated with Pole 4. |
+| **Crossarm phase separation formula** | $D = 0.75\sqrt{s} + V^2 / 20000$ | Page 9 (formula note at bottom of table) | Implemented directly in `engine/pole_engine/clearances.py` per PDF specification. |
+| **Terrain height along span** | $0.0\text{ m}$ | Pages 7–8 (`max_terrain_height_m`) | Default terrain rise in flat terrain sample calculation. |
+
+

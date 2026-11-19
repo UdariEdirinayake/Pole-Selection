@@ -4,10 +4,14 @@ from pole_engine.clearances import (
     calculate_separation_at_angle_m,
     calculate_max_crossarm_angle_deg,
     evaluate_phase_separation,
+    calculate_attachment_height_above_ground_m,
     calculate_lowest_ground_clearance_m,
+    assess_ground_clearance,
     evaluate_ground_clearance,
+    assess_circuit_clearance,
     evaluate_circuit_clearance,
     PoleClearanceResult,
+    compute_pole_clearance,
 )
 from pole_engine.units import (
     m_to_mm,
@@ -62,8 +66,12 @@ __all__ = [
     "calculate_separation_at_angle_m",
     "calculate_max_crossarm_angle_deg",
     "evaluate_phase_separation",
+    "calculate_attachment_height_above_ground_m",
     "calculate_lowest_ground_clearance_m",
+    "assess_ground_clearance",
     "evaluate_ground_clearance",
+    "assess_circuit_clearance",
     "evaluate_circuit_clearance",
     "PoleClearanceResult",
+    "compute_pole_clearance",
 ]

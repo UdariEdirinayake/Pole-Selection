@@ -611,3 +611,214 @@ def compute_clearances(
         ground_clearance=ground_clr_items,
         warnings=all_warnings,
     )
+
+
+
+class EngineRunRequest(BaseModel):
+    project_id: int
+
+
+@router.post("/run")
+def run_full_engine(
+    req: EngineRunRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Execute complete ported calculation engine for a project."""
+    project = db.query(Project).filter(Project.id == req.project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project with id {req.project_id} not found."
+        )
+
+    poles = db.query(Pole).filter(Pole.project_id == project.id).order_by(Pole.section, Pole.pole_no).all()
+    if not poles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project '{project.name}' has no route poles."
+        )
+
+    from pole_engine.line import compute_line
+
+    line_rows = []
+    for p in poles:
+        line_rows.append({
+            "pole_no": p.pole_no,
+            "section": p.section,
+            "fore_span_m": p.fore_span_m or 0.0,
+            "aft_span_m": p.aft_span_m or 0.0,
+            "angle_deg": p.angle_deg or 0.0,
+            "elev_delta_m": p.elev_delta_m or 0.0,
+            "soil_class": p.soil_class or "Medium",
+            "equipment": p.equipment or "",
+            "transformer_kva": p.transformer_kva or 0,
+            "span_environment": p.span_environment or "along or across any road or street",
+        })
+
+    # Prepare master data from active version
+    active_version = db.query(DatasetVersion).filter(DatasetVersion.is_active == True).first()
+    vid = active_version.id if active_version else None
+
+    conductors_db = db.query(Conductor).filter(Conductor.dataset_version_id == vid).all() if vid else db.query(Conductor).all()
+    conductors_data = [
+        {
+            "code": c.code,
+            "description": c.description,
+            "diameter_mm": c.diameter_mm,
+            "weight_kg_m": c.weight_kg_m,
+            "lookup_table": c.lookup_table,
+            "UTS_daN": c.ultimate_tensile_strength_dan,
+            "Modulus_of_Elasticity_kg_mm2": c.modulus_of_elasticity_kg_mm2,
+            "Thermal_Expansion_Coefficient_/_°C": c.thermal_expansion_coefficient,
+            "stress_area_mm2": c.stress_area_mm2,
+        }
+        for c in conductors_db
+    ]
+
+    from app.models import PoleCapacity, GuyWire, Insulator, SoilClass, StructureClearance
+    capacities_db = db.query(PoleCapacity).filter(PoleCapacity.dataset_version_id == vid).all() if vid else db.query(PoleCapacity).all()
+    capacities_data = [
+        {
+            "pole_height_m": c.height_m,
+            "mount_type": c.mount_type,
+            "class_label": c.class_label,
+            "capacity_dan": c.capacity_dan,
+            "capacity_daN": c.capacity_dan,
+            "critical_buckling_kn": c.critical_buckling_kn,
+            "critical_buckling_kN": c.critical_buckling_kn,
+            "avg_breadth_m": c.avg_breadth_m,
+            "below_gl_breadth_m": c.below_gl_breadth_m,
+            "weight_kg": c.weight_kg,
+            "footprint_mm": c.footprint_mm,
+        }
+        for c in capacities_db
+    ]
+
+    guy_wires_db = db.query(GuyWire).filter(GuyWire.dataset_version_id == vid).all() if vid else db.query(GuyWire).all()
+    guy_wires_data = [
+        {
+            "code": g.code,
+            "working_load_dan": g.working_load_dan,
+            "working_load_daN": g.working_load_dan,
+        }
+        for g in guy_wires_db
+    ]
+
+    insulators_db = db.query(Insulator).filter(Insulator.dataset_version_id == vid).all() if vid else db.query(Insulator).all()
+    insulators_data = [
+        {
+            "description": i.description,
+            "voltage_level_kV": i.voltage_level_kv,
+            "nominal_height_m": i.nominal_height_m,
+            "cantilever_strength_kN": i.cantilever_strength_kn,
+        }
+        for i in insulators_db
+    ]
+
+    soil_db = db.query(SoilClass).filter(SoilClass.dataset_version_id == vid).all() if vid else db.query(SoilClass).all()
+    soil_data = [
+        {
+            "class": s.soil_class,
+            "subgrade_kN/m3": s.subgrade_modulus_kn_m3,
+            "bearing_kNm2": s.bearing_capacity_kn_m2,
+        }
+        for s in soil_db
+    ]
+
+    tables_db = db.query(SpanTensionPoint).filter(SpanTensionPoint.dataset_version_id == vid).all() if vid else db.query(SpanTensionPoint).all()
+    tables_data = [
+        {
+            "table_id": t.table_id,
+            "span_m": t.span_m,
+            "tension_kN": t.tension_15c_wind_kn,
+            "tension_27_kN": t.tension_27c_kn,
+            "sag_15c_m": t.sag_15c_m,
+            "sag_27_m": t.sag_27c_m,
+            "sag_65_m": t.sag_65c_m,
+        }
+        for t in tables_db
+    ]
+
+    gc_db = db.query(GroundClearance).filter(GroundClearance.dataset_version_id == vid).all() if vid else db.query(GroundClearance).all()
+    gc_data = [
+        {
+            "voltage_band": g.voltage_band,
+            "environment": g.environment,
+            "min_clearance_m": g.min_clearance_m,
+        }
+        for g in gc_db
+    ]
+
+    cc_db = db.query(CircuitClearance).filter(CircuitClearance.dataset_version_id == vid).all() if vid else db.query(CircuitClearance).all()
+    cc_data = [
+        {
+            "upper_band": c.upper_band,
+            "lower_band": c.lower_band,
+            "min_vertical_m": c.min_vertical_clearance_m,
+        }
+        for c in cc_db
+    ]
+
+    circuits = db.query(Circuit).filter(Circuit.project_id == project.id).all()
+    conductor_h = next((c.conductor.code for c in circuits if "11" in c.voltage_band and c.conductor), "FLY")
+    conductor_lv = next((c.conductor.code for c in circuits if "LV" in c.voltage_band and c.conductor), "LV_ABC")
+
+    from app.models import PoleConfiguration
+    configs_db = db.query(PoleConfiguration).filter(PoleConfiguration.dataset_version_id == vid).all() if vid else db.query(PoleConfiguration).all()
+    configs_data = [
+        {
+            "config_no": c.config_no,
+            "description": c.description,
+            "pole_height_m": c.pole_height_m,
+            "levels_HH": c.levels_33kv,
+            "levels_H": c.levels_11kv,
+            "levels_L": c.levels_lv,
+            "heights_m": f"{c.height_33kv_m or ''};{c.height_11kv_m or ''};{c.height_lv_m or ''}".strip(";"),
+            "n_per_level": "3;1" if (c.levels_11kv and c.levels_lv) else "3",
+            "guy_h_m": 8.4,
+            "tguy_h_m": 8.4
+        }
+        for c in configs_db
+    ]
+    if not configs_data:
+        configs_data = [{
+            "config_no": "3",
+            "description": "11 kV + LV bundle",
+            "pole_height_m": 11.0,
+            "levels_HH": 0,
+            "levels_H": 1,
+            "levels_L": 1,
+            "heights_m": "8.85;7.5",
+            "n_per_level": "3;1",
+            "guy_h_m": 8.4,
+            "tguy_h_m": 8.4
+        }]
+
+    settings = {
+        "config_no": configs_data[0]["config_no"],
+        "conductor_H": conductor_h,
+        "conductor_LV": conductor_lv,
+        "wind_pressure_Nm2": 575.0,
+        "wind_pole_Nm2": 865.0,
+        "guy_wire_angle_deg": 30.0
+    }
+
+    data_payload = {
+        "configs": configs_data,
+        "conductors": conductors_data,
+        "span_tension_tables": tables_data,
+        "capacities": capacities_data,
+        "guy_wires": guy_wires_data,
+        "insulators": insulators_data,
+        "soil_classes": soil_data,
+        "ground_clearances": gc_data,
+        "circuit_clearances": cc_data,
+    }
+
+    res = compute_line(line_rows, settings, data_payload)
+    return {
+        "project_id": project.id,
+        "project_name": project.name,
+        "calculation_results": res
+    }

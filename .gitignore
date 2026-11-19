@@ -51,3 +51,4 @@ dist-ssr/
 .idea/
 *.swp
 *.swo
+~$*.xlsx 

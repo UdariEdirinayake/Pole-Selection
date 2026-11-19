@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Play } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Play, Loader2 } from 'lucide-react'
 
 interface ValidationItem {
   id: string
@@ -12,6 +12,8 @@ interface ValidationItem {
 
 export const ReviewRunPage: React.FC = () => {
   const navigate = useNavigate()
+  const [isRunning, setIsRunning] = useState(false)
+  const [runError, setRunError] = useState<string | null>(null)
 
   // Sample frontend validation checklist
   const [items] = useState<ValidationItem[]>([
@@ -114,28 +116,70 @@ export const ReviewRunPage: React.FC = () => {
           <div>
             <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.05rem', fontWeight: 600 }}>Calculation Engine Status</h4>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Phase 2 UI Shell active. Engineering calculation engine integration is scheduled for Phase 3.
+              Integrated Pure Python Engineering Calculation Engine (Phase 4C). Ready to execute structural analysis and sag-tension verification.
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               type="button"
               className="btn-primary"
-              disabled
+              disabled={isRunning || blockingItems.length > 0}
+              onClick={async () => {
+                setIsRunning(true)
+                setRunError(null)
+                try {
+                  const projRes = await fetch('/api/projects/')
+                  let projectId = 1
+                  if (projRes.ok) {
+                    const projs = await projRes.json()
+                    if (Array.isArray(projs) && projs.length > 0) {
+                      projectId = projs[0].id
+                    } else if (projs && Array.isArray(projs.items) && projs.items.length > 0) {
+                      projectId = projs.items[0].id
+                    }
+                  }
+
+                  const res = await fetch('/api/engine/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: projectId }),
+                  })
+
+                  if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}))
+                    throw new Error(errData.detail || `Calculation run failed with status ${res.status}`)
+                  }
+
+                  const data = await res.json()
+                  navigate('/results', { state: { liveResults: data.calculation_results, projectName: data.project_name } })
+                } catch (err: any) {
+                  console.error('Calculation run error:', err)
+                  setRunError(err.message || 'An unexpected error occurred while executing the calculation engine.')
+                } finally {
+                  setIsRunning(false)
+                }
+              }}
               style={{
-                cursor: 'not-allowed',
-                opacity: 0.6,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
+                cursor: (isRunning || blockingItems.length > 0) ? 'not-allowed' : 'pointer',
+                opacity: (isRunning || blockingItems.length > 0) ? 0.7 : 1,
               }}
               data-testid="run-calc-btn"
             >
-              <Play size={16} />
-              <span>Run calculations (Available in a later phase)</span>
+              {isRunning ? <Loader2 size={16} className="spin" /> : <Play size={16} />}
+              <span>{isRunning ? 'Executing Analysis...' : 'Run calculations'}</span>
             </button>
           </div>
         </div>
+
+        {runError && (
+          <div className="alert-box alert-error" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <XCircle size={18} />
+            <span>{runError}</span>
+          </div>
+        )}
       </div>
 
       {/* Checklist Sections */}

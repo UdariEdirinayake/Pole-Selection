@@ -55,6 +55,7 @@ export default function App() {
                 <Route path="/project-circuits" element={<ProjectCircuitsPage />} />
                 <Route path="/route-poles" element={<RoutePolesPage />} />
                 <Route path="/review-run" element={<ReviewRunPage />} />
+                <Route path="/review-methodology" element={<ReviewRunPage />} />
                 <Route path="/results" element={<ResultsPage />} />
                 <Route path="/construction-data" element={<ConstructionDataPage />} />
                 <Route path="/help" element={<HelpPage />} />

@@ -48,7 +48,7 @@ export const AppLayout: React.FC = () => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, step: null },
     { to: '/project-circuits', label: 'Project & circuits', icon: Layers, step: '1' },
     { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '2' },
-    { to: '/review-run', label: 'Review & run', icon: CheckSquare, step: '3' },
+    { to: '/review-run', label: 'Review methodology', icon: CheckSquare, step: '3' },
     { to: '/results', label: 'Results', icon: BarChart3, step: '4' },
   ]
 

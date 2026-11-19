@@ -643,34 +643,36 @@ def run_full_engine(
 
     line_rows = []
     for p in poles:
+        soil_label = f"Class {p.soil_class_num}" if getattr(p, "soil_class_num", None) else getattr(p, "soil_class", "Class 4")
         line_rows.append({
             "pole_no": p.pole_no,
             "section": p.section,
             "fore_span_m": p.fore_span_m or 0.0,
             "aft_span_m": p.aft_span_m or 0.0,
             "angle_deg": p.angle_deg or 0.0,
-            "elev_delta_m": p.elev_delta_m or 0.0,
-            "soil_class": p.soil_class or "Medium",
+            "elev_delta_m": getattr(p, "elev_delta_m", 0.0) or 0.0,
+            "soil": soil_label,
+            "soil_class": soil_label,
             "equipment": p.equipment or "",
-            "transformer_kva": p.transformer_kva or 0,
+            "transformer_kva": getattr(p, "transformer_kva", 0) or 0,
             "span_environment": p.span_environment or "along or across any road or street",
         })
 
-    # Prepare master data from active version
-    active_version = db.query(DatasetVersion).filter(DatasetVersion.is_active == True).first()
-    vid = active_version.id if active_version else None
+    # Prepare master data from latest version
+    latest_version = db.query(DatasetVersion).order_by(DatasetVersion.id.desc()).first()
+    vid = latest_version.id if latest_version else None
 
     conductors_db = db.query(Conductor).filter(Conductor.dataset_version_id == vid).all() if vid else db.query(Conductor).all()
     conductors_data = [
         {
-            "code": c.code,
+            "code": str(c.code) if c.code is not None else "",
             "description": c.description,
             "diameter_mm": c.diameter_mm,
-            "weight_kg_m": c.weight_kg_m,
+            "weight_kg_m": c.weight_kg_per_m,
             "lookup_table": c.lookup_table,
             "UTS_daN": c.ultimate_tensile_strength_dan,
-            "Modulus_of_Elasticity_kg_mm2": c.modulus_of_elasticity_kg_mm2,
-            "Thermal_Expansion_Coefficient_/_°C": c.thermal_expansion_coefficient,
+            "Modulus_of_Elasticity_kg_mm2": c.modulus_elasticity_kg_per_mm2,
+            "Thermal_Expansion_Coefficient_/_°C": c.thermal_expansion_coeff_per_c,
             "stress_area_mm2": c.stress_area_mm2,
         }
         for c in conductors_db
@@ -719,9 +721,11 @@ def run_full_engine(
     soil_db = db.query(SoilClass).filter(SoilClass.dataset_version_id == vid).all() if vid else db.query(SoilClass).all()
     soil_data = [
         {
-            "class": s.soil_class,
-            "subgrade_kN/m3": s.subgrade_modulus_kn_m3,
-            "bearing_kNm2": s.bearing_capacity_kn_m2,
+            "class": f"Class {s.soil_class_num}",
+            "subgrade_kN/m3": s.subgrade_kn_per_m3,
+            "bearing_kNm2": s.bearing_raw,
+            "bearing_min_kNm2": s.bearing_min_kn_per_m2,
+            "bearing_max_kNm2": s.bearing_max_kn_per_m2,
         }
         for s in soil_db
     ]
@@ -731,11 +735,11 @@ def run_full_engine(
         {
             "table_id": t.table_id,
             "span_m": t.span_m,
-            "tension_kN": t.tension_15c_wind_kn,
-            "tension_27_kN": t.tension_27c_kn,
-            "sag_15c_m": t.sag_15c_m,
-            "sag_27_m": t.sag_27c_m,
-            "sag_65_m": t.sag_65c_m,
+            "tension_kN": t.tension_kn,
+            "tension_27_kN": t.tension_27_kn,
+            "sag_15c_m": t.sag_15_m,
+            "sag_27_m": t.sag_27_m,
+            "sag_65_m": t.sag_65_m,
         }
         for t in tables_db
     ]
@@ -755,53 +759,38 @@ def run_full_engine(
         {
             "upper_band": c.upper_band,
             "lower_band": c.lower_band,
-            "min_vertical_m": c.min_vertical_clearance_m,
+            "min_vertical_m": c.min_vertical_m,
         }
         for c in cc_db
     ]
 
     circuits = db.query(Circuit).filter(Circuit.project_id == project.id).all()
-    conductor_h = next((c.conductor.code for c in circuits if "11" in c.voltage_band and c.conductor), "FLY")
-    conductor_lv = next((c.conductor.code for c in circuits if "LV" in c.voltage_band and c.conductor), "LV_ABC")
+    conductor_h = next((str(c.conductor_code) for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv >= 1.0 and c.conductor_code is not None), "1")
+    conductor_lv = next((str(c.conductor_code) for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv < 1.0 and c.conductor_code is not None), "2")
 
-    from app.models import PoleConfiguration
-    configs_db = db.query(PoleConfiguration).filter(PoleConfiguration.dataset_version_id == vid).all() if vid else db.query(PoleConfiguration).all()
-    configs_data = [
-        {
-            "config_no": c.config_no,
-            "description": c.description,
-            "pole_height_m": c.pole_height_m,
-            "levels_HH": c.levels_33kv,
-            "levels_H": c.levels_11kv,
-            "levels_L": c.levels_lv,
-            "heights_m": f"{c.height_33kv_m or ''};{c.height_11kv_m or ''};{c.height_lv_m or ''}".strip(";"),
-            "n_per_level": "3;1" if (c.levels_11kv and c.levels_lv) else "3",
-            "guy_h_m": 8.4,
-            "tguy_h_m": 8.4
-        }
-        for c in configs_db
-    ]
-    if not configs_data:
-        configs_data = [{
-            "config_no": "3",
-            "description": "11 kV + LV bundle",
-            "pole_height_m": 11.0,
-            "levels_HH": 0,
-            "levels_H": 1,
-            "levels_L": 1,
-            "heights_m": "8.85;7.5",
-            "n_per_level": "3;1",
-            "guy_h_m": 8.4,
-            "tguy_h_m": 8.4
-        }]
+    configs_data = [{
+        "config_no": "3",
+        "description": "11 kV + LV bundle",
+        "pole_height_m": 11.0,
+        "levels_HH": 0,
+        "levels_H": 1,
+        "levels_L": 1,
+        "heights_m": "8.85;7.5",
+        "n_per_level": "3;1",
+        "guy_h_m": 8.4,
+        "tguy_h_m": 8.4
+    }]
+
+    dp_db = db.query(DesignParameter).filter(DesignParameter.dataset_version_id == vid).all() if vid else db.query(DesignParameter).all()
+    dp_map = {p.parameter_name: p.value for p in dp_db}
 
     settings = {
         "config_no": configs_data[0]["config_no"],
         "conductor_H": conductor_h,
         "conductor_LV": conductor_lv,
-        "wind_pressure_Nm2": 575.0,
-        "wind_pole_Nm2": 865.0,
-        "guy_wire_angle_deg": 30.0
+        "wind_pressure_Nm2": dp_map.get("wind_conductor", 575.0),
+        "wind_pole_Nm2": dp_map.get("wind_pole", 865.0),
+        "guy_wire_angle_deg": dp_map.get("guy_angle_deg", 30.0),
     }
 
     data_payload = {

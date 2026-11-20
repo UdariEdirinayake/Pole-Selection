@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DataTable, Column } from '../components/DataTable'
 import { StatusChip } from '../components/StatusChip'
-import { RouteDiagram } from '../components/RouteDiagram'
-import { AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle, Download, FileSpreadsheet, FileText } from 'lucide-react'
+import { exportToExcel, exportToPDF } from '../utils/exportReport'
 
 function transformLiveResults(calcResults: any) {
   if (!calcResults || !Array.isArray(calcResults.results)) return null
@@ -473,20 +473,6 @@ export const ResultsPage: React.FC = () => {
     { key: 'sag_27_c2_m', header: 'Sag C2 @ 27°C (m)' },
   ]
 
-  // Map poles for RouteDiagram
-  const diagramPoles = (resultsData?.pole_summary || []).map((p: any, idx: number) => {
-    const loadingRow = resultsData?.structural_loading?.find((l: any) => l.pole === p.pole)
-    return {
-      pole_no: p.pole,
-      section: p.sec,
-      aft_span_m: idx === 0 ? 0 : resultsData?.structural_loading?.[idx - 1]?.fore_span_m || 30,
-      fore_span_m: loadingRow?.fore_span_m || 30,
-      angle_deg: loadingRow?.angle_deg || 0,
-      equipment: p.equipment,
-      status: p.status,
-    }
-  })
-
   return (
     <div className="page-wrapper">
       {/* BENCHMARK / LIVE CALCULATION BANNER */}
@@ -706,25 +692,6 @@ export const ResultsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Embedded Route Geometry Visualizer */}
-          <div className="card" style={{ marginTop: '1rem' }}>
-            <div className="card-header">
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Interactive Route Geometry & Pole Inspector</h3>
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Click on any pole in the serpentine diagram to open an in-depth telemetry panel showing its row across all benchmark result tables.
-              </p>
-            </div>
-            <div style={{ padding: '1rem' }}>
-              <RouteDiagram
-                poles={diagramPoles}
-                resultData={{
-                  summary: resultsData.pole_summary,
-                  loads: resultsData.structural_loading,
-                  foundation: resultsData.foundation_soil_bearing,
-                }}
-              />
-            </div>
-          </div>
         </>
       )}
 
@@ -738,26 +705,35 @@ export const ResultsPage: React.FC = () => {
         >
           <span>Return to Dashboard</span>
         </button>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            const data = JSON.stringify(resultsData, null, 2)
-            const blob = new Blob([data], { type: 'application/json' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'engineering_report.json'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            URL.revokeObjectURL(url)
-          }}
-          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          <span>Export Engineering Report</span>
-          <ArrowRight size={17} />
-        </button>
+
+        <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {/* Excel Export */}
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => exportToExcel(resultsData, 'LineDesign_Report')}
+            disabled={!resultsData}
+            style={{ height: '44px', minHeight: '44px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+            title="Download all result tables as a multi-sheet Excel workbook"
+          >
+            <FileSpreadsheet size={17} style={{ color: '#16a34a' }} />
+            <span>Export Excel</span>
+          </button>
+
+          {/* PDF Export */}
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => exportToPDF(resultsData, 'LineDesign_Report')}
+            disabled={!resultsData}
+            style={{ height: '44px', minHeight: '44px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+            title="Download full engineering report as a formatted PDF"
+          >
+            <FileText size={17} />
+            <span>Export PDF</span>
+            <Download size={15} />
+          </button>
+        </div>
       </div>
     </div>
   )

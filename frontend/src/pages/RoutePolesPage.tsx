@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, Trash2, AlertTriangle, CheckCircle, ArrowRight, MapPin, Upload, Loader2 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
-import { RouteDiagram } from '../components/RouteDiagram'
 import { ImportDropzone } from '../components/ImportDropzone'
 
 export interface PoleRow {
@@ -410,19 +409,6 @@ export const RoutePolesPage: React.FC = () => {
               })}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* SVG Serpentine Route Diagram */}
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div className="card-header">
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Route Geometry Visualizer (Serpentine Layout)</h3>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Interactive SVG diagram: click any pole circle to inspect its geometric parameters and benchmark attributes.
-          </p>
-        </div>
-        <div style={{ padding: '1rem' }}>
-          <RouteDiagram poles={poles} />
         </div>
       </div>
 

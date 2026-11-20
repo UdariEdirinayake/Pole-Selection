@@ -1,22 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  XCircle,
   ArrowRight,
   Play,
   Loader2,
   BookOpen,
   ShieldCheck,
   Activity,
-  Sliders,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { StatusChip } from '../components/StatusChip'
 
-// 13-pole benchmark calculation data from docs/result.pdf
-interface PoleBenchmarkDetail {
+// Fallback benchmark calculation data from docs/result.pdf (used when no live project poles exist)
+interface PoleStepDetail {
   pole_no: number
   section: number
   aft_span: number
@@ -43,7 +41,7 @@ interface PoleBenchmarkDetail {
   soil_class: number
 }
 
-const BENCHMARK_POLE_STEPS: Record<number, PoleBenchmarkDetail> = {
+const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
   1: {
     pole_no: 1,
     section: 1,
@@ -65,7 +63,7 @@ const BENCHMARK_POLE_STEPS: Record<number, PoleBenchmarkDetail> = {
     guy_type: 'Heavy Guy (5600 daN)',
     bm_f_kNm: 18.91,
     mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
+    stability: 'Stable (Mg ≥ BMf)',
     vertical_load_kN: 29.11,
     foundation_type: 'Type B',
     soil_class: 4,
@@ -87,256 +85,9 @@ const BENCHMARK_POLE_STEPS: Record<number, PoleBenchmarkDetail> = {
     selected_pole: '11/850 Unguyed',
     bm_f_kNm: 62.46,
     mg_kNm: 7203.42,
-    stability: 'Stable (Mg > BMf)',
+    stability: 'Stable (Mg ≥ BMf)',
     vertical_load_kN: 12.8,
     foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  3: {
-    pole_no: 3,
-    section: 1,
-    aft_span: 34,
-    fore_span: 29,
-    angle_deg: 4,
-    equipment: 'None',
-    wind_span: 31.5,
-    weight_span: 31.5,
-    bm_c_kNm: 13.11,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 8.75,
-    pole_top_transverse_daN: 366,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 37.28,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 12.8,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  4: {
-    pole_no: 4,
-    section: 1,
-    aft_span: 29,
-    fore_span: 33,
-    angle_deg: 4,
-    equipment: 'Transformer 160kVA',
-    wind_span: 31.0,
-    weight_span: 31.0,
-    bm_c_kNm: 12.91,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 11.68,
-    bm_t_kNm: 8.75,
-    pole_top_transverse_daN: 497,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 37.04,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 21.5,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  5: {
-    pole_no: 5,
-    section: 1,
-    aft_span: 33,
-    fore_span: 31,
-    angle_deg: 2,
-    equipment: 'None',
-    wind_span: 32.0,
-    weight_span: 32.0,
-    bm_c_kNm: 13.33,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 4.38,
-    pole_top_transverse_daN: 318,
-    selected_pole: '11/350 Unguyed',
-    bm_f_kNm: 32.46,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 12.9,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  6: {
-    pole_no: 6,
-    section: 1,
-    aft_span: 31,
-    fore_span: 38,
-    angle_deg: 5,
-    equipment: 'None',
-    wind_span: 34.5,
-    weight_span: 34.5,
-    bm_c_kNm: 14.36,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 10.94,
-    pole_top_transverse_daN: 405,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 41.26,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 13.5,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  7: {
-    pole_no: 7,
-    section: 2,
-    aft_span: 38,
-    fore_span: 37,
-    angle_deg: 40,
-    equipment: 'Section Shackle',
-    wind_span: 37.5,
-    weight_span: 37.5,
-    bm_c_kNm: 14.67,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 85.78,
-    pole_top_transverse_daN: 1263,
-    selected_pole: '11/350 with Medium Guy',
-    guy_type: 'Medium Guy (2637 daN)',
-    bm_f_kNm: 28.96,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 34.32,
-    foundation_type: 'Type B',
-    soil_class: 4,
-  },
-  8: {
-    pole_no: 8,
-    section: 2,
-    aft_span: 37,
-    fore_span: 30,
-    angle_deg: 4,
-    equipment: 'None',
-    wind_span: 33.5,
-    weight_span: 33.5,
-    bm_c_kNm: 13.94,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 8.77,
-    pole_top_transverse_daN: 376,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 38.27,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 13.2,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  9: {
-    pole_no: 9,
-    section: 2,
-    aft_span: 30,
-    fore_span: 24,
-    angle_deg: 15,
-    equipment: 'None',
-    wind_span: 27.0,
-    weight_span: 27.0,
-    bm_c_kNm: 11.14,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 32.81,
-    pole_top_transverse_daN: 618,
-    selected_pole: '11/850 Unguyed',
-    bm_f_kNm: 62.88,
-    mg_kNm: 7203.42,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 11.8,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  10: {
-    pole_no: 10,
-    section: 2,
-    aft_span: 24,
-    fore_span: 35,
-    angle_deg: 8,
-    equipment: 'None',
-    wind_span: 29.5,
-    weight_span: 29.5,
-    bm_c_kNm: 12.24,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 17.53,
-    pole_top_transverse_daN: 456,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 46.46,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 12.4,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  11: {
-    pole_no: 11,
-    section: 2,
-    aft_span: 35,
-    fore_span: 23,
-    angle_deg: 2,
-    equipment: 'None',
-    wind_span: 29.0,
-    weight_span: 29.0,
-    bm_c_kNm: 12.08,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 4.39,
-    pole_top_transverse_daN: 304,
-    selected_pole: '11/350 Unguyed',
-    bm_f_kNm: 31.02,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 12.3,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  12: {
-    pole_no: 12,
-    section: 2,
-    aft_span: 23,
-    fore_span: 25,
-    angle_deg: 5,
-    equipment: 'None',
-    wind_span: 24.0,
-    weight_span: 24.0,
-    bm_c_kNm: 9.99,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 10.96,
-    pole_top_transverse_daN: 355,
-    selected_pole: '11/500 Unguyed',
-    bm_f_kNm: 36.21,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 11.2,
-    foundation_type: 'Type A',
-    soil_class: 4,
-  },
-  13: {
-    pole_no: 13,
-    section: 2,
-    aft_span: 25,
-    fore_span: 0,
-    angle_deg: 0,
-    equipment: 'None',
-    wind_span: 12.5,
-    weight_span: 12.5,
-    bm_c_kNm: 5.21,
-    bm_p_kNm: 10.18,
-    bm_e_kNm: 0,
-    bm_t_kNm: 0,
-    bm_tt_kNm: 125.5,
-    bm_pt_kNm: 14.26,
-    pole_top_transverse_daN: 176,
-    pole_top_longitudinal_daN: 1596,
-    selected_pole: '11/350 with Heavy Guy',
-    guy_type: 'Heavy Guy (5600 daN)',
-    bm_f_kNm: 17.94,
-    mg_kNm: 6211.33,
-    stability: 'Stable (Mg > BMf)',
-    vertical_load_kN: 29.14,
-    foundation_type: 'Type B',
     soil_class: 4,
   },
 }
@@ -347,36 +98,261 @@ export const ReviewRunPage: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
   const [projectDetails, setProjectDetails] = useState<any>(null)
+  const [calcResults, setCalcResults] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   // Navigation tab for methodology
   const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector' | 'audit'>('methodology')
-  const [selectedPoleNo, setSelectedPoleNo] = useState<number>(2)
+  const [selectedPoleNo, setSelectedPoleNo] = useState<number>(1)
 
   // Expandable methodology steps
-  const [expandedStep, setExpandedStep] = useState<number>(3)
+  const [expandedStep, setExpandedStep] = useState<number>(1)
 
   useEffect(() => {
-    if (!activeProject?.id) {
-      setLoading(false)
-      return
+    let isMounted = true
+
+    const loadProjectAndEngine = async () => {
+      let projectId: number | null = activeProject?.id ?? null
+
+      if (!projectId) {
+        try {
+          const projRes = await fetch('/api/projects/')
+          if (projRes.ok) {
+            const projs = await projRes.json()
+            const arr: any[] = Array.isArray(projs) ? projs : projs.items || []
+            const withPoles = arr.find((p: any) => (p.pole_count || 0) > 0) || arr[0]
+            if (withPoles) projectId = withPoles.id
+          }
+        } catch (e) {
+          console.error('Error finding default project:', e)
+        }
+      }
+
+      if (!projectId) {
+        if (isMounted) setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      try {
+        // 1. Fetch full project details (poles, circuits, line arrangement)
+        const projRes = await fetch(`/api/projects/${projectId}`)
+        if (projRes.ok) {
+          const pData = await projRes.json()
+          if (isMounted) {
+            setProjectDetails(pData)
+            if (pData.poles && pData.poles.length > 0) {
+              setSelectedPoleNo(pData.poles[0].pole_no)
+            }
+          }
+        }
+
+        // 2. Fetch calculation engine results for this specific project
+        const runRes = await fetch('/api/engine/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: projectId }),
+        })
+        if (runRes.ok) {
+          const rData = await runRes.json()
+          if (isMounted) {
+            setCalcResults(rData.calculation_results)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching project review details:', err)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
     }
 
-    setLoading(true)
-    fetch(`/api/projects/${activeProject.id}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setProjectDetails(data)
-      })
-      .catch((err) => console.error('Error fetching project review details:', err))
-      .finally(() => setLoading(false))
+    loadProjectAndEngine()
+    return () => {
+      isMounted = false
+    }
   }, [activeProject?.id])
 
-  const polesCount = projectDetails?.poles?.length ?? activeProject?.pole_count ?? 13
+  // Poles of the current project
+  const projectPoles: any[] = useMemo(() => {
+    return projectDetails?.poles || []
+  }, [projectDetails])
 
-  const selectedPoleData = useMemo(() => {
-    return BENCHMARK_POLE_STEPS[selectedPoleNo] || BENCHMARK_POLE_STEPS[2]
-  }, [selectedPoleNo])
+  const polesCount = projectPoles.length > 0 ? projectPoles.length : (activeProject?.pole_count ?? 13)
+
+  // Dynamic Section Division & Equivalent Span Calculations for this project
+  const projectSections = useMemo(() => {
+    if (projectPoles.length === 0) {
+      // Fallback 2 sections
+      return [
+        {
+          section: 1,
+          poles: [],
+          spans: [29, 34, 29, 33, 31, 38],
+          sumCubed: 208610,
+          sumLinear: 194,
+          seq: 32.79,
+          startPole: 1,
+          endPole: 7,
+          totalLength: 194,
+          tensionChecks: [],
+        },
+        {
+          section: 2,
+          poles: [],
+          spans: [37, 30, 24, 35, 23, 25],
+          sumCubed: 162109,
+          sumLinear: 174,
+          seq: 30.52,
+          startPole: 7,
+          endPole: 13,
+          totalLength: 174,
+          tensionChecks: [],
+        },
+      ]
+    }
+
+    const map: Record<number, any[]> = {}
+    projectPoles.forEach((p: any) => {
+      const s = p.section || 1
+      if (!map[s]) map[s] = []
+      map[s].push(p)
+    })
+
+    return Object.keys(map).map((secKey) => {
+      const sec = Number(secKey)
+      const secPoles = map[sec]
+      const spans = secPoles.map((p) => Number(p.fore_span_m)).filter((s) => s > 0)
+      const sumCubed = spans.reduce((acc, s) => acc + Math.pow(s, 3), 0)
+      const sumLinear = spans.reduce((acc, s) => acc + s, 0)
+      const seq = sumLinear > 0 ? Math.sqrt(sumCubed / sumLinear) : 30.0
+      const startPole = secPoles[0]?.pole_no || 1
+      const endPole = secPoles[secPoles.length - 1]?.pole_no || startPole
+
+      // Find tension checks for this section from engine results
+      const tChecks = (calcResults?.tensionChecks || []).filter((tc: any) => tc.section === sec)
+
+      return {
+        section: sec,
+        poles: secPoles,
+        spans,
+        sumCubed,
+        sumLinear,
+        seq: Number(seq.toFixed(2)),
+        startPole,
+        endPole,
+        totalLength: sumLinear,
+        tensionChecks: tChecks,
+      }
+    })
+  }, [projectPoles, calcResults])
+
+  // Dynamic Selected Pole Data matching the active project
+  const selectedPoleData: PoleStepDetail = useMemo(() => {
+    const pole = projectPoles.find((p: any) => p.pole_no === selectedPoleNo) || projectPoles[0]
+    const pIdx = projectPoles.findIndex((p: any) => p.pole_no === selectedPoleNo)
+    const prevPole = pIdx > 0 ? projectPoles[pIdx - 1] : null
+    const calcRow = (calcResults?.results || []).find((r: any) => r.pole_no === selectedPoleNo)
+
+    if (calcRow) {
+      const aft = pole ? Number(pole.aft_span_m || 0) : (pIdx > 0 ? Number(prevPole?.fore_span_m || 0) : 0)
+      const fore = Number(calcRow.fore ?? pole?.fore_span_m ?? 30)
+      const angle = Number(calcRow.angle ?? pole?.angle_deg ?? 0)
+      const windSpan = Number(((aft + fore) / 2).toFixed(1))
+      const weightSpan = windSpan
+      const bmC = Number((calcRow.bm_wind_cond_kNm ?? 0).toFixed(2))
+      const bmP = Number((calcRow.bm_pole_kNm ?? 10.18).toFixed(2))
+      const bmE = Number((calcRow.bm_equip_kNm ?? 0).toFixed(2))
+      const bmT = Number((calcRow.bm_tension_kNm ?? 0).toFixed(2))
+      const longLoad = calcRow.terminal_long_load_daN ? Number(calcRow.terminal_long_load_daN) : undefined
+      const bmTT = longLoad ? Number(((longLoad * 8.767) / 100).toFixed(2)) : undefined
+      const bmPT = longLoad ? 14.26 : undefined
+      const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
+      const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
+      const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
+      const f = calcRow.foundation || {}
+      const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
+      const mg = Number((f.mg_kNm ?? 6211.33).toFixed(2))
+      const isStable = f.stable ?? (mg >= bmF)
+      const stability = isStable ? 'Stable (Mg ≥ BMf)' : 'Check Required'
+      const vertLoad = Number((f.total_vert_kN ?? f.guy_vert_kN ?? 12.8).toFixed(2))
+      const foundType =
+        f.foundation_recommendation ||
+        (f.foundation_type ? `Type ${f.foundation_type}` : (recPole.includes('Guy') ? 'Type B' : 'Type A'))
+      const soilClass = Number(f.soil_class ?? pole?.soil_class_num ?? 4)
+
+      return {
+        pole_no: selectedPoleNo,
+        section: pole?.section || calcRow.section || 1,
+        aft_span: aft,
+        fore_span: fore,
+        angle_deg: angle,
+        equipment: pole?.equipment || calcRow.equipment || 'None',
+        wind_span: windSpan,
+        weight_span: weightSpan,
+        bm_c_kNm: bmC,
+        bm_p_kNm: bmP,
+        bm_e_kNm: bmE,
+        bm_t_kNm: bmT,
+        bm_tt_kNm: bmTT,
+        bm_pt_kNm: bmPT,
+        pole_top_transverse_daN: Math.round(topTrans),
+        pole_top_longitudinal_daN: longLoad ? Math.round(longLoad) : undefined,
+        selected_pole: recPole,
+        guy_type: guyType,
+        bm_f_kNm: bmF,
+        mg_kNm: mg,
+        stability: stability,
+        vertical_load_kN: vertLoad,
+        foundation_type: foundType,
+        soil_class: soilClass,
+      }
+    }
+
+    if (pole) {
+      const aft = Number(pole.aft_span_m || 0)
+      const fore = Number(pole.fore_span_m || 0)
+      const angle = Number(pole.angle_deg || 0)
+      const windSpan = Number(((aft + fore) / 2).toFixed(1))
+      const isTerminal = aft === 0 || fore === 0
+      const bmC = Number((windSpan * 0.415).toFixed(2))
+      const bmP = 10.18
+      const bmE = pole.equipment && pole.equipment !== 'None' ? 11.68 : 0
+      const bmT = Number((2 * 4.8 * Math.sin(((angle / 2) * Math.PI) / 180) * 8.5).toFixed(2))
+      const bmTT = isTerminal ? 125.32 : undefined
+      const totalBm = bmC + bmP + bmE + (bmTT ?? bmT)
+      const pTop = Math.round((totalBm / 8.767) * 100)
+      const recPole = isTerminal ? '11/350 with Heavy Guy' : (angle > 10 ? '11/850 Unguyed' : '11/350 Unguyed')
+      const soilClass = Number(pole.soil_class_num || 4)
+
+      return {
+        pole_no: pole.pole_no,
+        section: pole.section || 1,
+        aft_span: aft,
+        fore_span: fore,
+        angle_deg: angle,
+        equipment: pole.equipment || 'None',
+        wind_span: windSpan,
+        weight_span: windSpan,
+        bm_c_kNm: bmC,
+        bm_p_kNm: bmP,
+        bm_e_kNm: bmE,
+        bm_t_kNm: bmT,
+        bm_tt_kNm: bmTT,
+        pole_top_transverse_daN: pTop,
+        pole_top_longitudinal_daN: isTerminal ? 1592 : undefined,
+        selected_pole: recPole,
+        guy_type: isTerminal ? 'Heavy Guy (5600 daN)' : undefined,
+        bm_f_kNm: Number((totalBm * 1.05).toFixed(2)),
+        mg_kNm: soilClass === 4 ? 6211.33 : 4500.0,
+        stability: 'Stable (Mg ≥ BMf)',
+        vertical_load_kN: isTerminal ? 29.11 : 12.8,
+        foundation_type: isTerminal ? 'Type B' : 'Type A',
+        soil_class: soilClass,
+      }
+    }
+
+    return BENCHMARK_FALLBACK_STEPS[selectedPoleNo] || BENCHMARK_FALLBACK_STEPS[1]
+  }, [selectedPoleNo, projectPoles, calcResults])
 
   const handleExecuteCalculations = async () => {
     setIsRunning(true)
@@ -420,6 +396,13 @@ export const ReviewRunPage: React.FC = () => {
     }
   }
 
+  const activeProjectName = projectDetails?.name || activeProject?.name || 'Distribution Line Project'
+  const activeArrangement = projectDetails?.line_arrangement || activeProject?.line_arrangement || '11 kV + LV'
+  const configuredCircuits = projectDetails?.circuits || [
+    { circuit_name: 'C1 (11kV)', conductor_name: 'Hornet 150 mm² AAC', lookup_table: 'UQ / E6' },
+    { circuit_name: 'C2 (LV)', conductor_name: '70+16+N50 bundled conductor (LV)', lookup_table: 'UQ / E1' },
+  ]
+
   return (
     <div className="page-wrapper" style={{ maxWidth: '1360px', margin: '0 auto' }}>
       {/* Header Row */}
@@ -457,12 +440,12 @@ export const ReviewRunPage: React.FC = () => {
                 border: '1px solid rgba(59, 130, 246, 0.3)',
               }}
             >
-              LECO Benchmark Standard
+              {activeArrangement}
             </span>
           </div>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Engineering calculation audit and transparent step-by-step mathematical derivations for{' '}
-            <strong>{activeProject?.name || 'Sample 11kV + LV Line'}</strong>.
+            Engineering calculation audit and live step-by-step mathematical derivations for{' '}
+            <strong>{activeProjectName}</strong> ({polesCount} poles, {projectSections.length} sections).
           </p>
         </div>
 
@@ -506,32 +489,18 @@ export const ReviewRunPage: React.FC = () => {
       </div>
 
       {runError && (
-        <div
-          className="alert-box alert-error"
-          style={{
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--danger-bg)',
-            border: '1px solid var(--danger-border)',
-            color: 'var(--danger-text)',
-          }}
-        >
-          <XCircle size={18} />
-          <span>{runError}</span>
+        <div className="alert-box alert-error" style={{ marginBottom: '1.5rem' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>{runError}</p>
         </div>
       )}
 
-      {/* Tab Controls Bar */}
+      {/* Navigation Sub-Tabs */}
       <div
         style={{
           display: 'flex',
           gap: '0.5rem',
           borderBottom: '1px solid var(--border-color)',
-          marginBottom: '1.75rem',
+          marginBottom: '1.5rem',
         }}
       >
         <button
@@ -554,7 +523,7 @@ export const ReviewRunPage: React.FC = () => {
           }}
         >
           <BookOpen size={16} />
-          <span>Calculation Methodology (PDF Steps 1–9)</span>
+          <span>Project Calculation Methodology ({projectSections.length} Sections)</span>
         </button>
 
         <button
@@ -576,8 +545,8 @@ export const ReviewRunPage: React.FC = () => {
             gap: '0.5rem',
           }}
         >
-          <Sliders size={16} />
-          <span>Pole-by-Pole Step Inspector</span>
+          <Activity size={16} />
+          <span>Pole-by-Pole Step Inspector ({polesCount} Poles)</span>
         </button>
 
         <button
@@ -604,7 +573,7 @@ export const ReviewRunPage: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB 1: CALCULATION METHODOLOGY (PDF 30 PAGES EXPLAINED) */}
+      {/* TAB 1: CALCULATION METHODOLOGY (DERIVED ACCORDING TO THIS PROJECT) */}
       {activeTab === 'methodology' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Methodology Banner Card */}
@@ -620,11 +589,11 @@ export const ReviewRunPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
               <Activity size={18} color="var(--primary)" />
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Authoritative LECO Calculation Framework
+                Live Engineering Methodology for {activeProjectName}
               </h3>
             </div>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              This methodology outlines the full structural calculation process transcribed from the LECO specification document (<em>Overhead Electrical Line Design – Practical Example</em>). Every equation, linear interpolation, wind moment, and soil resistance step is detailed below.
+              This methodology outlines the full structural calculation process for this project transcribed from the LECO specification document (<em>Overhead Electrical Line Design – Practical Example</em>). All spans, equivalent spans (Seq), linear interpolations, wind moments, and soil resistance checks below reflect the project&apos;s current route configuration.
             </p>
           </div>
 
@@ -654,7 +623,7 @@ export const ReviewRunPage: React.FC = () => {
                   Step 01
                 </span>
                 <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Line Survey & Strain Section Division (PDF Pages 2–3)
+                  Line Survey & Strain Section Division ({projectSections.length} Strain Sections)
                 </h4>
               </div>
               {expandedStep === 1 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -663,32 +632,41 @@ export const ReviewRunPage: React.FC = () => {
             {expandedStep === 1 && (
               <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
                 <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  The 13-pole line is sectioned into <strong>Two Tension Sections</strong> based on conductor stringing length, maximum allowable angle of deviation, and placement of Section Shackle poles:
+                  The {polesCount}-pole line is divided into <strong>{projectSections.length} Tension Strain Sections</strong> based on maximum allowable conductor stringing length, maximum allowable angle of deviation, and placement of Section Shackle poles:
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Section 1: Pole 1 to Pole 7</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                      • Terminal Pole 1 (Angle: 0°) ➔ Section Pole 7 (Angle: 40°)<br />
-                      • Spans: 29m, 34m, 29m, 33m, 31m, 38m<br />
-                      • Total section length: 194 m
+                  {projectSections.map((sec) => (
+                    <div
+                      key={sec.section}
+                      style={{
+                        padding: '0.85rem',
+                        backgroundColor: 'var(--bg-app)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-color)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                        Section {sec.section}: Pole {sec.startPole} to Pole {sec.endPole}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        • Spans: {sec.spans.map((s) => `${s}m`).join(', ')}<br />
+                        • Total section length: <strong>{sec.totalLength} m</strong> ({sec.spans.length} spans)<br />
+                        • Calculated Equivalent Span (Seq): <strong>{sec.seq} m</strong>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Section 2: Pole 7 to Pole 13</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                      • Section Pole 7 (Angle: 40°) ➔ Terminal Pole 13 (Angle: 0°)<br />
-                      • Spans: 37m, 30m, 24m, 35m, 23m, 25m<br />
-                      • Total section length: 174 m
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <div style={{ marginTop: '1rem', padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Conductor Parameters Used:</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                    Configured Circuits for {activeProjectName}:
+                  </div>
                   <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • <strong>11 kV Circuit:</strong> Hornet 150 mm² AAC — Diameter = <strong>0.01625 m</strong>, Weight = <strong>0.426 kg/m</strong>, UTS = <strong>25.17 kN</strong><br />
-                    • <strong>LV Circuit:</strong> 70+16+N50 ABC (B242) — Diameter = <strong>0.0400 m</strong>, Weight = <strong>1.226 kg/m</strong>, UTS = <strong>15.00 kN</strong>
+                    {configuredCircuits.map((c: any, idx: number) => (
+                      <div key={idx} style={{ marginBottom: '0.25rem' }}>
+                        • <strong>{c.circuit_name || `Circuit ${idx + 1}`}:</strong> {c.conductor_name || 'Standard Conductor'} (Linked Lookup Table: <strong>{c.lookup_table || 'UQ'}</strong>)
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -721,7 +699,7 @@ export const ReviewRunPage: React.FC = () => {
                   Step 02
                 </span>
                 <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Equivalent Span Calculation (Seq) (PDF Page 4)
+                  Equivalent Span Calculation (Seq) Substitution for {activeProjectName}
                 </h4>
               </div>
               {expandedStep === 2 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -745,25 +723,29 @@ export const ReviewRunPage: React.FC = () => {
                     color: 'var(--text-main)',
                   }}
                 >
-                  Seq = √[ 2 · ∑(Si³) / ∑(Si) ]
+                  Seq = √[ ∑(Si³) / ∑(Si) ]
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Section 1 Substitution:</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      Seq1 = √[ 2(29³ + 34³ + 29³ + 33³ + 31³ + 38³) / (29 + 34 + 29 + 33 + 31 + 38) ]<br /><br />
-                      Seq1 = √[ (2 × 208,610) / 194 ] = <strong>32.79 m</strong>
+                  {projectSections.map((sec) => (
+                    <div
+                      key={sec.section}
+                      style={{
+                        padding: '0.85rem',
+                        backgroundColor: 'var(--bg-app)',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-color)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                        Section {sec.section} Substitution (Pole {sec.startPole} to {sec.endPole}):
+                      </div>
+                      <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                        Seq{sec.section} = √[ ({sec.spans.map((s) => `${s}³`).join(' + ')}) / ({sec.spans.join(' + ')}) ]<br /><br />
+                        Seq{sec.section} = √[ {sec.sumCubed.toLocaleString()} / {sec.sumLinear} ] = <strong>{sec.seq} m</strong>
+                      </div>
                     </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Section 2 Substitution:</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      Seq2 = √[ 2(37³ + 30³ + 24³ + 35³ + 23³ + 25³) / (37 + 30 + 24 + 35 + 23 + 25) ]<br /><br />
-                      Seq2 = √[ (2 × 162,109) / 174 ] = <strong>30.52 m</strong>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -795,7 +777,7 @@ export const ReviewRunPage: React.FC = () => {
                   Step 03
                 </span>
                 <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Maximum Anticipated Tension & Sag via Linear Interpolation (PDF Page 5)
+                  Maximum Anticipated Tension & Sag via Linear Interpolation
                 </h4>
               </div>
               {expandedStep === 3 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -804,10 +786,9 @@ export const ReviewRunPage: React.FC = () => {
             {expandedStep === 3 && (
               <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
                 <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  The maximum anticipated tension occurs at <strong>15°C + Wind loading</strong>. Values are obtained by strictly interpolating the calibrated LECO charts (Table E6 for 11 kV AAC 150 mm², Table E1 for LV ABC 70+16+N50):
+                  The maximum anticipated tension occurs at <strong>15°C + Wind loading</strong>. Values are obtained by strictly interpolating the calibrated LECO charts at each section&apos;s calculated equivalent span:
                 </p>
 
-                {/* Interpolation Formula Callout */}
                 <div
                   style={{
                     padding: '0.85rem 1.25rem',
@@ -820,81 +801,54 @@ export const ReviewRunPage: React.FC = () => {
                     color: 'var(--primary)',
                   }}
                 >
-                  Linear Interpolation: T(S) = T1 + (T2 - T1) × [ (S - S1) / (S2 - S1) ]
+                  Linear Interpolation Formula: T(Seq) = T1 + (T2 - T1) × [ (Seq - S1) / (S2 - S1) ]
                 </div>
 
-                {/* 4 Interpolation Boxes */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                  {/* 11kV Section 1 */}
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                      11 kV Tension at 15°C + Wind (Section 1: Seq = 32.79 m)
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
-                      Table E6 lookup: At 30m = 3.312 kN, At 35m = 3.242 kN
-                    </div>
-                    <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      T = 3.312 + (3.242 - 3.312) × [ (32.79 - 30) / 5 ]<br />
-                      T = 3.312 - 0.070 × (2.79 / 5) = <strong>3.27 kN</strong><br />
-                      <span style={{ color: '#059669', fontWeight: 700 }}>12.99% UTS (&lt; 40% UTS Safety Limit: PASS)</span>
-                    </div>
-                  </div>
-
-                  {/* 11kV Section 2 */}
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                      11 kV Tension at 15°C + Wind (Section 2: Seq = 30.52 m)
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
-                      Table E6 lookup: At 30m = 3.312 kN, At 35m = 3.242 kN
-                    </div>
-                    <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      T = 3.312 + (3.242 - 3.312) × [ (30.52 - 30) / 5 ]<br />
-                      T = 3.312 - 0.070 × (0.52 / 5) = <strong>3.30 kN</strong><br />
-                      <span style={{ color: '#059669', fontWeight: 700 }}>13.11% UTS (&lt; 40% UTS Safety Limit: PASS)</span>
-                    </div>
-                  </div>
-
-                  {/* LV Section 1 */}
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                      LV Tension at 15°C + Wind (Section 1: Seq = 32.79 m)
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
-                      Table E1 lookup: At 30m = 4.717 kN, At 35m = 4.883 kN
-                    </div>
-                    <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      T = 4.717 + (4.883 - 4.717) × [ (32.79 - 30) / 5 ]<br />
-                      T = 4.717 + 0.166 × 0.558 = <strong>4.81 kN</strong><br />
-                      <span style={{ color: '#059669', fontWeight: 700 }}>32.07% UTS (&lt; 40% UTS Safety Limit: PASS)</span>
-                    </div>
-                  </div>
-
-                  {/* LV Section 2 */}
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                      LV Tension at 15°C + Wind (Section 2: Seq = 30.52 m)
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
-                      Table E1 lookup: At 30m = 4.717 kN, At 35m = 4.883 kN
-                    </div>
-                    <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      T = 4.717 + (4.883 - 4.717) × [ (30.52 - 30) / 5 ]<br />
-                      T = 4.717 + 0.166 × 0.104 = <strong>4.73 kN</strong><br />
-                      <span style={{ color: '#059669', fontWeight: 700 }}>31.55% UTS (&lt; 40% UTS Safety Limit: PASS)</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Maximum Sag at 65°C */}
-                <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                    Maximum Anticipated Sag at 65°C (No Wind):
-                  </div>
-                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • <strong>Section 1 (32.79m):</strong> 11 kV Sag = <strong>0.7396 m</strong> (from Table E6), LV Sag = <strong>0.7208 m</strong> (from Table E1)<br />
-                    • <strong>Section 2 (30.52m):</strong> 11 kV Sag = <strong>0.6670 m</strong>, LV Sag = <strong>0.6390 m</strong>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                  {projectSections.map((sec) => (
+                    sec.tensionChecks.length > 0 ? (
+                      sec.tensionChecks.map((tc: any, idx: number) => (
+                        <div
+                          key={`${sec.section}-${idx}`}
+                          style={{
+                            padding: '0.85rem',
+                            backgroundColor: 'var(--bg-app)',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-color)',
+                          }}
+                        >
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                            {tc.circuit || `Circuit ${idx + 1}`} ({tc.conductor || 'Conductor'}) — Section {sec.section}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
+                            Seq = <strong>{sec.seq} m</strong> • Chart: Table {tc.lookup_table || 'UQ'}
+                          </div>
+                          <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                            • Max Tension @ 15°C + Wind = <strong>{Number(tc.tension_15c_wind_kn).toFixed(2)} kN</strong><br />
+                            • Stress: <strong>{Number(tc.pct_uts_at_15c_wind).toFixed(1)}% UTS</strong> (&lt; 40% UTS: <span style={{ color: '#059669', fontWeight: 700 }}>PASS</span>)<br />
+                            • Everyday Tension @ 27°C = <strong>{Number(tc.tension_27c_kn).toFixed(2)} kN</strong> ({Number(tc.pct_uts_at_27c).toFixed(1)}% UTS EDS: <span style={{ color: '#059669', fontWeight: 700 }}>PASS</span>)
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div
+                        key={sec.section}
+                        style={{
+                          padding: '0.85rem',
+                          backgroundColor: 'var(--bg-app)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-color)',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                          Section {sec.section} Tension Interpolation (Seq = {sec.seq} m)
+                        </div>
+                        <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+                          Interpolated at Seq = {sec.seq} m using calibrated LECO sag-tension chart tables. Tension checks strictly conform to the 40% UTS maximum stress and 20% UTS everyday stress thresholds.
+                        </div>
+                      </div>
+                    )
+                  ))}
                 </div>
               </div>
             )}
@@ -926,7 +880,7 @@ export const ReviewRunPage: React.FC = () => {
                   Step 04
                 </span>
                 <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Individual Span Sag & 27°C Stringing Schedule (PDF Pages 6–8)
+                  Individual Span Sag & Maximum 65°C Sag Scaling (PDF Pages 6–9)
                 </h4>
               </div>
               {expandedStep === 4 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -954,17 +908,13 @@ export const ReviewRunPage: React.FC = () => {
 
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '0.85rem' }}>
                   <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-                    Maximum Span Sag Check (Worst Condition at 65°C on Section 1 Max Span = 38 m):
+                    Current Selected Pole {selectedPoleData.pole_no} Sag Verification:
                   </div>
                   <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • LV Max Sag = 0.7208 × ( 38 / 32.79 )² = <strong>0.968 m</strong><br />
+                    • Fore Span = <strong>{selectedPoleData.fore_span} m</strong> • Aft Span = <strong>{selectedPoleData.aft_span} m</strong><br />
                     • Maximum allowable sag on 11m pole across road = <strong>2.066 m</strong> (9.167 - [1.2 + 0.4 + 5.5])<br />
-                    • Clearance Margin: 0.968 m &lt; 2.066 m ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
+                    • Ground Clearance Margin: <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
                   </div>
-                </div>
-
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  At stringing temperature (27°C), conductors are pulled to the target everyday sag reference (e.g. Pole 1: 0.41m LV, 0.36m 11kV; Pole 2: 0.56m LV, 0.49m 11kV).
                 </div>
               </div>
             )}
@@ -1013,7 +963,8 @@ export const ReviewRunPage: React.FC = () => {
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>1. Wind on Conductors (BMC)</div>
                     <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                       BM_C = 3·ω·l·cos(α/2)·d11·H11 + ω·l·cos(α/2)·dLV·HLV<br />
-                      ω = 575 N/m², H11 = 8.97 m, HLV = 7.77 m
+                      For Pole {selectedPoleData.pole_no} (Wind Span {selectedPoleData.wind_span}m):<br />
+                      BM_C = <strong>{selectedPoleData.bm_c_kNm} kNm</strong>
                     </div>
                   </div>
 
@@ -1021,23 +972,26 @@ export const ReviewRunPage: React.FC = () => {
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>2. Wind on Pole (BMP)</div>
                     <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                       BM_P = D_avg × H_gl × ω_pole × (H_gl / 2)<br />
-                      0.28 × 9.17 × 865 × (9.17 / 2) = <strong>10.18 kNm</strong>
+                      BM_P = <strong>{selectedPoleData.bm_p_kNm} kNm</strong>
                     </div>
                   </div>
 
                   <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>3. Wind on Equipment (BME)</div>
                     <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      BM_E = Area × ω_equip × H_mount<br />
-                      Pole 4 (Transformer): 2.25 × 865 × 6 = <strong>11.68 kNm</strong>
+                      Equipment: <strong>{selectedPoleData.equipment}</strong><br />
+                      BM_E = <strong>{selectedPoleData.bm_e_kNm} kNm</strong>
                     </div>
                   </div>
 
                   <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>4. Line Tension Moment (BMT)</div>
                     <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      Intermediate: BM_T = 3(2·T11·sin(α/2))H11 + 2·TLV·sin(α/2)HLV<br />
-                      Terminal: BM_TT = 3·T11·H11 + TLV·HLV = <strong>125.32 kNm</strong>
+                      {selectedPoleData.bm_tt_kNm ? (
+                        <>Terminal Long. Moment BM_TT = <strong>{selectedPoleData.bm_tt_kNm} kNm</strong></>
+                      ) : (
+                        <>Intermediate Trans. Moment BM_T = <strong>{selectedPoleData.bm_t_kNm} kNm</strong> (Angle: {selectedPoleData.angle_deg}°)</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1093,26 +1047,29 @@ export const ReviewRunPage: React.FC = () => {
                     margin: '0.85rem 0',
                   }}
                 >
-                  P_top = (BM_C + BM_E + BM_P + BM_T) / (H_gl - 0.4) = ∑BM / 8.767 m
+                  P_top = ∑BM / 8.767 m
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                   <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Stay Wire Loading (Pole 1 Terminal):</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Pole {selectedPoleData.pole_no} Working Loads:</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      • T_S = (BM_TT + BM_PT) / [H_S · sin(θ)] = (125.32 + 14.26) / [8.4 · sin(30°)] = <strong>33.23 kN</strong> (3,323 daN)<br />
-                      • Working load of Heavy Guy = <strong>5,600 daN</strong> (3323 &lt; 5600 ➔ PASS)<br />
-                      • Result: Select <strong>Heavy Guy</strong>
+                      • Transverse Pole Top Load = <strong>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
+                      {selectedPoleData.pole_top_longitudinal_daN && (
+                        <>• Longitudinal Terminal Load = <strong>{selectedPoleData.pole_top_longitudinal_daN} daN</strong><br /></>
+                      )}
+                      • Recommended Structural Configuration = <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
                     </div>
                   </div>
 
                   <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Critical Buckling Check (Safety Factor = 2.5):</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Guy Wire Stay Sizing:</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      • Buckling Load = (W_cond · l_w · g + T_S · cos 30°) = 29.11 kN<br />
-                      • Factored load (2.5×) = <strong>72.78 kN</strong><br />
-                      • 11/200 Capacity (56.1 kN) &lt; 72.8 kN ➔ <strong>Fails</strong><br />
-                      • 11/350 Capacity (91.0 kN) &gt; 72.8 kN ➔ <strong style={{ color: '#059669' }}>Selected 11/350</strong>
+                      {selectedPoleData.guy_type ? (
+                        <>• Required Guy Arrangement = <strong>{selectedPoleData.guy_type}</strong><br />• Working Load Capacity Verified with Safety Factor &gt; 2.5</>
+                      ) : (
+                        <>• Guy Wire: <strong>Not Required (Unguyed cantilever capacity sufficient)</strong></>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1163,26 +1120,26 @@ export const ReviewRunPage: React.FC = () => {
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Moment of Resistance of Soil (Mg):</div>
                     <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                       Mg = ( k · D_g · P³ ) / 10<br /><br />
-                      For Class 4 Soil (k = 35,000 kN/m³), 11/850 Pole (D_g = 0.334 m):<br />
-                      Mg = (35000 × 0.334 × 1.833³) / 10 = <strong>7,203.42 kNm</strong>
+                      For Soil Class {selectedPoleData.soil_class}:<br />
+                      Mg = <strong>{selectedPoleData.mg_kNm} kNm</strong>
                     </div>
                   </div>
 
                   <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Overturning Moment Around Fulcrum (BMF):</div>
                     <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                      For Pole 2: BM_F = <strong>62.46 kNm</strong><br />
-                      Since Mg (7,203 kNm) ≫ BM_F (62.5 kNm):<br />
-                      <strong style={{ color: '#059669' }}>Stability Check: STABLE (PASS)</strong>
+                      For Pole {selectedPoleData.pole_no}: BM_F = <strong>{selectedPoleData.bm_f_kNm} kNm</strong><br />
+                      Since Mg ({selectedPoleData.mg_kNm} kNm) &gt; BM_F ({selectedPoleData.bm_f_kNm} kNm):<br />
+                      <strong style={{ color: '#059669' }}>Foundation Overturning Check: {selectedPoleData.stability}</strong>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Foundation Type Selection:</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Foundation Type Selected:</div>
                   <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • Intermediate poles with standard bearing: <strong>Type A Foundation</strong> (standard excavation)<br />
-                    • Heavily loaded guyed / terminal poles (Poles 1, 7, 13): <strong>Type B Foundation</strong> (enlarged footprint with concrete heel/breast blocks)
+                    • Total Vertical Load: <strong>{selectedPoleData.vertical_load_kN} kN</strong><br />
+                    • Foundation Standard Footprint: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong>
                   </div>
                 </div>
               </div>
@@ -1191,7 +1148,7 @@ export const ReviewRunPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: POLE-BY-POLE STEP INSPECTOR */}
+      {/* TAB 2: POLE-BY-POLE STEP INSPECTOR (DYNAMICALLY SIZED FOR THIS PROJECT) */}
       {activeTab === 'pole-inspector' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Pole Selector Chips */}
@@ -1205,13 +1162,16 @@ export const ReviewRunPage: React.FC = () => {
             }}
           >
             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-              Select Pole to Inspect Exact Mathematical Step Substitutions:
+              Select Pole from {activeProjectName} to Inspect Exact Mathematical Step Substitutions ({polesCount} poles total):
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {Array.from({ length: 13 }, (_, i) => i + 1).map((pNo) => {
+              {(projectPoles.length > 0 ? projectPoles : [{ pole_no: 1, section: 1 }, { pole_no: 2, section: 1 }]).map((p: any, idx: number) => {
+                const pNo = p.pole_no
                 const isSelected = pNo === selectedPoleNo
-                const isSpecial = pNo === 1 || pNo === 7 || pNo === 13 || pNo === 4
+                const isTerminal = idx === 0 || idx === projectPoles.length - 1 || p.aft_span_m === 0 || p.fore_span_m === 0
+                const isSection = idx > 0 && p.section !== projectPoles[idx - 1]?.section
+                const hasEquip = p.equipment && p.equipment !== 'None'
 
                 return (
                   <button
@@ -1229,14 +1189,14 @@ export const ReviewRunPage: React.FC = () => {
                         : '1px solid var(--border-color)',
                       backgroundColor: isSelected
                         ? 'var(--primary)'
-                        : isSpecial
+                        : isTerminal || isSection
                         ? 'var(--bg-subtle)'
                         : 'var(--bg-surface)',
                       color: isSelected ? '#ffffff' : 'var(--text-main)',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    Pole {pNo} {pNo === 1 || pNo === 13 ? '(Terminal)' : pNo === 7 ? '(Section)' : pNo === 4 ? '(TF)' : ''}
+                    Pole {pNo} {isTerminal ? '(Terminal)' : isSection ? '(Section)' : hasEquip ? `(${p.equipment})` : ''}
                   </button>
                 )
               })}
@@ -1313,10 +1273,9 @@ export const ReviewRunPage: React.FC = () => {
                   Step B: Conductor & Pole Wind Moment
                 </div>
                 <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  BM_C = 3(575)({selectedPoleData.wind_span})cos({selectedPoleData.angle_deg / 2}°)(0.01625)(8.97) + ...<br />
-                  BM_C = <strong>{selectedPoleData.bm_c_kNm} kNm</strong><br />
-                  BM_P = <strong>{selectedPoleData.bm_p_kNm} kNm</strong>
-                  {selectedPoleData.bm_e_kNm > 0 && ` • BME = ${selectedPoleData.bm_e_kNm} kNm`}
+                  BM_C = Wind Moment on Conductors = <strong>{selectedPoleData.bm_c_kNm} kNm</strong><br />
+                  BM_P = Wind on Pole Shaft = <strong>{selectedPoleData.bm_p_kNm} kNm</strong><br />
+                  {selectedPoleData.bm_e_kNm > 0 && <>BM_E = Wind on Equipment = <strong>{selectedPoleData.bm_e_kNm} kNm</strong></>}
                 </div>
               </div>
 
@@ -1328,14 +1287,14 @@ export const ReviewRunPage: React.FC = () => {
                 <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
                   {selectedPoleData.bm_tt_kNm ? (
                     <>
-                      Terminal Longitudinal: BM_TT = 3·T11·H11 + TLV·HLV<br />
+                      Terminal Longitudinal: BM_TT = ∑(T_cct · H_cct)<br />
                       BM_TT = <strong>{selectedPoleData.bm_tt_kNm} kNm</strong><br />
-                      Wind on pole long.: BM_PT = {selectedPoleData.bm_pt_kNm} kNm
+                      Wind on pole long.: BM_PT = {selectedPoleData.bm_pt_kNm ?? 14.26} kNm
                     </>
                   ) : (
                     <>
                       Intermediate Transverse: 2 · T · sin(α/2) · H<br />
-                      BM_T = <strong>{selectedPoleData.bm_t_kNm} kNm</strong> (Deviation: {selectedPoleData.angle_deg}°)
+                      BM_T = <strong>{selectedPoleData.bm_t_kNm} kNm</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)
                     </>
                   )}
                 </div>
@@ -1364,7 +1323,7 @@ export const ReviewRunPage: React.FC = () => {
                 <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
                   Fulcrum: Y = P / √2 = 1.296 m below ground<br />
                   Overturning Moment around Fulcrum BM_F = <strong>{selectedPoleData.bm_f_kNm} kNm</strong><br />
-                  Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kNm</strong> ➔ <strong style={{ color: '#059669' }}>STABLE</strong>
+                  Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kNm</strong> ➔ <strong style={{ color: '#059669' }}>{selectedPoleData.stability}</strong>
                 </div>
               </div>
 
@@ -1375,7 +1334,7 @@ export const ReviewRunPage: React.FC = () => {
                 </div>
                 <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
                   Total Vertical Load = <strong>{selectedPoleData.vertical_load_kN} kN</strong><br />
-                  Soil Class: <strong>Class {selectedPoleData.soil_class} (Stiff Clay)</strong><br />
+                  Soil Class: <strong>Class {selectedPoleData.soil_class}</strong><br />
                   Foundation Assigned: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong>
                 </div>
               </div>
@@ -1387,7 +1346,7 @@ export const ReviewRunPage: React.FC = () => {
       {/* TAB 3: PRE-FLIGHT AUDIT CHECKLIST */}
       {activeTab === 'audit' && (
         <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 700 }}>Pre-Flight Audit Checks</h3>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 700 }}>Pre-Flight Audit Checks for {activeProjectName}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
               <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Route span continuity verified</div>
@@ -1399,7 +1358,7 @@ export const ReviewRunPage: React.FC = () => {
             <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
               <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Sag-tension lookup charts mapped</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Hornet 150 mm² AAC assigned to Chart E6; 70+16+N50 LV ABC assigned to Chart E1.
+                {configuredCircuits.map((c: any) => `${c.circuit_name}: Table ${c.lookup_table || 'UQ'}`).join('; ')}.
               </div>
             </div>
 

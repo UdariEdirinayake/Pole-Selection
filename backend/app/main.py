@@ -16,8 +16,8 @@ from app.api.engine import router as engine_router
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Pole Select API",
-    description="Backend API for pole selection with SQLite, Alembic, Auth, and Project Management",
+    title="LineDesign API",
+    description="Backend API for LineDesign – overhead electrical line design with SQLite, Alembic, Auth, and Project Management",
     version="0.2.0",
 )
 
@@ -54,4 +54,4 @@ def health_check(db: Session = Depends(get_db)):
 
 @app.get("/", tags=["Root"])
 def root():
-    return {"message": "Pole Select API is running", "docs": "/docs"}
+    return {"message": "LineDesign API is running", "docs": "/docs"}

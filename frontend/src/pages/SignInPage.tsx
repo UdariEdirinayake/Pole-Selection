@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 export const SignInPage: React.FC = () => {
-  const [email, setEmail] = useState('designer@pole-select.local')
+  const [email, setEmail] = useState('designer@linedesign.local')
   const [password, setPassword] = useState('DesignerPass123!')
   const [showPassword, setShowPassword] = useState(false)
   const [keepSignedIn, setKeepSignedIn] = useState(true)
@@ -112,7 +112,7 @@ export const SignInPage: React.FC = () => {
               <span style={{ fontSize: '0.58rem', fontWeight: 800, marginTop: '1px' }}>LECO</span>
             </div>
             <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#f8fafc' }}>
-              Pole Select
+              LineDesign
             </span>
           </div>
 
@@ -256,7 +256,7 @@ export const SignInPage: React.FC = () => {
               Sign in
             </h2>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Use your Pole Select account to continue.
+              Use your LineDesign account to continue.
             </p>
           </div>
 
@@ -312,7 +312,7 @@ export const SignInPage: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@pole-select.local"
+                  placeholder="name@linedesign.local"
                   className="form-input"
                   style={{
                     paddingLeft: '34px',
@@ -443,7 +443,7 @@ export const SignInPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
               <button
                 type="button"
-                onClick={() => fillQuick('designer@pole-select.local', 'DesignerPass123!')}
+                onClick={() => fillQuick('designer@linedesign.local', 'DesignerPass123!')}
                 className="btn-secondary"
                 style={{
                   height: '36px',
@@ -460,7 +460,7 @@ export const SignInPage: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => fillQuick('reviewer@pole-select.local', 'ReviewerPass123!')}
+                onClick={() => fillQuick('reviewer@linedesign.local', 'ReviewerPass123!')}
                 className="btn-secondary"
                 style={{
                   height: '36px',
@@ -477,7 +477,7 @@ export const SignInPage: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => fillQuick('admin@pole-select.local', 'AdminPass123!')}
+                onClick={() => fillQuick('admin@linedesign.local', 'AdminPass123!')}
                 className="btn-secondary"
                 style={{
                   height: '36px',
@@ -496,7 +496,7 @@ export const SignInPage: React.FC = () => {
 
           {/* Footer Version Tag */}
           <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Pole Select v0.2
+            LineDesign v0.2
           </div>
         </div>
       </div>

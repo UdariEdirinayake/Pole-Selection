@@ -186,7 +186,7 @@ export const ProjectCircuitsPage: React.FC = () => {
       disabled={saving}
       className="btn-primary"
     >
-      <span>{saving ? 'Saving Project...' : 'Save & Continue to Route'}</span>
+      <span>{saving ? 'Saving Project...' : 'Save & Next: Route & Poles'}</span>
       <ArrowRight size={16} />
     </button>
   )
@@ -451,7 +451,7 @@ export const ProjectCircuitsPage: React.FC = () => {
             className="btn-primary"
             style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem' }}
           >
-            <span>{saving ? 'Saving Project...' : 'Save & Continue to Route'}</span>
+            <span>{saving ? 'Saving Project...' : 'Save & Next: Route & Poles'}</span>
             <ArrowRight size={17} />
           </button>
         </div>

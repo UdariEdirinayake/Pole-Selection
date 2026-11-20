@@ -217,7 +217,7 @@ export const RoutePolesPage: React.FC = () => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
             {saving ? <Loader2 size={16} className="spin" /> : <ArrowRight size={16} />}
-            <span>{saving ? 'Saving Route...' : 'Save & Review'}</span>
+            <span>{saving ? 'Saving Route...' : 'Save & Next: Review Methodology'}</span>
           </button>
         </div>
       </div>
@@ -424,6 +424,20 @@ export const RoutePolesPage: React.FC = () => {
         <div style={{ padding: '1rem' }}>
           <RouteDiagram poles={poles} />
         </div>
+      </div>
+
+      {/* Bottom footer action */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', paddingBottom: '1.5rem' }}>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleSaveAndProceed}
+          disabled={saving}
+          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          {saving ? <Loader2 size={17} className="spin" /> : <ArrowRight size={17} />}
+          <span>{saving ? 'Saving...' : 'Save & Next: Review Methodology'}</span>
+        </button>
       </div>
     </div>
   )

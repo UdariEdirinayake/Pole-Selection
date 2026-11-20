@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Trash2, Play, FolderOpen, Save } from 'lucide-react'
+import { Plus, Search, Trash2, FolderOpen, Save } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { StatusChip } from '../components/StatusChip'
 
@@ -72,21 +72,77 @@ export const DashboardPage: React.FC = () => {
     navigate('/project-circuits')
   }
 
-  const handleQuickCalc = async () => {
-    const targetProject = activeProject || projects[0]
-    if (!targetProject) {
-      alert('Please create or select a project first.')
-      return
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSaveToDevice = async () => {
+    const target = activeProject || projects[0]
+    if (!target) { alert('No active project to save.'); return }
+    try {
+      const res = await fetch(`/api/projects/${target.id}`)
+      if (!res.ok) throw new Error('Failed to fetch project data')
+      const data = await res.json()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${(target.name || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}_linedesign.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e: any) {
+      alert('Save failed: ' + e.message)
     }
-    setActiveProject(targetProject)
-    navigate('/review-run')
   }
 
-  const handleSaveActive = () => {
-    alert('All active project data and line schedules are saved automatically to the database.')
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      // Create the project via API
+      const res = await fetch('/api/projects/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name || file.name.replace('_linedesign.json', ''),
+          description: data.description || '',
+          line_arrangement: data.line_arrangement || '11 kV + LV',
+          circuits: (data.circuits || []).map((c: any) => ({
+            circuit_name: c.circuit_name,
+            nominal_voltage_kv: c.nominal_voltage_kv,
+            circuit_type: c.circuit_type || 'Overhead ABC',
+            conductor_code: c.conductor_code,
+            conductor_name: c.conductor_name,
+            lookup_table: c.lookup_table,
+          })),
+          poles: (data.poles || []).map((p: any) => ({
+            section: p.section || 1,
+            pole_no: p.pole_no,
+            aft_span_m: p.aft_span_m || 0,
+            fore_span_m: p.fore_span_m || 0,
+            angle_deg: p.angle_deg || 0,
+            soil_class_num: p.soil_class_num || 4,
+            equipment: p.equipment,
+            span_environment: p.span_environment || 'across any road or street',
+          })),
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to import project')
+      const created = await res.json()
+      await loadProjects()
+      // Set as active and navigate
+      const all = await fetch('/api/projects/').then(r => r.json())
+      const newProj = all.find((p: any) => p.id === created.id) || all[0]
+      if (newProj) { setActiveProject(newProj); navigate('/project-circuits') }
+    } catch (err: any) {
+      alert('Import failed: ' + (err.message || 'Invalid file'))
+    } finally {
+      if (e.target) e.target.value = ''
+    }
   }
 
-  // Counts for KPI cards
   const totalPoles = useMemo(() => {
     return projects.reduce((acc, p) => acc + (p.pole_count || 0), 0)
   }, [projects])
@@ -118,7 +174,6 @@ export const DashboardPage: React.FC = () => {
       if (voltageFilter !== 'ALL') {
         const arr = (p.line_arrangement || '').toLowerCase()
         if (voltageFilter === '11kV_LV' && !arr.includes('11') && !arr.includes('lv')) return false
-        if (voltageFilter === '33kV_LV' && !arr.includes('33')) return false
         if (voltageFilter === 'LV_ONLY' && (!arr.includes('lv') || arr.includes('11') || arr.includes('33'))) return false
         if (voltageFilter === '11kV' && !arr.includes('11')) return false
       }
@@ -129,7 +184,6 @@ export const DashboardPage: React.FC = () => {
         if (statusFilter === 'PASS' && normStatus !== 'PASS') return false
         if (statusFilter === 'CAUTION' && normStatus !== 'CAUTION') return false
         if (statusFilter === 'FAIL' && normStatus !== 'FAIL') return false
-        if (statusFilter === 'NOT_CALCULATED' && normStatus !== 'NOT CALCULATED' && normStatus !== 'DRAFT' && normStatus !== 'READY') return false
       }
 
       return true
@@ -181,23 +235,7 @@ export const DashboardPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           <button
             type="button"
-            onClick={handleQuickCalc}
-            className="btn-secondary"
-            style={{
-              height: '38px',
-              minHeight: '38px',
-              padding: '0 0.95rem',
-              fontSize: '0.825rem',
-              fontWeight: 600,
-            }}
-          >
-            <Play size={14} style={{ fill: 'currentColor' }} />
-            <span>Quick calculation</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => projects.length > 0 && handleOpenProject(projects[0])}
+            onClick={() => fileInputRef.current?.click()}
             className="btn-secondary"
             style={{
               height: '38px',
@@ -213,7 +251,7 @@ export const DashboardPage: React.FC = () => {
 
           <button
             type="button"
-            onClick={handleSaveActive}
+            onClick={handleSaveToDevice}
             className="btn-secondary"
             style={{
               height: '38px',
@@ -240,8 +278,15 @@ export const DashboardPage: React.FC = () => {
             }}
           >
             <Plus size={16} />
-            <span>+ New project</span>
+            <span>New project</span>
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            style={{ display: 'none' }}
+            onChange={handleFileImport}
+          />
         </div>
       </div>
 
@@ -490,7 +535,6 @@ export const DashboardPage: React.FC = () => {
             >
               <option value="ALL">All voltages</option>
               <option value="11kV_LV">11 kV + LV</option>
-              <option value="33kV_LV">33 kV + LV</option>
               <option value="11kV">11 kV</option>
               <option value="LV_ONLY">LV only</option>
             </select>
@@ -513,7 +557,6 @@ export const DashboardPage: React.FC = () => {
               <option value="PASS">Pass</option>
               <option value="CAUTION">Caution</option>
               <option value="FAIL">Fail</option>
-              <option value="NOT_CALCULATED">Not calculated</option>
             </select>
           </div>
         </div>

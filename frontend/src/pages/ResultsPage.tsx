@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DataTable, Column } from '../components/DataTable'
 import { StatusChip } from '../components/StatusChip'
 import { RouteDiagram } from '../components/RouteDiagram'
-import { AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 
 function transformLiveResults(calcResults: any) {
   if (!calcResults || !Array.isArray(calcResults.results)) return null
@@ -187,6 +187,7 @@ function transformLiveResults(calcResults: any) {
 
 export const ResultsPage: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'summary' | 'loads' | 'clearances'>('summary')
   const [resultsData, setResultsData] = useState<any>(null)
   const [isLive, setIsLive] = useState(false)
@@ -726,6 +727,38 @@ export const ResultsPage: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* Bottom footer action */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem', paddingBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => navigate('/dashboard')}
+          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <span>Return to Dashboard</span>
+        </button>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => {
+            const data = JSON.stringify(resultsData, null, 2)
+            const blob = new Blob([data], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'engineering_report.json'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+          }}
+          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          <span>Export Engineering Report</span>
+          <ArrowRight size={17} />
+        </button>
+      </div>
     </div>
   )
 }

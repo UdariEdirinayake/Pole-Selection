@@ -90,7 +90,7 @@ export const AppLayout: React.FC = () => {
             <span style={{ fontSize: '0.55rem', fontWeight: 800, marginTop: '1px' }}>LECO</span>
           </div>
           <div className="app-brand-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-            Pole Select
+            LineDesign
           </div>
           <span className="version-tag" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>v0.2</span>
         </div>
@@ -163,7 +163,7 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="sidebar-footer-card">
-            <h5 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>Pole Select v0.2</h5>
+            <h5 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>LineDesign v0.2</h5>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
               Master data: {datasetVersion ? datasetVersion.name : 'LECO Master'}.<br />
               Imported {formattedDate}. All engineering constants come from the dataset.

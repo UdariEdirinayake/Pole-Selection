@@ -1419,6 +1419,21 @@ export const ReviewRunPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Bottom footer action */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem', paddingBottom: '1.5rem' }}>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleExecuteCalculations}
+          disabled={isRunning || loading}
+          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
+        >
+          {isRunning ? <Loader2 size={17} className="spin" /> : null}
+          <span>{isRunning ? 'Running Analysis...' : 'Execute Calculations & View Results'}</span>
+          {!isRunning && <ArrowRight size={17} />}
+        </button>
+      </div>
     </div>
   )
 }

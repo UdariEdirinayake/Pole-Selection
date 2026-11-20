@@ -5,7 +5,8 @@ import { ThemeProvider } from './context/ThemeContext'
 import { ProjectProvider } from './context/ProjectContext'
 import { AppLayout } from './layouts/AppLayout'
 import { SignInPage } from './pages/SignInPage'
-import { HomePage, AboutPage, HelpPage } from './pages/PublicPages'
+import { HomePage, AboutPage } from './pages/PublicPages'
+import { HelpDocsPage } from './pages/HelpDocsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProjectCircuitsPage } from './pages/ProjectCircuitsPage'
 import { RoutePolesPage } from './pages/RoutePolesPage'
@@ -58,7 +59,7 @@ export default function App() {
                 <Route path="/review-methodology" element={<ReviewRunPage />} />
                 <Route path="/results" element={<ResultsPage />} />
                 <Route path="/construction-data" element={<ConstructionDataPage />} />
-                <Route path="/help" element={<HelpPage />} />
+                <Route path="/help" element={<HelpDocsPage />} />
               </Route>
 
               {/* Fallback */}

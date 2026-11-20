@@ -10,7 +10,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  Zap,
   Database,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -68,26 +67,17 @@ export const AppLayout: React.FC = () => {
         <div className="header-left">
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: '6px',
-              backgroundColor: '#facc15',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#0f172a',
-              fontWeight: 900,
-              fontSize: '0.62rem',
-              lineHeight: 1,
-              letterSpacing: '0.02em',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-              padding: '2px',
             }}
             title="Lanka Electricity Company"
           >
-            <Zap size={14} fill="#0f172a" strokeWidth={1} />
-            <span style={{ fontSize: '0.55rem', fontWeight: 800, marginTop: '1px' }}>LECO</span>
+            <img
+              src="/leco_logo.png"
+              alt="LECO"
+              style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+            />
           </div>
           <div className="app-brand-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
             LineDesign

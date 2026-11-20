@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Lock, Mail, AlertCircle, Sun, Moon, Zap } from 'lucide-react'
+import { Lock, Mail, AlertCircle, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -90,27 +90,11 @@ export const SignInPage: React.FC = () => {
         {/* Top: Logo & App Title */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '3.5rem' }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '7px',
-                backgroundColor: '#facc15',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0f172a',
-                fontWeight: 900,
-                fontSize: '0.65rem',
-                lineHeight: 1,
-                boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
-                padding: '2px',
-              }}
-            >
-              <Zap size={15} fill="#0f172a" strokeWidth={1} />
-              <span style={{ fontSize: '0.58rem', fontWeight: 800, marginTop: '1px' }}>LECO</span>
-            </div>
+            <img
+              src="/leco_logo.png"
+              alt="LECO"
+              style={{ height: '38px', width: 'auto', objectFit: 'contain' }}
+            />
             <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#f8fafc' }}>
               LineDesign
             </span>

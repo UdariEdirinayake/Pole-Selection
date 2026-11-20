@@ -1,1 +1,1 @@
-LineDesign rename, file save/load, dashboard cleanup, save-next footers
+feat: redesign help & docs page to match official LECO spec with logo

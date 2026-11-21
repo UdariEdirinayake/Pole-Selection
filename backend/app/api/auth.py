@@ -32,7 +32,18 @@ class UserResponse(BaseModel):
 @router.post("/login", response_model=UserResponse)
 def login(credentials: LoginRequest, response: Response, db: Session = Depends(get_db)):
     """Authenticate user with email and password, setting an httpOnly JWT cookie."""
-    user = db.query(User).filter(User.email == credentials.email.lower().strip(), User.active == True).first()
+    req_email = credentials.email.lower().strip()
+    if req_email.endswith("@linedesign.local"):
+        alt_email = req_email.replace("@linedesign.local", "@pole-select.local")
+    elif req_email.endswith("@pole-select.local"):
+        alt_email = req_email.replace("@pole-select.local", "@linedesign.local")
+    else:
+        alt_email = req_email
+
+    user = db.query(User).filter(
+        (User.email == req_email) | (User.email == alt_email),
+        User.active == True,
+    ).first()
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

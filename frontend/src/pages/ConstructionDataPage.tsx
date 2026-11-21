@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw,
-  Table as TableIcon,
   Plus,
   Trash2,
 } from 'lucide-react'
@@ -24,12 +23,12 @@ export interface TableMeta {
 }
 
 const SPAN_TENSION_FIELDS = [
-  { key: 'span_m', label: 'Span Length (m)', type: 'number' as const },
-  { key: 'tension_kn', label: 'Max Tension @ 15°C + Wind (kN)', type: 'number' as const },
-  { key: 'tension_27_kn', label: 'Everyday Tension @ 27°C (kN)', type: 'number' as const },
-  { key: 'sag_15_m', label: 'Sag @ 15°C (m)', type: 'number' as const },
-  { key: 'sag_27_m', label: 'Sag @ 27°C Everyday (m)', type: 'number' as const },
-  { key: 'sag_65_m', label: 'Max Sag @ 65°C Operating (m)', type: 'number' as const },
+  { key: 'span_m', label: 'Span (m)', type: 'number' as const },
+  { key: 'tension_kn', label: 'Max Tension 15°C+Wind (kN)', type: 'number' as const },
+  { key: 'tension_27_kn', label: 'EDT 27°C (kN)', type: 'number' as const },
+  { key: 'sag_15_m', label: 'Sag 15°C (m)', type: 'number' as const },
+  { key: 'sag_27_m', label: 'Sag 27°C (m)', type: 'number' as const },
+  { key: 'sag_65_m', label: 'Max Sag 65°C (m)', type: 'number' as const },
 ]
 
 export const MASTER_TABLES: TableMeta[] = [
@@ -41,13 +40,13 @@ export const MASTER_TABLES: TableMeta[] = [
     category: 'Conductor Specifications',
     description: 'Catalog sizes, breaking loads, ultimate tensile strengths, weights, and lookup table mappings.',
     editableFields: [
-      { key: 'description', label: 'Conductor Description', type: 'text' },
-      { key: 'diameter_mm', label: 'Diameter (mm)', type: 'number' },
+      { key: 'description', label: 'Description', type: 'text' },
+      { key: 'diameter_mm', label: 'Dia (mm)', type: 'number' },
       { key: 'weight_kg_per_m', label: 'Weight (kg/m)', type: 'number' },
       { key: 'ultimate_tensile_strength_kn', label: 'UTS (kN)', type: 'number' },
-      { key: 'modulus_elasticity_kg_per_mm2', label: 'Modulus of Elasticity (kg/mm²)', type: 'number' },
-      { key: 'thermal_expansion_coeff_per_c', label: 'Thermal Expansion Coeff (/°C)', type: 'number' },
-      { key: 'lookup_table', label: 'Mapped Sag-Tension Table ID', type: 'text' },
+      { key: 'modulus_elasticity_kg_per_mm2', label: 'Modulus (kg/mm²)', type: 'number' },
+      { key: 'thermal_expansion_coeff_per_c', label: 'Exp Coeff (/°C)', type: 'number' },
+      { key: 'lookup_table', label: 'Lookup Table ID', type: 'text' },
     ],
   },
 
@@ -160,13 +159,13 @@ export const MASTER_TABLES: TableMeta[] = [
     category: 'Structural Library',
     description: 'Allowable transverse working loads (daN), Euler buckling capacities, weights, and below-ground dimensions.',
     editableFields: [
-      { key: 'height_m', label: 'Pole Height (m)', type: 'number' },
-      { key: 'class_label', label: 'Class / Rating Label', type: 'text' },
-      { key: 'capacity_dan', label: 'Transverse Working Rating (daN)', type: 'number' },
-      { key: 'critical_buckling_kn', label: 'Critical Buckling Strength (kN)', type: 'number' },
-      { key: 'weight_kg', label: 'Pole Mass (kg)', type: 'number' },
-      { key: 'footprint_mm', label: 'Base Footprint (e.g. 500x300)', type: 'text' },
-      { key: 'below_gl_breadth_m', label: 'Below-GL Breadth (m)', type: 'number' },
+      { key: 'height_m', label: 'Height (m)', type: 'number' },
+      { key: 'class_label', label: 'Class', type: 'text' },
+      { key: 'capacity_dan', label: 'Working Rating (daN)', type: 'number' },
+      { key: 'critical_buckling_kn', label: 'Buckling (kN)', type: 'number' },
+      { key: 'weight_kg', label: 'Mass (kg)', type: 'number' },
+      { key: 'footprint_mm', label: 'Footprint', type: 'text' },
+      { key: 'below_gl_breadth_m', label: 'Below-GL (m)', type: 'number' },
     ],
   },
   {
@@ -176,8 +175,8 @@ export const MASTER_TABLES: TableMeta[] = [
     category: 'Structural Library',
     description: 'Permissible working load capacities for light (2,000 daN) and heavy (3,500 daN) stay wire configurations.',
     editableFields: [
-      { key: 'code', label: 'Stay Code / Class', type: 'text' },
-      { key: 'working_load_dan', label: 'Allowable Working Load (daN)', type: 'number' },
+      { key: 'code', label: 'Stay Code', type: 'text' },
+      { key: 'working_load_dan', label: 'Working Load (daN)', type: 'number' },
     ],
   },
   {
@@ -187,8 +186,8 @@ export const MASTER_TABLES: TableMeta[] = [
     category: 'Geotechnical & Foundations',
     description: 'Subgrade reaction modulus (kN/m³) and allowable bearing capacities (kN/m²) for Soil Classes 1 through 5.',
     editableFields: [
-      { key: 'soil_class_num', label: 'Soil Class Number (1–5)', type: 'number' },
-      { key: 'subgrade_kn_per_m3', label: 'Subgrade Modulus (kN/m³)', type: 'number' },
+      { key: 'soil_class_num', label: 'Class (1–5)', type: 'number' },
+      { key: 'subgrade_kn_per_m3', label: 'Subgrade (kN/m³)', type: 'number' },
       { key: 'bearing_min_kn_per_m2', label: 'Bearing Min (kN/m²)', type: 'number' },
       { key: 'bearing_max_kn_per_m2', label: 'Bearing Max (kN/m²)', type: 'number' },
     ],
@@ -200,10 +199,10 @@ export const MASTER_TABLES: TableMeta[] = [
     category: 'Fittings & Clearances',
     description: 'Cantilever strengths, nominal mounting heights, and deflection tie limits (TTIE ≤ 10°, STIE ≤ 20°, clamps > 20°).',
     editableFields: [
-      { key: 'description', label: 'Insulator Description', type: 'text' },
-      { key: 'voltage_level_kv', label: 'Voltage Level (kV)', type: 'number' },
-      { key: 'nominal_height_m', label: 'Nominal Height (m)', type: 'number' },
-      { key: 'cantilever_strength_kn', label: 'Cantilever Pin Strength (kN)', type: 'number' },
+      { key: 'description', label: 'Description', type: 'text' },
+      { key: 'voltage_level_kv', label: 'Voltage (kV)', type: 'number' },
+      { key: 'nominal_height_m', label: 'Height (m)', type: 'number' },
+      { key: 'cantilever_strength_kn', label: 'Cantilever Pin (kN)', type: 'number' },
     ],
   },
   {
@@ -215,7 +214,7 @@ export const MASTER_TABLES: TableMeta[] = [
     editableFields: [
       { key: 'voltage_band', label: 'Voltage Band', type: 'text' },
       { key: 'environment', label: 'Environment', type: 'text' },
-      { key: 'min_clearance_m', label: 'Minimum Required Clearance (m)', type: 'number' },
+      { key: 'min_clearance_m', label: 'Min Clearance (m)', type: 'number' },
     ],
   },
   {
@@ -227,13 +226,14 @@ export const MASTER_TABLES: TableMeta[] = [
     editableFields: [
       { key: 'parameter_name', label: 'Parameter Key', type: 'text' },
       { key: 'value', label: 'Design Value', type: 'number' },
-      { key: 'unit', label: 'Physical Unit', type: 'text' },
-      { key: 'source_note', label: 'Engineering Citation / Authority', type: 'text' },
+      { key: 'unit', label: 'Unit', type: 'text' },
+      { key: 'source_note', label: 'Engineering Citation', type: 'text' },
     ],
   },
 ]
 
 export const ConstructionDataPage: React.FC = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [selectedTableId, setSelectedTableId] = useState<string>('conductors')
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -474,113 +474,153 @@ export const ConstructionDataPage: React.FC = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Table Selector Sidebar */}
-        <div className="card" style={{ padding: '0.75rem', maxHeight: '82vh', overflowY: 'auto' }}>
-          <div style={{ padding: '0.5rem 0.5rem 0.75rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.5rem' }}>
-            <h4 style={{ margin: 0, fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-              Construction Tables & Charts
-            </h4>
+      {/* 1. Category Filter Pills */}
+      <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'center' }}>
+        {['All', ...categories].map((cat) => {
+          const isSelected = selectedCategory === cat
+          const count = cat === 'All' ? MASTER_TABLES.length : MASTER_TABLES.filter((t) => t.category === cat).length
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => {
+                setSelectedCategory(cat)
+                if (cat !== 'All') {
+                  const firstInCat = MASTER_TABLES.find((t) => t.category === cat)
+                  if (firstInCat && !MASTER_TABLES.filter((t) => t.category === cat).some((t) => t.id === selectedTableId)) {
+                    setSelectedTableId(firstInCat.id)
+                  }
+                }
+              }}
+              style={{
+                padding: '0.35rem 0.8rem',
+                borderRadius: '9999px',
+                fontSize: '0.78rem',
+                fontWeight: isSelected ? 700 : 500,
+                backgroundColor: isSelected ? 'var(--primary)' : 'var(--bg-subtle)',
+                color: isSelected ? '#ffffff' : 'var(--text-main)',
+                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>{cat}</span>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  opacity: isSelected ? 0.95 : 0.65,
+                  padding: '0.05rem 0.35rem',
+                  borderRadius: '10px',
+                  backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--border-color)',
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 2. Top Controls Toolbar: Table Selector Dropdown + Search */}
+      <div className="card" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          {/* Table Picker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: '1 1 420px', minWidth: '260px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem', flexShrink: 0 }}>
+              <Database size={16} />
+              <span>Selected Catalog:</span>
+            </div>
+            <select
+              value={selectedTableId}
+              onChange={(e) => {
+                setSelectedTableId(e.target.value)
+                const t = MASTER_TABLES.find((m) => m.id === e.target.value)
+                if (t && selectedCategory !== 'All' && t.category !== selectedCategory) {
+                  setSelectedCategory(t.category)
+                }
+              }}
+              style={{
+                flex: 1,
+                padding: '0.5rem 0.75rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-main)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {(selectedCategory === 'All' ? categories : [selectedCategory]).map((cat) => (
+                <optgroup key={cat} label={cat}>
+                  {MASTER_TABLES.filter((t) => t.category === cat).map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.spanTensionTableId ? `[Chart ${t.spanTensionTableId}] ${t.label}` : t.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-            {categories.map((cat) => (
-              <div key={cat}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', padding: '0.2rem 0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {cat}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  {MASTER_TABLES.filter((t) => t.category === cat).map((table) => {
-                    const isSelected = table.id === selectedTableId
-                    return (
-                      <button
-                        key={table.id}
-                        type="button"
-                        onClick={() => setSelectedTableId(table.id)}
-                        style={{
-                          textAlign: 'left',
-                          padding: '0.55rem 0.75rem',
-                          borderRadius: '6px',
-                          border: isSelected ? '1px solid var(--primary-border)' : '1px solid transparent',
-                          backgroundColor: isSelected ? 'var(--primary-subtle)' : 'transparent',
-                          color: isSelected ? 'var(--primary)' : 'var(--text-main)',
-                          fontWeight: isSelected ? 600 : 500,
-                          fontSize: '0.825rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.55rem',
-                          transition: 'all 0.15s ease',
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {table.spanTensionTableId ? (
-                          <TableIcon size={14} color={isSelected ? 'var(--primary)' : 'var(--text-muted)'} style={{ flexShrink: 0 }} />
-                        ) : (
-                          <Database size={14} color={isSelected ? 'var(--primary)' : 'var(--text-muted)'} style={{ flexShrink: 0 }} />
-                        )}
-                        <span style={{ flex: 1 }}>{table.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+          {/* Search Filter */}
+          <div style={{ position: 'relative', width: '240px' }}>
+            <Search size={14} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Filter table rows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.45rem 0.65rem 0.45rem 1.9rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.825rem',
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-main)',
+              }}
+            />
           </div>
         </div>
+      </div>
 
-        {/* Table Data View Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Active Catalog Description Bar */}
-          <div className="card" style={{ padding: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-              <div style={{ maxWidth: '620px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  {activeTableMeta.spanTensionTableId && (
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '4px',
-                        backgroundColor: 'var(--primary-subtle)',
-                        color: 'var(--primary)',
-                        border: '1px solid var(--primary-border)',
-                      }}
-                    >
-                      CHART CODE: {activeTableMeta.spanTensionTableId}
-                    </span>
-                  )}
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                    {activeTableMeta.fullName}
-                  </h3>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
-                  {activeTableMeta.description}
-                </p>
-              </div>
-
-              {/* Search input */}
-              <div style={{ position: 'relative', minWidth: '220px' }}>
-                <Search size={15} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  placeholder="Filter rows..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+      {/* 3. Active Table Title & Info Bar */}
+      <div className="card" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+              {activeTableMeta.spanTensionTableId && (
+                <span
                   style={{
-                    width: '100%',
-                    padding: '0.45rem 0.65rem 0.45rem 2rem',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border-color)',
-                    fontSize: '0.85rem',
-                    backgroundColor: 'var(--bg-main)',
-                    color: 'var(--text-main)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '4px',
+                    backgroundColor: 'var(--primary-subtle)',
+                    color: 'var(--primary)',
+                    border: '1px solid var(--primary-border)',
                   }}
-                />
-              </div>
+                >
+                  CHART CODE: {activeTableMeta.spanTensionTableId}
+                </span>
+              )}
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+                {activeTableMeta.fullName}
+              </h3>
             </div>
+            <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              {activeTableMeta.description}
+            </p>
           </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            Showing <strong>{filteredItems.length}</strong> of <strong>{items.length}</strong> records
+          </div>
+        </div>
+      </div>
 
           {/* Add Record Form Box */}
           {isAdding && (
@@ -737,32 +777,53 @@ export const ConstructionDataPage: React.FC = () => {
                 No records found matching current query.
               </div>
             ) : (
-              <div className="table-responsive">
-                <table className="data-table">
+              <div className="table-responsive" style={{ overflowX: 'auto' }}>
+                <table className="data-table" style={{ width: '100%', tableLayout: 'auto' }}>
                   <thead>
                     <tr>
-                      <th style={{ width: '50px', textAlign: 'center' }}>#</th>
+                      <th style={{ width: '45px', textAlign: 'center', padding: '0.65rem 0.5rem' }}>#</th>
                       {activeTableMeta.editableFields.map((f) => (
-                        <th key={f.key}>{f.label}</th>
+                        <th
+                          key={f.key}
+                          style={{
+                            padding: '0.65rem 0.75rem',
+                            whiteSpace: 'normal',
+                            verticalAlign: 'bottom',
+                            fontSize: '0.75rem',
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {f.label}
+                        </th>
                       ))}
-                      <th style={{ width: '130px', textAlign: 'center' }}>Actions</th>
+                      <th style={{ width: '115px', textAlign: 'center', padding: '0.65rem 0.5rem' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredItems.map((row, idx) => (
                       <tr key={row.id}>
-                        <td style={{ fontFamily: 'monospace', fontWeight: 600, textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 600, textAlign: 'center', color: 'var(--text-muted)', padding: '0.55rem 0.5rem' }}>
                           {idx + 1}
                         </td>
                         {activeTableMeta.editableFields.map((f) => {
                           const val = row[f.key]
+                          const isNumber = f.type === 'number'
                           return (
-                            <td key={f.key} style={{ whiteSpace: 'nowrap' }}>
+                            <td
+                              key={f.key}
+                              style={{
+                                padding: '0.55rem 0.75rem',
+                                whiteSpace: isNumber ? 'nowrap' : 'normal',
+                                wordBreak: isNumber ? 'normal' : 'break-word',
+                                maxWidth: isNumber ? '150px' : '280px',
+                                fontSize: '0.825rem',
+                              }}
+                            >
                               {val != null ? String(val) : '—'}
                             </td>
                           )
                         })}
-                        <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <td style={{ textAlign: 'center', whiteSpace: 'nowrap', padding: '0.45rem 0.5rem' }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                             <button
                               type="button"
@@ -811,8 +872,6 @@ export const ConstructionDataPage: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   )
 }

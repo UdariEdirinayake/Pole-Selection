@@ -80,7 +80,7 @@ export const AppLayout: React.FC = () => {
             />
           </div>
           <div className="app-brand-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-            LineDesign
+            Line<span style={{ color: 'var(--primary)' }}>Design</span>
           </div>
           <span className="version-tag" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>v0.2</span>
         </div>
@@ -132,7 +132,7 @@ export const AppLayout: React.FC = () => {
               })}
             </nav>
 
-            <div style={{ margin: '1.25rem 0 0.5rem', borderTop: '1px solid var(--border-light)' }} />
+            <div style={{ margin: '1.25rem 0 0.5rem', borderTop: '1px solid var(--border-color)' }} />
 
             <nav className="sidebar-nav">
               {secondaryNavItems.map((item) => {

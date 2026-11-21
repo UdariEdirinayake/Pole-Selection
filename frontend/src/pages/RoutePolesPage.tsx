@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, AlertTriangle, CheckCircle, ArrowRight, MapPin, Upload, Loader2 } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle, MapPin, Upload, Loader2, Play } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
 import { ImportDropzone } from '../components/ImportDropzone'
@@ -43,7 +43,7 @@ export function validateRouteContinuity(poles: PoleRow[]): { valid: boolean; bro
 }
 
 export const RoutePolesPage: React.FC = () => {
-  const { activeProject, refreshProjects } = useProject()
+  const { activeProject, setActiveProject, refreshProjects } = useProject()
   const [poles, setPoles] = useState<PoleRow[]>([])
   const [soilClasses, setSoilClasses] = useState<{ num: string; desc: string }[]>([
     { num: '1', desc: 'Soft clay / silt' },
@@ -141,19 +141,28 @@ export const RoutePolesPage: React.FC = () => {
     setPoles(fixed)
   }
 
-  const handleSaveAndProceed = async () => {
+  const handleRunCalculations = async () => {
     if (!continuityResult.valid) {
-      alert(`Please resolve route continuity before proceeding:\n${continuityResult.message}`)
-      return
-    }
-
-    if (!activeProject?.id) {
-      navigate('/review-run')
+      alert(`Please resolve route continuity before running calculations:\n${continuityResult.message}`)
       return
     }
 
     setSaving(true)
     try {
+      let projectId = activeProject?.id
+
+      if (!projectId) {
+        const projRes = await fetch('/api/projects/')
+        if (projRes.ok) {
+          const projs = await projRes.json()
+          const arr: any[] = Array.isArray(projs) ? projs : projs.items || []
+          if (arr.length > 0) {
+            projectId = arr[0].id
+            setActiveProject(arr[0])
+          }
+        }
+      }
+
       const polePayload = poles.map((p) => ({
         section: Number(p.section) || 1,
         pole_no: Number(p.pole_no),
@@ -166,24 +175,68 @@ export const RoutePolesPage: React.FC = () => {
         span_environment: 'across any road or street',
       }))
 
-      const res = await fetch(`/api/projects/${activeProject.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          poles: polePayload,
-        }),
-      })
+      if (projectId) {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            poles: polePayload,
+          }),
+        })
 
-      if (res.ok) {
-        await refreshProjects()
-        navigate('/review-run')
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          alert(err.detail || 'Failed to save route poles to the project.')
+          setSaving(false)
+          return
+        }
+
+        // Run calculation engine
+        const calcRes = await fetch('/api/engine/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: projectId }),
+        })
+
+        if (!calcRes.ok) {
+          const calcErr = await calcRes.json().catch(() => ({}))
+          console.warn('Calculation warning:', calcErr.detail)
+        }
       } else {
-        const err = await res.json().catch(() => ({}))
-        alert(err.detail || 'Failed to save route poles to the project.')
+        // Create new project with these poles
+        const newRes = await fetch('/api/projects/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'New Line Project',
+            description: 'Overhead Line Design',
+            line_arrangement: '11 kV + LV',
+            circuits: [
+              { circuit_name: 'C1 (11kV)', nominal_voltage_kv: 11.0, circuit_type: 'Overhead ABC', conductor_code: 1, conductor_name: '70+16+N50 bundled conductor (LV)', lookup_table: 'UQ' },
+              { circuit_name: 'C2 (LV)', nominal_voltage_kv: 0.4, circuit_type: 'Overhead ABC', conductor_code: 1, conductor_name: '70+16+N50 bundled conductor (LV)', lookup_table: 'UQ' },
+            ],
+            poles: polePayload,
+          }),
+        })
+        if (newRes.ok) {
+          const newProj = await newRes.json()
+          projectId = newProj.id
+          if (newProj.id) {
+            await fetch('/api/engine/run', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ project_id: newProj.id }),
+            })
+          }
+        }
       }
+
+      await refreshProjects()
+      // Once calculations run, navigate directly to Review Methodology page
+      navigate('/review-run')
     } catch (e) {
-      console.error('Error saving route poles:', e)
-      alert('Network error while saving route poles.')
+      console.error('Error running calculations:', e)
+      alert('Network error while running calculations.')
     } finally {
       setSaving(false)
     }
@@ -407,12 +460,12 @@ export const RoutePolesPage: React.FC = () => {
         <button
           type="button"
           className="btn-primary"
-          onClick={handleSaveAndProceed}
+          onClick={handleRunCalculations}
           disabled={saving}
-          style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          style={{ height: '46px', minHeight: '46px', padding: '0 1.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.925rem', fontWeight: 700 }}
         >
-          {saving ? <Loader2 size={17} className="spin" /> : <ArrowRight size={17} />}
-          <span>{saving ? 'Saving...' : 'Save & Next: Review Methodology'}</span>
+          {saving ? <Loader2 size={18} className="spin" /> : <Play size={17} style={{ fill: 'currentColor' }} />}
+          <span>{saving ? 'Running Calculations...' : 'Run Calculations'}</span>
         </button>
       </div>
     </div>

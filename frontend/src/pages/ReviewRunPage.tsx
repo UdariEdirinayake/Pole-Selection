@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
-  Play,
   Loader2,
   BookOpen,
   ShieldCheck,
@@ -447,44 +446,6 @@ export const ReviewRunPage: React.FC = () => {
             Engineering calculation audit and live step-by-step mathematical derivations for{' '}
             <strong>{activeProjectName}</strong> ({polesCount} poles, {projectSections.length} sections).
           </p>
-        </div>
-
-        {/* Header Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleExecuteCalculations}
-            disabled={isRunning || loading}
-            style={{
-              height: '38px',
-              minHeight: '38px',
-              padding: '0 1.25rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            {isRunning ? <Loader2 size={16} className="spin" /> : <Play size={15} style={{ fill: 'currentColor' }} />}
-            <span>{isRunning ? 'Running Analysis...' : 'Run calculations'}</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => navigate('/results')}
-            style={{
-              height: '38px',
-              minHeight: '38px',
-              padding: '0 1.15rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-            }}
-          >
-            <span>View Results</span>
-            <ArrowRight size={15} />
-          </button>
         </div>
       </div>
 

@@ -98,7 +98,6 @@ export const AppLayout: React.FC = () => {
           {user && (
             <div className="user-chip" data-testid="user-chip">
               <span className="user-avatar-dot" />
-              <span className="user-email">{user.email}</span>
               <span className="user-role-badge">{user.role}</span>
             </div>
           )}

@@ -1,63 +1,22 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StatusChip } from '../components/StatusChip'
 
 export const HelpDocsPage: React.FC = () => {
   const navigate = useNavigate()
-  const [activeSection, setActiveSection] = useState('workflow')
-
-  const sections = [
-    { id: 'workflow', label: 'Workflow' },
-    { id: 'status-labels', label: 'Status labels' },
-    { id: 'methodology', label: 'Methodology' },
-    { id: 'worked-example', label: 'Worked example' },
-    { id: 'constants-and-rules', label: 'Constants and rules' },
-    { id: 'troubleshooting', label: 'Troubleshooting' },
-    { id: 'glossary', label: 'Glossary' },
-  ]
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 120
-      for (const section of sections) {
-        const el = document.getElementById(section.id)
-        if (el) {
-          const top = el.offsetTop
-          const height = el.offsetHeight
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section.id)
-            break
-          }
-        }
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  const scrollToSection = (id: string) => {
-    setActiveSection(id)
-    const element = document.getElementById(id)
-    if (element) {
-      const yOffset = -80
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
-      window.scrollTo({ top: y, behavior: 'smooth' })
-    }
-  }
 
   return (
     <div
       className="page-wrapper"
       style={{
-        maxWidth: '1280px',
+        maxWidth: '1080px',
         margin: '0 auto',
         padding: '0 1rem 3rem',
       }}
     >
-      <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start' }}>
+      <div>
         {/* Main Content Area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div>
           {/* Header */}
           <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
@@ -952,80 +911,6 @@ export const HelpDocsPage: React.FC = () => {
             </div>
           </section>
         </div>
-
-        {/* Sticky On this page Table of Contents (matching image 1 & 2) */}
-        <aside
-          style={{
-            width: '210px',
-            flexShrink: 0,
-            position: 'sticky',
-            top: '80px',
-            paddingTop: '0.5rem',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              color: 'var(--text-muted)',
-              marginBottom: '0.75rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
-            On this page
-          </div>
-
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-            {sections.map((sec) => {
-              const isActive = activeSection === sec.id
-              return (
-                <button
-                  key={sec.id}
-                  type="button"
-                  onClick={() => scrollToSection(sec.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '4px',
-                    fontSize: '0.825rem',
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    borderLeft: isActive ? '2px solid var(--primary)' : '2px solid transparent',
-                    backgroundColor: isActive ? 'var(--bg-subtle)' : 'transparent',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {sec.label}
-                </button>
-              )
-            })}
-          </nav>
-
-          {/* Quick LECO badge in TOC footer */}
-          <div
-            style={{
-              marginTop: '2rem',
-              padding: '0.85rem',
-              backgroundColor: 'var(--bg-subtle)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-sm)',
-              textAlign: 'center',
-            }}
-          >
-            <img
-              src="/leco_logo.png"
-              alt="LECO"
-              style={{ height: '36px', width: 'auto', margin: '0 auto 0.4rem', display: 'block' }}
-            />
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-              Lanka Electricity Company (Pvt) Ltd
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   )

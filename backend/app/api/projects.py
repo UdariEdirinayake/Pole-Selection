@@ -49,9 +49,9 @@ class ProjectUpdate(BaseModel):
 
 @router.get("/")
 def list_projects(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """List projects owned by the current user (or all if admin)."""
+    """List projects accessible to the user (all projects for designers/reviewers/admins)."""
     query = db.query(Project)
-    if current_user.role != "admin":
+    if current_user.role not in ("admin", "designer", "reviewer"):
         query = query.filter(Project.owner_id == current_user.id)
     projects = query.order_by(Project.updated_at.desc()).all()
 
@@ -217,7 +217,7 @@ def get_project(project_id: int, current_user: User = Depends(get_current_user),
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if current_user.role != "admin" and project.owner_id != current_user.id:
+    if current_user.role not in ("admin", "designer", "reviewer") and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Permission denied")
 
     return {
@@ -266,7 +266,7 @@ def update_project(project_id: int, data: ProjectUpdate, current_user: User = De
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if current_user.role != "admin" and project.owner_id != current_user.id:
+    if current_user.role not in ("admin", "designer", "reviewer") and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Permission denied")
 
     if data.name is not None:
@@ -318,7 +318,7 @@ def delete_project(project_id: int, current_user: User = Depends(get_current_use
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if current_user.role != "admin" and project.owner_id != current_user.id:
+    if current_user.role not in ("admin", "designer", "reviewer") and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Permission denied")
 
     db.delete(project)

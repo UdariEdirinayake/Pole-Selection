@@ -208,16 +208,6 @@ export const RoutePolesPage: React.FC = () => {
             <Upload size={16} />
             <span>{showUploader ? 'Hide Uploader' : 'Import Excel'}</span>
           </button>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleSaveAndProceed}
-            disabled={saving}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-          >
-            {saving ? <Loader2 size={16} className="spin" /> : <ArrowRight size={16} />}
-            <span>{saving ? 'Saving Route...' : 'Save & Next: Review Methodology'}</span>
-          </button>
         </div>
       </div>
 

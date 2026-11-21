@@ -124,7 +124,10 @@ export const ProjectCircuitsPage: React.FC = () => {
         if (res.ok) {
           await refreshProjects()
           setSavedSuccess(true)
-          setTimeout(() => navigate('/route-poles'), 600)
+          setTimeout(() => navigate('/route-poles'), 400)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          alert(err.detail || 'Failed to save project.')
         }
       } else {
         // Create new project with standard 13 route poles
@@ -169,34 +172,25 @@ export const ProjectCircuitsPage: React.FC = () => {
             })
           }
           setSavedSuccess(true)
-          setTimeout(() => navigate('/route-poles'), 600)
+          setTimeout(() => navigate('/route-poles'), 400)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          alert(err.detail || 'Failed to create project.')
         }
       }
     } catch (err) {
       console.error('Error saving project circuits:', err)
+      alert('Network error while saving project.')
     } finally {
       setSaving(false)
     }
   }
-
-  const actions = (
-    <button
-      type="button"
-      onClick={() => handleSave()}
-      disabled={saving}
-      className="btn-primary"
-    >
-      <span>{saving ? 'Saving Project...' : 'Save & Next: Route & Poles'}</span>
-      <ArrowRight size={16} />
-    </button>
-  )
 
   return (
     <div className="page-wrapper">
       <PageHeader
         title="Project & Circuits Setup"
         description="Configure line project identification, structural framing arrangement, and phase conductor specifications"
-        actions={actions}
       />
 
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

@@ -9,6 +9,8 @@ import {
   CheckCircle,
   RefreshCw,
   Table as TableIcon,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 
 export interface TableMeta {
@@ -237,7 +239,10 @@ export const ConstructionDataPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [editingRow, setEditingRow] = useState<any | null>(null)
+  const [isAdding, setIsAdding] = useState<boolean>(false)
+  const [newRowData, setNewRowData] = useState<Record<string, any>>({})
   const [saving, setSaving] = useState<boolean>(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -248,6 +253,7 @@ export const ConstructionDataPage: React.FC = () => {
     setSaveSuccess(null)
     setSaveError(null)
     setEditingRow(null)
+    setIsAdding(false)
 
     try {
       let url = ''
@@ -277,6 +283,7 @@ export const ConstructionDataPage: React.FC = () => {
   }, [selectedTableId])
 
   const handleEditClick = (row: any) => {
+    setIsAdding(false)
     setEditingRow({ ...row })
     setSaveSuccess(null)
     setSaveError(null)
@@ -320,6 +327,97 @@ export const ConstructionDataPage: React.FC = () => {
     }
   }
 
+  const handleOpenAdd = () => {
+    setEditingRow(null)
+    setSaveSuccess(null)
+    setSaveError(null)
+    const initData: Record<string, any> = {}
+    if (activeTableMeta.spanTensionTableId) {
+      initData.table_id = activeTableMeta.spanTensionTableId
+    }
+    activeTableMeta.editableFields.forEach((f) => {
+      initData[f.key] = ''
+    })
+    setNewRowData(initData)
+    setIsAdding(true)
+  }
+
+  const handleNewFieldChange = (key: string, val: any) => {
+    setNewRowData((prev) => ({
+      ...prev,
+      [key]: val,
+    }))
+  }
+
+  const handleSaveNew = async () => {
+    setSaving(true)
+    setSaveError(null)
+    setSaveSuccess(null)
+
+    try {
+      const endpointTable = activeTableMeta.spanTensionTableId ? 'span-tension-points' : activeTableMeta.id
+      const payload = { ...newRowData }
+      if (activeTableMeta.spanTensionTableId) {
+        payload.table_id = activeTableMeta.spanTensionTableId
+      }
+
+      const res = await fetch(`/api/master/${endpointTable}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || `Failed to create record (status ${res.status})`)
+      }
+
+      const resData = await res.json().catch(() => ({}))
+      const newId = resData?.item?.id ? ` (ID: ${resData.item.id})` : ''
+      setSaveSuccess(`New record successfully created in '${activeTableMeta.label}'${newId}.`)
+      setIsAdding(false)
+      setNewRowData({})
+      await loadTableData(activeTableMeta)
+    } catch (e: any) {
+      console.error('Add record error:', e)
+      setSaveError(e.message || 'Failed to add record.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (rowId: number) => {
+    const confirmed = window.confirm(`Are you sure you want to delete record #${rowId} from '${activeTableMeta.fullName}'?`)
+    if (!confirmed) return
+
+    setDeletingId(rowId)
+    setSaveError(null)
+    setSaveSuccess(null)
+
+    try {
+      const endpointTable = activeTableMeta.spanTensionTableId ? 'span-tension-points' : activeTableMeta.id
+      const res = await fetch(`/api/master/${endpointTable}/${rowId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || `Failed to delete record (status ${res.status})`)
+      }
+
+      setSaveSuccess(`Record #${rowId} deleted successfully from '${activeTableMeta.label}'.`)
+      if (editingRow && editingRow.id === rowId) {
+        setEditingRow(null)
+      }
+      await loadTableData(activeTableMeta)
+    } catch (e: any) {
+      console.error('Delete record error:', e)
+      setSaveError(e.message || 'Failed to delete record.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   // Filter items by search term
   const filteredItems = items.filter((item) => {
     if (!searchTerm.trim()) return true
@@ -339,7 +437,16 @@ export const ConstructionDataPage: React.FC = () => {
             Inspect, calibrate, and edit all underlying construction catalogs, conductor sag-tension charts, and structural rating tables.
           </p>
         </div>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleOpenAdd}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <Plus size={15} />
+            <span>Add Record</span>
+          </button>
           <button
             type="button"
             className="btn-secondary"
@@ -348,7 +455,7 @@ export const ConstructionDataPage: React.FC = () => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
             <RefreshCw size={15} className={loading ? 'spin' : ''} />
-            <span>Refresh Table</span>
+            <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -475,6 +582,78 @@ export const ConstructionDataPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Add Record Form Box */}
+          {isAdding && (
+            <div className="card" style={{ border: '2px solid var(--primary)', padding: '1.25rem', backgroundColor: 'var(--bg-subtle)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', color: 'var(--primary)' }}>
+                  <Plus size={18} />
+                  <span>
+                    Add Record to {activeTableMeta.label}
+                    {activeTableMeta.spanTensionTableId && ` (Chart ${activeTableMeta.spanTensionTableId})`}
+                  </span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                {activeTableMeta.editableFields.map((field) => (
+                  <div key={field.key}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.3rem', color: 'var(--text-muted)' }}>
+                      {field.label}
+                    </label>
+                    <input
+                      type={field.type === 'number' ? 'number' : 'text'}
+                      step={field.type === 'number' ? 'any' : undefined}
+                      placeholder={`Enter ${field.label.toLowerCase()}...`}
+                      value={newRowData[field.key] ?? ''}
+                      onChange={(e) => {
+                        const v = field.type === 'number' ? (e.target.value === '' ? '' : parseFloat(e.target.value)) : e.target.value
+                        handleNewFieldChange(field.key, v)
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-main)',
+                        color: 'var(--text-main)',
+                        fontSize: '0.85rem',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIsAdding(false)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSaveNew}
+                  disabled={saving}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Check size={16} />
+                  <span>{saving ? 'Saving...' : 'Save New Record'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Edit Modal / Box if a row is selected for editing */}
           {editingRow && (
             <div className="card" style={{ border: '2px solid var(--primary)', padding: '1.25rem', backgroundColor: 'var(--bg-subtle)' }}>
@@ -566,7 +745,7 @@ export const ConstructionDataPage: React.FC = () => {
                       {activeTableMeta.editableFields.map((f) => (
                         <th key={f.key}>{f.label}</th>
                       ))}
-                      <th style={{ width: '80px', textAlign: 'center' }}>Action</th>
+                      <th style={{ width: '130px', textAlign: 'center' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -583,24 +762,47 @@ export const ConstructionDataPage: React.FC = () => {
                             </td>
                           )
                         })}
-                        <td style={{ textAlign: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn-secondary"
-                            onClick={() => handleEditClick(row)}
-                            style={{
-                              padding: '0.2rem 0.5rem',
-                              fontSize: '0.75rem',
-                              height: '26px',
-                              minHeight: '26px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            <Edit2 size={12} />
-                            <span>Edit</span>
-                          </button>
+                        <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => handleEditClick(row)}
+                              style={{
+                                padding: '0.2rem 0.5rem',
+                                fontSize: '0.75rem',
+                                height: '26px',
+                                minHeight: '26px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                              }}
+                            >
+                              <Edit2 size={12} />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              onClick={() => handleDelete(row.id)}
+                              disabled={deletingId === row.id}
+                              title={`Delete record #${row.id}`}
+                              style={{
+                                padding: '0.2rem 0.5rem',
+                                fontSize: '0.75rem',
+                                height: '26px',
+                                minHeight: '26px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                color: '#ef4444',
+                                borderColor: 'rgba(239, 68, 68, 0.3)',
+                              }}
+                            >
+                              <Trash2 size={12} />
+                              <span>{deletingId === row.id ? '...' : 'Delete'}</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

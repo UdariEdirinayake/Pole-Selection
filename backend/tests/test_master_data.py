@@ -225,3 +225,63 @@ def test_master_api_endpoints():
     assert conf_data["total"] >= 11
     for item in conf_data["items"]:
         assert item["needs_confirmation"] is True
+
+
+def test_master_crud_operations():
+    """Verify POST, PUT, and DELETE on master construction data tables."""
+    # 1. Create a new conductor record
+    post_res = client.post(
+        "/api/master/conductors",
+        json={
+            "description": "Test AAC Conductor 120mm2",
+            "diameter_mm": 15.0,
+            "weight_kg_per_m": 0.35,
+            "ultimate_tensile_strength_kn": 22.5,
+            "lookup_table": "UA-7.90",
+        },
+    )
+    assert post_res.status_code == 201
+    created = post_res.json()
+    assert "item" in created
+    item_id = created["item"]["id"]
+    assert created["item"]["description"] == "Test AAC Conductor 120mm2"
+    assert created["item"]["diameter_mm"] == 15.0
+
+    # 2. Update the newly created record
+    put_res = client.put(
+        f"/api/master/conductors/{item_id}",
+        json={
+            "description": "Updated Test AAC Conductor 120mm2",
+            "diameter_mm": 15.5,
+        },
+    )
+    assert put_res.status_code == 200
+    updated = put_res.json()
+    assert updated["item"]["description"] == "Updated Test AAC Conductor 120mm2"
+    assert updated["item"]["diameter_mm"] == 15.5
+
+    # 3. Delete the record
+    del_res = client.delete(f"/api/master/conductors/{item_id}")
+    assert del_res.status_code == 200
+
+    # 4. Confirm it is gone
+    del_again = client.delete(f"/api/master/conductors/{item_id}")
+    assert del_again.status_code == 404
+
+    # 5. Create and delete a span-tension point
+    st_post = client.post(
+        "/api/master/span-tension-points",
+        json={
+            "table_id": "UQ",
+            "span_m": 72.0,
+            "tension_kn": 5.2,
+            "tension_27_kn": 3.8,
+            "sag_15_m": 0.85,
+            "sag_27_m": 1.05,
+            "sag_65_m": 1.45,
+        },
+    )
+    assert st_post.status_code == 201
+    st_id = st_post.json()["item"]["id"]
+    st_del = client.delete(f"/api/master/span-tension-points/{st_id}")
+    assert st_del.status_code == 200

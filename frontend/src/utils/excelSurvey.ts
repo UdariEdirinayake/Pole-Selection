@@ -15,23 +15,10 @@ export function downloadSurveyTemplate(filename = 'Route_Survey_Template.xlsx') 
     'Soil Class (1-5)',
   ]
 
-  const sampleRows = [
-    [1, 1, 0, 29, 0, 'None', 4],
-    [1, 2, 29, 34, 14, 'None', 4],
-    [1, 3, 34, 29, 4, 'None', 4],
-    [1, 4, 29, 33, 4, 'TF - 160kVA', 4],
-    [1, 5, 33, 31, 2, 'None', 4],
-    [1, 6, 31, 38, 5, 'None', 4],
-    [2, 7, 38, 37, 40, 'None', 4],
-    [2, 8, 37, 30, 4, 'None', 4],
-    [2, 9, 30, 24, 15, 'None', 4],
-    [2, 10, 24, 35, 8, 'None', 4],
-    [2, 11, 35, 23, 2, 'None', 4],
-    [2, 12, 23, 25, 5, 'None', 4],
-    [2, 13, 25, 0, 0, 'None', 4],
-  ]
+  // Clean empty table rows ready for field survey data entry
+  const blankRows = Array.from({ length: 30 }, () => ['', '', '', '', '', '', ''])
 
-  const wsSurvey = XLSX.utils.aoa_to_sheet([headers, ...sampleRows])
+  const wsSurvey = XLSX.utils.aoa_to_sheet([headers, ...blankRows])
 
   // Set column widths
   wsSurvey['!cols'] = [

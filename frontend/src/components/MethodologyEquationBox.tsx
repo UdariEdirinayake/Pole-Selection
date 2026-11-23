@@ -34,13 +34,13 @@ export const MethodologyEquationBox: React.FC<MethodologyEquationBoxProps> = ({
   const categoryLabel = isCommon ? 'Common for Entire Route' : 'Pole-Specific Calculation'
   const categoryBadgeBg = isCommon
     ? isDark ? 'rgba(56, 189, 248, 0.15)' : '#e0f2fe'
-    : isDark ? 'rgba(168, 85, 247, 0.15)' : '#f3e8ff'
+    : isDark ? 'rgba(71, 85, 105, 0.25)' : '#f1f5f9'
   const categoryBadgeColor = isCommon
     ? isDark ? '#38bdf8' : '#0369a1'
-    : isDark ? '#c084fc' : '#7e22ce'
+    : isDark ? '#94a3b8' : '#475569'
   const categoryBadgeBorder = isCommon
     ? isDark ? '#0284c7' : '#bae6fd'
-    : isDark ? '#7e22ce' : '#e9d5ff'
+    : isDark ? '#475569' : '#cbd5e1'
 
   return (
     <div
@@ -75,7 +75,7 @@ export const MethodologyEquationBox: React.FC<MethodologyEquationBoxProps> = ({
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 800,
-                color: isCommon ? '#38bdf8' : '#a855f7',
+                color: isCommon ? '#38bdf8' : (isDark ? '#38bdf8' : '#0284c7'),
                 fontFamily: 'monospace',
                 backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
                 padding: '2px 8px',
@@ -121,11 +121,11 @@ export const MethodologyEquationBox: React.FC<MethodologyEquationBoxProps> = ({
         </div>
       </div>
 
-      {/* Boxed Equation: Matches exactly the white/dark rectangular border in reference image */}
+      {/* Boxed Equation: Matches exactly the white/dark rectangular border in reference image (Centered) */}
       <div
         style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'center',
           margin: '0.85rem 0 1.25rem',
         }}
       >

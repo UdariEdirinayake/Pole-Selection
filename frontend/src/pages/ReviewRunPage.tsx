@@ -115,7 +115,6 @@ export const ReviewRunPage: React.FC = () => {
   // Navigation tab for methodology
   const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector'>('methodology')
   const [selectedPoleNo, setSelectedPoleNo] = useState<number>(1)
-  const [sectionFilter, setSectionFilter] = useState<'all' | 'common' | 'pole'>('all')
 
   useEffect(() => {
     let isMounted = true
@@ -568,98 +567,42 @@ export const ReviewRunPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Filter Sub-Navigation */}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-              Methodology Sections:
-            </span>
-            <button
-              type="button"
-              onClick={() => setSectionFilter('all')}
-              style={{
-                padding: '0.35rem 0.85rem',
-                borderRadius: '9999px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: sectionFilter === 'all' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                backgroundColor: sectionFilter === 'all' ? 'var(--primary)' : 'var(--bg-surface)',
-                color: sectionFilter === 'all' ? '#ffffff' : 'var(--text-secondary)',
-              }}
-            >
-              Show All (Both Sections)
-            </button>
-            <button
-              type="button"
-              onClick={() => setSectionFilter('common')}
-              style={{
-                padding: '0.35rem 0.85rem',
-                borderRadius: '9999px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: sectionFilter === 'common' ? '1px solid #0284c7' : '1px solid var(--border-color)',
-                backgroundColor: sectionFilter === 'common' ? '#0284c7' : 'var(--bg-surface)',
-                color: sectionFilter === 'common' ? '#ffffff' : 'var(--text-secondary)',
-              }}
-            >
-              Section 1: Common for Entire Route (4 Formulas)
-            </button>
-            <button
-              type="button"
-              onClick={() => setSectionFilter('pole')}
-              style={{
-                padding: '0.35rem 0.85rem',
-                borderRadius: '9999px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: sectionFilter === 'pole' ? '1px solid #9333ea' : '1px solid var(--border-color)',
-                backgroundColor: sectionFilter === 'pole' ? '#9333ea' : 'var(--bg-surface)',
-                color: sectionFilter === 'pole' ? '#ffffff' : 'var(--text-secondary)',
-              }}
-            >
-              Section 2: Pole-Specific Calculations (11 Formulas)
-            </button>
-          </div>
-
           {/* =========================================================================
               SECTION 1: CALCULATIONS COMMON FOR THE ENTIRE ROUTE
              ========================================================================= */}
-          {(sectionFilter === 'all' || sectionFilter === 'common') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
-              {/* Section 1 Header Banner */}
-              <div
-                style={{
-                  padding: '1.25rem 1.5rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
-                  borderLeft: '5px solid #0284c7',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                      color: '#0284c7',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    SECTION 1
-                  </span>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    Calculations Common for the Entire Route
-                  </h3>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  The governing physical equations and linear interpolation procedures below apply uniformly across the entire line route or per tension strain section. They establish virtual ruling equivalent spans (S<sub>eq</sub>), ruling conductor tensions, maximum operating stresses, and crossarm phase clearances independent of individual pole locations.
-                </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+            {/* Section 1 Header Banner */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                borderLeft: '5px solid #0284c7',
+                borderRadius: 'var(--radius-md)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                    color: '#0284c7',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  SECTION 1
+                </span>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  Calculations Common for the Entire Route
+                </h3>
               </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+                The governing physical equations and linear interpolation procedures below apply uniformly across the entire line route or per tension strain section. They establish virtual ruling equivalent spans (S<sub>eq</sub>), ruling conductor tensions, maximum operating stresses, and crossarm phase clearances independent of individual pole locations.
+              </p>
+            </div>
 
               {/* Strain Section Breakdown Card */}
               <div
@@ -835,20 +778,18 @@ export const ReviewRunPage: React.FC = () => {
                 }
               />
             </div>
-          )}
 
           {/* =========================================================================
               SECTION 2: CALCULATIONS THAT DIFFER WITH THE POLE
              ========================================================================= */}
-          {(sectionFilter === 'all' || sectionFilter === 'pole') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem' }}>
               {/* Section 2 Header Banner */}
               <div
                 style={{
                   padding: '1.25rem 1.5rem',
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border-color)',
-                  borderLeft: '5px solid #9333ea',
+                  borderLeft: '5px solid #0284c7',
                   borderRadius: 'var(--radius-md)',
                 }}
               >
@@ -859,8 +800,8 @@ export const ReviewRunPage: React.FC = () => {
                       fontWeight: 800,
                       padding: '2px 8px',
                       borderRadius: '4px',
-                      backgroundColor: 'rgba(147, 51, 234, 0.15)',
-                      color: '#9333ea',
+                      backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                      color: '#0284c7',
                       letterSpacing: '0.5px',
                     }}
                   >
@@ -909,10 +850,10 @@ export const ReviewRunPage: React.FC = () => {
                           fontWeight: 700,
                           cursor: 'pointer',
                           border: isSelected
-                            ? '1px solid #9333ea'
+                            ? '1px solid var(--primary)'
                             : '1px solid var(--border-color)',
                           backgroundColor: isSelected
-                            ? '#9333ea'
+                            ? 'var(--primary)'
                             : isTerminal || isSection
                             ? 'var(--bg-subtle)'
                             : 'var(--bg-surface)',
@@ -964,7 +905,7 @@ export const ReviewRunPage: React.FC = () => {
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>Assigned Pole:</span>{' '}
-                    <strong style={{ color: '#9333ea' }}>{selectedPoleData.selected_pole}</strong>
+                    <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
                   </div>
                 </div>
               </div>
@@ -980,7 +921,7 @@ export const ReviewRunPage: React.FC = () => {
                 variables={POLE_SPECIFIC_FORMULAS[0].variables}
                 substitution={
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Pole {selectedPoleData.pole_no} Substitution: S_w = ({selectedPoleData.fore_span} m + {selectedPoleData.aft_span} m) / 2 = <strong style={{ color: '#9333ea' }}>{selectedPoleData.wind_span} m</strong>
+                    Pole {selectedPoleData.pole_no} Substitution: S_w = ({selectedPoleData.fore_span} m + {selectedPoleData.aft_span} m) / 2 = <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.wind_span} m</strong>
                   </div>
                 }
               />
@@ -1069,7 +1010,7 @@ export const ReviewRunPage: React.FC = () => {
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
                     Total Ground Line Moment ∑BM = {selectedPoleData.total_bm_kNm} kN·m<br />
                     Pole Top Working Load P_top = {selectedPoleData.total_bm_kNm} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
-                    Recommended Structural Pole: <strong style={{ color: '#9333ea' }}>{selectedPoleData.selected_pole}</strong>
+                    Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
                   </div>
                 }
               />
@@ -1086,7 +1027,7 @@ export const ReviewRunPage: React.FC = () => {
                 substitution={
                   <div style={{ fontSize: '0.825rem' }}>
                     {selectedPoleData.guy_type ? (
-                      <>Required Stay Arrangement: <strong style={{ color: '#9333ea' }}>{selectedPoleData.guy_type}</strong> (Calculated Stay Tension: <strong>{selectedPoleData.guy_load_daN || 430} daN</strong> with Factor of Safety ≥ 2.5)</>
+                      <>Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Calculated Stay Tension: <strong>{selectedPoleData.guy_load_daN || 430} daN</strong> with Factor of Safety ≥ 2.5)</>
                     ) : (
                       <>Guy Wire Stay: <strong>Not Required</strong> (Standard unstayed cantilever pole strength is adequate)</>
                     )}
@@ -1157,13 +1098,12 @@ export const ReviewRunPage: React.FC = () => {
                 variables={POLE_SPECIFIC_FORMULAS[10].variables}
                 substitution={
                   <div style={{ fontSize: '0.825rem' }}>
-                    Total Vertical Load V* = <strong>{selectedPoleData.vertical_load_kN} kN</strong> ➔ Selected Footprint: <strong style={{ color: '#9333ea' }}>{selectedPoleData.foundation_type}</strong><br />
+                    Total Vertical Load V* = <strong>{selectedPoleData.vertical_load_kN} kN</strong> ➔ Selected Footprint: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong><br />
                     Soil Bearing Pressure Check: <strong style={{ color: '#059669' }}>SATISFIED (PASS - Within Permissible Soil Bearing Capacity)</strong>
                   </div>
                 }
               />
             </div>
-          )}
         </div>
       )}
 

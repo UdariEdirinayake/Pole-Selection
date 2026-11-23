@@ -176,27 +176,40 @@ def normalize_config_row(cfg: Optional[dict[str, Any]]) -> Optional[dict[str, An
 
 
 def parse_levels(config: dict[str, Any]) -> dict[str, Any]:
-    """Parse levels and attachment heights from pole configuration (original tool line 11496-11527)."""
+    """Parse levels and attachment heights from pole configuration.
+
+    Always computes attachment heights using standard engineering formulas:
+      H_HV = pole_height * 5/6 - 0.2 (e.g. ~8.97 m for 11 m pole)
+      H_LV = pole_height * 5/6 - 1.4 (e.g. ~7.77 m for 11 m pole)
+    rather than using static config data.
+    """
     normalize_config_row(config)
     n_hh = int(num(config.get("levels_HH"), 0.0) or 0.0)
     n_h = int(num(config.get("levels_H"), 0.0) or 0.0)
     n_l = int(num(config.get("levels_L"), 0.0) or 0.0)
 
-    heights = [float(x) for x in split_semi_list(config.get("heights_m")) if num(x) is not None]
-    ns = [float(x) for x in split_semi_list(config.get("n_per_level")) if num(x) is not None]
-
     pole_height = num(config.get("pole_height_m"), 11.0) or 11.0
+    h_hv = pole_height * 5.0 / 6.0 - 0.2
+    h_lv = pole_height * 5.0 / 6.0 - 1.4
 
-    while len(heights) < n_hh + n_h + n_l:
-        idx = len(heights)
-        if idx < n_hh:
-            heights.append(num(config.get("H_HH_m")) or (pole_height * 5.0 / 6.0 - 0.2))
-        elif idx < n_hh + n_h:
-            heights.append(num(config.get("H_H_m")) or (pole_height * 5.0 / 6.0 - 0.2))
+    heights = []
+    for _ in range(n_hh):
+        heights.append(h_hv)
+    for _ in range(n_h):
+        heights.append(h_hv)
+    for _ in range(n_l):
+        heights.append(h_lv)
+
+    if not heights and (n_hh + n_h + n_l == 0):
+        # Fallback if no level counts specified
+        cfg_heights = [float(x) for x in split_semi_list(config.get("heights_m")) if num(x) is not None]
+        if cfg_heights:
+            heights = [h_hv if i == 0 else h_lv for i in range(len(cfg_heights))]
         else:
-            heights.append(num(config.get("H_L_m")) or (pole_height * 5.0 / 6.0 - 1.4))
+            heights = [h_hv, h_lv]
 
-    while len(ns) < n_hh + n_h + n_l:
+    ns = [float(x) for x in split_semi_list(config.get("n_per_level")) if num(x) is not None]
+    while len(ns) < len(heights):
         idx = len(ns)
         if idx < n_hh or idx < n_hh + n_h:
             ns.append(3.0)
@@ -205,8 +218,8 @@ def parse_levels(config: dict[str, Any]) -> dict[str, Any]:
 
     h_e = earth_heights_of(config)
     n_e_arr = earth_ns_of(config)
-    heights = heights[:n_hh + n_h + n_l]
-    ns = ns[:n_hh + n_h + n_l]
+    heights = heights[:n_hh + n_h + n_l] if (n_hh + n_h + n_l > 0) else heights
+    ns = ns[:len(heights)]
 
     for k, h in enumerate(h_e):
         heights.append(h)

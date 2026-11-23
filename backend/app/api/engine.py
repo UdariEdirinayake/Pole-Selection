@@ -769,14 +769,18 @@ def run_full_engine(
     conductor_h = next((str(c.conductor_code) for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv >= 1.0 and c.conductor_code is not None), "1")
     conductor_lv = next((str(c.conductor_code) for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv < 1.0 and c.conductor_code is not None), "2")
 
+    pole_h = 11.0
+    h_hv = pole_h * 5.0 / 6.0 - 0.2
+    h_lv = pole_h * 5.0 / 6.0 - 1.4
+
     configs_data = [{
         "config_no": "3",
         "description": "11 kV + LV bundle",
-        "pole_height_m": 11.0,
+        "pole_height_m": pole_h,
         "levels_HH": 0,
         "levels_H": 1,
         "levels_L": 1,
-        "heights_m": "8.85;7.5",
+        "heights_m": f"{h_hv:.4f};{h_lv:.4f}",
         "n_per_level": "3;1",
         "guy_h_m": 8.4,
         "tguy_h_m": 8.4

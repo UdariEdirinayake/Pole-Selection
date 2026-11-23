@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, AlertTriangle, CheckCircle, MapPin, Upload, Loader2, Play } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle, MapPin, Upload, Loader2, Play, Download, FileSpreadsheet } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
 import { ImportDropzone } from '../components/ImportDropzone'
+import { downloadSurveyTemplate, parseSurveyExcel } from '../utils/excelSurvey'
 
 export interface PoleRow {
   id?: number
@@ -54,6 +55,8 @@ export const RoutePolesPage: React.FC = () => {
   ])
   const [showUploader, setShowUploader] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null)
+  const directFileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -139,6 +142,50 @@ export const RoutePolesPage: React.FC = () => {
       fixed[i + 1].aft_span_m = fixed[i].fore_span_m
     }
     setPoles(fixed)
+  }
+
+  const handlePolesImported = async (importedPoles: PoleRow[], filename: string) => {
+    setPoles(importedPoles)
+    setImportSuccessMsg(`Successfully imported ${importedPoles.length} poles from "${filename}".`)
+
+    // Auto-save imported poles to project if active project exists
+    if (activeProject?.id) {
+      try {
+        const polePayload = importedPoles.map((p) => ({
+          section: Number(p.section) || 1,
+          pole_no: Number(p.pole_no),
+          pole_id_name: `Pole ${p.pole_no}`,
+          aft_span_m: Number(p.aft_span_m) || 0,
+          fore_span_m: Number(p.fore_span_m) || 0,
+          angle_deg: Number(p.angle_deg) || 0,
+          soil_class_num: Number(p.soil_class) || 4,
+          equipment: p.equipment && p.equipment !== 'None' ? p.equipment : null,
+          span_environment: 'across any road or street',
+        }))
+
+        await fetch(`/api/projects/${activeProject.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ poles: polePayload }),
+        })
+        await refreshProjects()
+      } catch (err) {
+        console.warn('Auto-save of imported poles encountered an issue:', err)
+      }
+    }
+  }
+
+  const handleDirectExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const parsed = await parseSurveyExcel(file)
+      await handlePolesImported(parsed, file.name)
+    } catch (err: any) {
+      alert(err.message || 'Failed to parse Excel survey file')
+    } finally {
+      if (e.target) e.target.value = ''
+    }
   }
 
   const handleRunCalculations = async () => {
@@ -251,22 +298,75 @@ export const RoutePolesPage: React.FC = () => {
             Configure line sectioning, pole spans, deviation angles, equipment, and geotechnical soil classes.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => downloadSurveyTemplate()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.825rem', height: '36px' }}
+            title="Download an Excel template to enter survey data"
+          >
+            <Download size={15} />
+            <span>Download Sample Excel</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => directFileInputRef.current?.click()}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.825rem', height: '36px' }}
+            title="Select an Excel or CSV survey file from your device"
+          >
+            <Upload size={15} />
+            <span>Import Excel</span>
+          </button>
+
           <button
             type="button"
             className="btn-secondary"
             onClick={() => setShowUploader(!showUploader)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.825rem', height: '36px' }}
+            title="Toggle drag-and-drop file upload box"
           >
-            <Upload size={16} />
-            <span>{showUploader ? 'Hide Uploader' : 'Import Excel'}</span>
+            <FileSpreadsheet size={15} />
+            <span>{showUploader ? 'Hide Dropzone' : 'Dropzone'}</span>
           </button>
+
+          <input
+            ref={directFileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleDirectExcelUpload}
+            style={{ display: 'none' }}
+          />
         </div>
       </div>
 
       {showUploader && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <ImportDropzone />
+          <ImportDropzone
+            onPolesImported={handlePolesImported}
+            onClose={() => setShowUploader(false)}
+          />
+        </div>
+      )}
+
+      {importSuccessMsg && (
+        <div
+          className="alert-box alert-success"
+          style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckCircle size={18} color="#059669" />
+            <span style={{ fontSize: '0.875rem', color: '#065f46' }}>{importSuccessMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setImportSuccessMsg(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065f46', fontWeight: 700, padding: '0.2rem 0.5rem' }}
+          >
+            ✕
+          </button>
         </div>
       )}
 

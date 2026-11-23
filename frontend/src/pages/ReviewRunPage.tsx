@@ -112,8 +112,8 @@ export const ReviewRunPage: React.FC = () => {
   })
   const [loading, setLoading] = useState(false)
 
-  // Navigation tab for methodology
-  const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector'>('methodology')
+  // Active topic section (Section 1 vs Section 2)
+  const [activeSection, setActiveSection] = useState<'section1' | 'section2'>('section1')
   const [selectedPoleNo, setSelectedPoleNo] = useState<number>(1)
 
   useEffect(() => {
@@ -487,24 +487,47 @@ export const ReviewRunPage: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation Sub-Tabs */}
+      {/* Description Box */}
+      <div
+        className="card"
+        style={{
+          padding: '1.25rem 1.5rem',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+          <Activity size={18} color="var(--primary)" />
+          <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            Live Engineering Methodology for {activeProjectName}
+          </h3>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          This methodology outlines the full structural calculation process for this project transcribed from the LECO specification document (<em>Overhead Electrical Line Design – Practical Example</em>). All spans, equivalent spans (Seq), linear interpolations, wind moments, and soil resistance checks below reflect the project&apos;s current route configuration.
+        </p>
+      </div>
+
+      {/* Divided Topics: Section 1 and Section 2 */}
       <div
         style={{
           display: 'flex',
           gap: '0.5rem',
           borderBottom: '1px solid var(--border-color)',
           marginBottom: '1.5rem',
+          flexWrap: 'wrap',
         }}
       >
         <button
           type="button"
-          onClick={() => setActiveTab('methodology')}
+          onClick={() => setActiveSection('section1')}
           style={{
             padding: '0.75rem 1.25rem',
             fontSize: '0.875rem',
             fontWeight: 700,
-            color: activeTab === 'methodology' ? 'var(--primary)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'methodology' ? '2px solid var(--primary)' : '2px solid transparent',
+            color: activeSection === 'section1' ? 'var(--primary)' : 'var(--text-muted)',
+            borderBottom: activeSection === 'section1' ? '2px solid var(--primary)' : '2px solid transparent',
             background: 'none',
             borderTop: 'none',
             borderLeft: 'none',
@@ -516,18 +539,18 @@ export const ReviewRunPage: React.FC = () => {
           }}
         >
           <BookOpen size={16} />
-          <span>Project Calculation Methodology ({projectSections.length} Sections)</span>
+          <span>Section 1: Calculations Common for the Entire Route</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('pole-inspector')}
+          onClick={() => setActiveSection('section2')}
           style={{
             padding: '0.75rem 1.25rem',
             fontSize: '0.875rem',
             fontWeight: 700,
-            color: activeTab === 'pole-inspector' ? 'var(--primary)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'pole-inspector' ? '2px solid var(--primary)' : '2px solid transparent',
+            color: activeSection === 'section2' ? 'var(--primary)' : 'var(--text-muted)',
+            borderBottom: activeSection === 'section2' ? '2px solid var(--primary)' : '2px solid transparent',
             background: 'none',
             borderTop: 'none',
             borderLeft: 'none',
@@ -539,50 +562,27 @@ export const ReviewRunPage: React.FC = () => {
           }}
         >
           <Activity size={16} />
-          <span>Pole-by-Pole Step Inspector ({polesCount} Poles)</span>
+          <span>Section 2: Calculations That Differ with the Pole</span>
         </button>
       </div>
 
-      {/* TAB 1: CALCULATION METHODOLOGY (DERIVED ACCORDING TO THIS PROJECT) */}
-      {activeTab === 'methodology' && (
+      {/* =========================================================================
+          SECTION 1: CALCULATIONS COMMON FOR THE ENTIRE ROUTE
+         ========================================================================= */}
+      {activeSection === 'section1' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Methodology Banner Card */}
+          {/* Section 1 Header Banner */}
           <div
-            className="card"
             style={{
               padding: '1.25rem 1.5rem',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-color)',
+              borderLeft: '5px solid #0284c7',
               borderRadius: 'var(--radius-md)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-              <Activity size={18} color="var(--primary)" />
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Live Engineering Methodology for {activeProjectName}
-              </h3>
-            </div>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              This methodology outlines the full structural calculation process for this project transcribed from the LECO specification document (<em>Overhead Electrical Line Design – Practical Example</em>). All spans, equivalent spans (Seq), linear interpolations, wind moments, and soil resistance checks below reflect the project&apos;s current route configuration.
-            </p>
-          </div>
-
-          {/* =========================================================================
-              SECTION 1: CALCULATIONS COMMON FOR THE ENTIRE ROUTE
-             ========================================================================= */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
-            {/* Section 1 Header Banner */}
-            <div
-              style={{
-                padding: '1.25rem 1.5rem',
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-color)',
-                borderLeft: '5px solid #0284c7',
-                borderRadius: 'var(--radius-md)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                <span
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+              <span
                   style={{
                     fontSize: '0.72rem',
                     fontWeight: 800,
@@ -778,11 +778,13 @@ export const ReviewRunPage: React.FC = () => {
                 }
               />
             </div>
+          )}
 
           {/* =========================================================================
               SECTION 2: CALCULATIONS THAT DIFFER WITH THE POLE
              ========================================================================= */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem' }}>
+          {activeSection === 'section2' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Section 2 Header Banner */}
               <div
                 style={{
@@ -881,9 +883,10 @@ export const ReviewRunPage: React.FC = () => {
                     fontSize: '0.8rem',
                   }}
                 >
-                  <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Active Pole:</span>{' '}
                     <strong>Pole {selectedPoleData.pole_no} (Sec {selectedPoleData.section})</strong>
+                    <StatusChip status="PASS" label={selectedPoleData.stability} />
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>Spans:</span>{' '}
@@ -1104,203 +1107,7 @@ export const ReviewRunPage: React.FC = () => {
                 }
               />
             </div>
-        </div>
-      )}
-
-      {/* TAB 2: POLE-BY-POLE STEP INSPECTOR (DYNAMICALLY SIZED FOR THIS PROJECT) */}
-      {activeTab === 'pole-inspector' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Pole Selector Chips */}
-          <div
-            className="card"
-            style={{
-              padding: '1rem 1.25rem',
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-            }}
-          >
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
-              Select Pole from {activeProjectName} to Inspect Exact Mathematical Step Substitutions ({polesCount} poles total):
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {(projectPoles.length > 0 ? projectPoles : [{ pole_no: 1, section: 1 }, { pole_no: 2, section: 1 }]).map((p: any, idx: number) => {
-                const pNo = p.pole_no
-                const isSelected = pNo === selectedPoleNo
-                const isTerminal = idx === 0 || idx === projectPoles.length - 1 || p.aft_span_m === 0 || p.fore_span_m === 0
-                const isSection = idx > 0 && p.section !== projectPoles[idx - 1]?.section
-                const hasEquip = p.equipment && p.equipment !== 'None'
-
-                return (
-                  <button
-                    key={pNo}
-                    type="button"
-                    onClick={() => setSelectedPoleNo(pNo)}
-                    style={{
-                      padding: '0.45rem 0.85rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: isSelected
-                        ? '1px solid var(--primary)'
-                        : '1px solid var(--border-color)',
-                      backgroundColor: isSelected
-                        ? 'var(--primary)'
-                        : isTerminal || isSection
-                        ? 'var(--bg-subtle)'
-                        : 'var(--bg-surface)',
-                      color: isSelected ? '#ffffff' : 'var(--text-main)',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    Pole {pNo} {isTerminal ? '(Terminal)' : isSection ? '(Section)' : hasEquip ? `(${p.equipment})` : ''}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Selected Pole Deep-Dive Card */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              padding: '1.5rem',
-            }}
-          >
-            {/* Pole Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid var(--border-color)',
-                paddingBottom: '1rem',
-                marginBottom: '1.25rem',
-                flexWrap: 'wrap',
-                gap: '0.75rem',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    Pole {selectedPoleData.pole_no} — Mathematical Breakdown
-                  </h3>
-                  <StatusChip status="PASS" label={selectedPoleData.stability} />
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                  Section {selectedPoleData.section} • Spans: Aft {selectedPoleData.aft_span}m, Fore {selectedPoleData.fore_span}m • Angle: {selectedPoleData.angle_deg}° • Equipment: {selectedPoleData.equipment}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: '0.4rem 0.85rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  color: 'var(--primary)',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                }}
-              >
-                Selected: {selectedPoleData.selected_pole}
-              </div>
-            </div>
-
-            {/* Calculations Grid for this specific pole */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '1.25rem' }}>
-              {/* Step A: Wind & Weight Spans */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step A: Wind & Weight Span
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  l = (L_aft + L_fore) / 2 = ({selectedPoleData.aft_span} + {selectedPoleData.fore_span}) / 2<br />
-                  Wind Span = <strong>{selectedPoleData.wind_span} m</strong><br />
-                  Weight Span = <strong>{selectedPoleData.weight_span} m</strong>
-                </div>
-              </div>
-
-              {/* Step B: Wind Bending Moment */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step B: Conductor & Pole Wind Moment
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  BM_C = Wind Moment on Conductors = <strong>{selectedPoleData.bm_c_kNm} kNm</strong><br />
-                  BM_P = Wind on Pole Shaft = <strong>{selectedPoleData.bm_p_kNm} kNm</strong><br />
-                  {selectedPoleData.bm_e_kNm > 0 && <>BM_E = Wind on Equipment = <strong>{selectedPoleData.bm_e_kNm} kNm</strong></>}
-                </div>
-              </div>
-
-              {/* Step C: Tension Bending Moment */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step C: Conductor Tension Moment
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  {selectedPoleData.bm_tt_kNm ? (
-                    <>
-                      Terminal Longitudinal: BM_TT = ∑(T_cct · H_cct)<br />
-                      BM_TT = <strong>{selectedPoleData.bm_tt_kNm} kNm</strong><br />
-                      Wind on pole long.: BM_PT = {selectedPoleData.bm_pt_kNm ?? 14.26} kNm
-                    </>
-                  ) : (
-                    <>
-                      Intermediate Transverse: 2 · T · sin(α/2) · H<br />
-                      BM_T = <strong>{selectedPoleData.bm_t_kNm} kNm</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Step D: Pole Top Working Load */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step D: Pole Top Working Load
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  P_top = ∑BM / 8.767 m<br />
-                  Transverse Load = <strong>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
-                  {selectedPoleData.pole_top_longitudinal_daN && (
-                    <>Longitudinal Load = <strong>{selectedPoleData.pole_top_longitudinal_daN} daN</strong><br /></>
-                  )}
-                  Recommendation: <strong>{selectedPoleData.selected_pole}</strong>
-                </div>
-              </div>
-
-              {/* Step E: Soil Stability (Mg vs BMf) */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step E: Foundation Overturning (Fulcrum)
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  Fulcrum: Y = P / √2 = 1.296 m below ground<br />
-                  Overturning Moment around Fulcrum BM_F = <strong>{selectedPoleData.bm_f_kNm} kNm</strong><br />
-                  Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kNm</strong> ➔ <strong style={{ color: '#059669' }}>{selectedPoleData.stability}</strong>
-                </div>
-              </div>
-
-              {/* Step F: Vertical Load & Foundation Type */}
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                  Step F: Vertical Load & Foundation Footprint
-                </div>
-                <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                  Total Vertical Load = <strong>{selectedPoleData.vertical_load_kN} kN</strong><br />
-                  Soil Class: <strong>Class {selectedPoleData.soil_class}</strong><br />
-                  Foundation Assigned: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
       {/* Bottom footer action */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem', paddingBottom: '1.5rem' }}>

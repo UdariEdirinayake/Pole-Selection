@@ -68,6 +68,7 @@ function transformLiveResults(calcResults: any) {
     return {
       sec: r.section,
       pole: r.pole_no,
+      equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
       fore_span_m: r.fore,
       angle_deg: r.angle,
       eq_span_m: eqSpan != null ? Number(eqSpan.toFixed(1)) : '—',
@@ -105,6 +106,7 @@ function transformLiveResults(calcResults: any) {
     return {
       sec: r.section,
       pole: r.pole_no,
+      equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
       soil_class: f.soil_class || r.soil || 'Medium',
       recommended_pole: r.recommended || r.rec_guy_unguy || '—',
       bmf_kn_m: Number(bmf.toFixed(2)),
@@ -277,6 +279,7 @@ export const ResultsPage: React.FC = () => {
   const structuralLoadingColumns: Column<any>[] = [
     { key: 'sec', header: 'Sec' },
     { key: 'pole', header: 'Pole' },
+    { key: 'equipment', header: 'Equipment' },
     { key: 'fore_span_m', header: 'Fore Span (m)' },
     { key: 'angle_deg', header: 'Angle (°)' },
     { key: 'eq_span_m', header: 'Equiv Span (m)' },
@@ -405,6 +408,7 @@ export const ResultsPage: React.FC = () => {
   const foundationColumns: Column<any>[] = [
     { key: 'sec', header: 'Sec' },
     { key: 'pole', header: 'Pole' },
+    { key: 'equipment', header: 'Equipment' },
     { key: 'soil_class', header: 'Soil Class' },
     { key: 'recommended_pole', header: 'Pole' },
     { key: 'bmf_kn_m', header: 'BM Foundation (kN·m)' },

@@ -19,6 +19,15 @@ interface ConductorOption {
   confirmation_note: string | null
 }
 
+function cleanConductorText(raw: string): string {
+  if (!raw) return ''
+  return raw
+    .replace(/\s*\(\s*with\s+LV\s*\)/gi, '')
+    .replace(/\s*\(\s*LV\s*\)/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 export const ProjectCircuitsPage: React.FC = () => {
   const { activeProject, setActiveProject, refreshProjects } = useProject()
   const [arrangement, setArrangement] = useState<'11 kV' | 'LV' | '11 kV + LV'>('11 kV + LV')
@@ -80,6 +89,10 @@ export const ProjectCircuitsPage: React.FC = () => {
 
   const selectedC1 = conductors.find((c) => Number(c.code) === Number(c1Conductor))
   const selectedC2 = conductors.find((c) => Number(c.code) === Number(c2Conductor))
+
+  const sortedConductors = React.useMemo(() => {
+    return [...conductors].sort((a, b) => Number(a.code) - Number(b.code))
+  }, [conductors])
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -293,7 +306,7 @@ export const ProjectCircuitsPage: React.FC = () => {
                   border: '1px solid var(--primary-border)',
                 }}
               >
-                {selectedC1 ? selectedC1.description : '11.0 kV Overhead ABC'}
+                {selectedC1 ? cleanConductorText(selectedC1.description) : '11.0 kV Overhead ABC'}
               </span>
             }
           >
@@ -316,9 +329,9 @@ export const ProjectCircuitsPage: React.FC = () => {
                   value={c1Conductor ?? ''}
                   onChange={(e) => setC1Conductor(Number(e.target.value))}
                 >
-                  {conductors.map((c) => (
+                  {sortedConductors.map((c, idx) => (
                     <option key={c.code} value={c.code}>
-                      {c.description}
+                      {idx + 1}. {cleanConductorText(c.description)}
                     </option>
                   ))}
                 </select>
@@ -371,7 +384,7 @@ export const ProjectCircuitsPage: React.FC = () => {
                   border: '1px solid var(--primary-border)',
                 }}
               >
-                {selectedC2 ? selectedC2.description : '0.4 kV Aerial Bundled Conductor'}
+                {selectedC2 ? cleanConductorText(selectedC2.description) : '0.4 kV Aerial Bundled Conductor'}
               </span>
             }
           >
@@ -394,9 +407,9 @@ export const ProjectCircuitsPage: React.FC = () => {
                   value={c2Conductor ?? ''}
                   onChange={(e) => setC2Conductor(Number(e.target.value))}
                 >
-                  {conductors.map((c) => (
+                  {sortedConductors.map((c, idx) => (
                     <option key={c.code} value={c.code}>
-                      {c.description}
+                      {idx + 1}. {cleanConductorText(c.description)}
                     </option>
                   ))}
                 </select>

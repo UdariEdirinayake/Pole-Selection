@@ -16,7 +16,7 @@ interface ProjectItem {
 }
 
 export const DashboardPage: React.FC = () => {
-  const { setActiveProject, activeProject } = useProject()
+  const { setActiveProject } = useProject()
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -74,18 +74,16 @@ export const DashboardPage: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSaveToDevice = async () => {
-    const target = activeProject || projects[0]
-    if (!target) { alert('No active project to save.'); return }
+  const handleSaveProjectToDevice = async (project: ProjectItem) => {
     try {
-      const res = await fetch(`/api/projects/${target.id}`)
+      const res = await fetch(`/api/projects/${project.id}`)
       if (!res.ok) throw new Error('Failed to fetch project data')
       const data = await res.json()
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${(target.name || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}_linedesign.json`
+      a.download = `${(project.name || 'project').replace(/[^a-zA-Z0-9_-]/g, '_')}_linedesign.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -247,22 +245,6 @@ export const DashboardPage: React.FC = () => {
           >
             <FolderOpen size={14} />
             <span>Open existing project</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveToDevice}
-            className="btn-secondary"
-            style={{
-              height: '38px',
-              minHeight: '38px',
-              padding: '0 0.95rem',
-              fontSize: '0.825rem',
-              fontWeight: 600,
-            }}
-          >
-            <Save size={14} />
-            <span>Save project</span>
           </button>
 
           <button
@@ -668,6 +650,26 @@ export const DashboardPage: React.FC = () => {
                             }}
                           >
                             <span>Open</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSaveProjectToDevice(p)}
+                            className="btn-secondary"
+                            title="Save project to device"
+                            style={{
+                              height: '32px',
+                              minHeight: '32px',
+                              padding: '0 0.75rem',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <Save size={13} />
+                            <span>Save</span>
                           </button>
 
                           <button

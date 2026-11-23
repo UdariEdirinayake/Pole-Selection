@@ -1,15 +1,31 @@
 import os
 import json
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import Response
 import openpyxl
 from io import BytesIO
 
 from app.auth import get_current_user
 from app.models import User
+from app.survey_template import generate_survey_template_bytes
 
 router = APIRouter(prefix="/api/results", tags=["Results & Analysis"])
 
 FIXTURE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../fixtures/sample_results.json"))
+
+
+@router.get("/survey-template")
+def download_survey_template(current_user: User = Depends(get_current_user)):
+    """Generate and download a blank Route Survey Excel workbook with native dropdown validations for Equipment and Soil Class."""
+    content = generate_survey_template_bytes()
+    headers = {
+        "Content-Disposition": 'attachment; filename="Route_Survey_Template.xlsx"',
+    }
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
 
 
 @router.get("/sample")

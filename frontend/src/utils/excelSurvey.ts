@@ -1,7 +1,25 @@
 import * as XLSX from 'xlsx'
 import { PoleRow } from '../pages/RoutePolesPage'
 
-export function downloadSurveyTemplate(filename = 'Route_Survey_Template.xlsx') {
+export async function downloadSurveyTemplate(filename = 'Route_Survey_Template.xlsx') {
+  try {
+    const res = await fetch('/api/results/survey-template')
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      return
+    }
+  } catch (e) {
+    console.warn('API survey-template fetch error, using client fallback:', e)
+  }
+
   const wb = XLSX.utils.book_new()
 
   // Sheet 1: Route Survey Data

@@ -5,6 +5,7 @@ import { StatusChip } from '../components/StatusChip'
 import { AlertCircle, CheckCircle, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../utils/exportReport'
 import { useProject } from '../context/ProjectContext'
+import { LineProfileDiagram, ProfilePoleData } from '../components/LineProfileDiagram'
 
 function transformLiveResults(calcResults: any) {
   if (!calcResults || !Array.isArray(calcResults.results)) return null
@@ -200,7 +201,7 @@ export const ResultsPage: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { activeProject } = useProject()
-  const [activeTab, setActiveTab] = useState<'summary' | 'loads' | 'clearances'>('summary')
+  const [activeTab, setActiveTab] = useState<'summary' | 'profile' | 'loads' | 'clearances'>('summary')
   const [resultsData, setResultsData] = useState<any>(null)
   const [isLive, setIsLive] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -286,6 +287,24 @@ export const ResultsPage: React.FC = () => {
         .finally(() => setLoading(false))
     }
   }, [location.state])
+
+  // Extract profile poles for LineProfileDiagram
+  const profilePoles: ProfilePoleData[] = (resultsData?.structural_loading || []).map((s: any, idx: number) => {
+    const summaryItem = resultsData?.pole_summary?.[idx] || {}
+    const clearItem = resultsData?.ground_clearance?.[idx] || {}
+    const pNo = Number(s.pole ?? summaryItem.pole ?? (idx + 1))
+    const sec = Number(s.sec ?? summaryItem.sec ?? (idx < 6 ? 1 : 2))
+    return {
+      pole_no: pNo,
+      section: sec,
+      fore_span_m: Number(s.fore_span_m ?? clearItem.fore_span_m ?? 30),
+      angle_deg: Number(s.angle_deg ?? 0),
+      equipment: s.equipment && s.equipment !== '—' && s.equipment !== 'None' ? s.equipment : undefined,
+      spur: summaryItem.spur && summaryItem.spur !== '—' ? summaryItem.spur : undefined,
+      recommended_pole: summaryItem.final_recommended_pole && summaryItem.final_recommended_pole !== '—' ? summaryItem.final_recommended_pole : (s.final_recommended || s.rec_guy_unguy),
+      foundation_type: summaryItem.foundation_recommendation,
+    }
+  })
 
   // Column definitions for Summary Tab
   const poleSummaryColumns: Column<any>[] = [
@@ -600,6 +619,15 @@ export const ResultsPage: React.FC = () => {
         </button>
         <button
           role="tab"
+          aria-selected={activeTab === 'profile'}
+          className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+          onClick={() => setActiveTab('profile')}
+          data-testid="tab-profile"
+        >
+          Route Profile Diagram
+        </button>
+        <button
+          role="tab"
           aria-selected={activeTab === 'loads'}
           className={`tab-btn ${activeTab === 'loads' ? 'active' : ''}`}
           onClick={() => setActiveTab('loads')}
@@ -635,6 +663,14 @@ export const ResultsPage: React.FC = () => {
           {/* TAB 1: SUMMARY */}
           {activeTab === 'summary' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Interactive Overhead Route Profile & Elevation Diagram */}
+              <div>
+                <LineProfileDiagram
+                  poles={profilePoles}
+                  projectName={(location.state as any)?.projectName || activeProject?.name || 'Kelaniya Distribution Feeder'}
+                />
+              </div>
+
               <div className="card">
                 <DataTable
                   title="Pole Selection Summary (Poles 1–13)"
@@ -677,6 +713,64 @@ export const ResultsPage: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: ROUTE PROFILE DIAGRAM */}
+          {activeTab === 'profile' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <LineProfileDiagram
+                poles={profilePoles}
+                projectName={(location.state as any)?.projectName || activeProject?.name || 'Kelaniya Distribution Feeder'}
+              />
+
+              {/* Profile Highlights Card */}
+              <div className="card" style={{ padding: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1rem', fontSize: '1.05rem', fontWeight: 600 }}>
+                  Route Profile & Structural Elevation Highlights
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Section 1 Scope
+                    </span>
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
+                      Poles 1–6 (194 m)
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Terminal Start to Intermediate</span>
+                  </div>
+
+                  <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Section 2 Scope
+                    </span>
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
+                      Poles 7–13 (174 m)
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Section Pole to Terminal End</span>
+                  </div>
+
+                  <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Transition Span
+                    </span>
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '1.15rem', fontWeight: 700, color: '#0284c7' }}>
+                      38 m (Pole 6 to 7)
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Continuous Sectioning S-Curve</span>
+                  </div>
+
+                  <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Equipment Mounted
+                    </span>
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '1.15rem', fontWeight: 700, color: '#d97706' }}>
+                      Pole 4: 160 kVA TF
+                    </p>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Distribution Substation</span>
+                  </div>
                 </div>
               </div>
             </div>

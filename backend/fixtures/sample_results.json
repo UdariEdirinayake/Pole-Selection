@@ -2,30 +2,30 @@
   "design_parameters": [
     {
       "parameter": "Wind pressure (conductors)",
-      "value": "575 N/m²"
+      "value": "575 N/m\u00b2"
     },
     {
       "parameter": "Wind on poles & equipment",
-      "value": "865 N/m²"
+      "value": "865 N/m\u00b2"
     },
     {
       "parameter": "Guy / strut angle limit",
-      "value": "0 °"
+      "value": "0 \u00b0"
     },
     {
       "parameter": "Guy wire angle to pole",
-      "value": "30 °"
+      "value": "30 \u00b0"
     },
     {
       "parameter": "Top-tie max angle",
-      "value": "10 °"
+      "value": "10 \u00b0"
     },
     {
       "parameter": "Side-tie max angle",
-      "value": "20 °"
+      "value": "20 \u00b0"
     },
     {
-      "parameter": "Everyday stress @ 27 °C",
+      "parameter": "Everyday stress @ 27 \u00b0C",
       "value": "20 % of UTS"
     },
     {
@@ -33,7 +33,7 @@
       "value": "LECO Standard (Sag-Tension Charts)"
     },
     {
-      "parameter": "Max stress @ 15 °C + wind",
+      "parameter": "Max stress @ 15 \u00b0C + wind",
       "value": "40 % of UTS"
     },
     {
@@ -45,118 +45,118 @@
     {
       "sec": 1,
       "pole": 1,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/500 H",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type B"
     },
     {
       "sec": 1,
       "pole": 2,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/1200 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 1,
       "pole": 3,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 1,
       "pole": 4,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
+      "spur": "\u2014",
       "equipment": "TF - 160kVA",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 1,
       "pole": 5,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/500 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 1,
       "pole": 6,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 7,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/500 M",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type B"
     },
     {
       "sec": 2,
       "pole": 8,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 9,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/1200 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 10,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 11,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/500 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 12,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/850 U",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type A"
     },
     {
       "sec": 2,
       "pole": 13,
-      "pole_configuration": "3 — 11 kV + LV bundle",
+      "pole_configuration": "3 \u2014 11 kV + LV bundle",
       "final_recommended_pole": "11/500 H",
-      "spur": "—",
-      "equipment": "—",
+      "spur": "\u2014",
+      "equipment": "\u2014",
       "foundation_recommendation": "Type B"
     }
   ],
@@ -164,7 +164,7 @@
     {
       "sec": 1,
       "circuit": "11kV",
-      "conductor": "1 — 70+16+N50 bundled conductor (LV)",
+      "conductor": "1 \u2014 70+16+N50 bundled conductor (LV)",
       "t_at_15_wind_kn": 5.252,
       "pct_uts_at_15_wind": 35.0,
       "check_15_wind": "OK",
@@ -176,7 +176,7 @@
     {
       "sec": 1,
       "circuit": "LV",
-      "conductor": "1 — 70+16+N50 bundled conductor (LV)",
+      "conductor": "1 \u2014 70+16+N50 bundled conductor (LV)",
       "t_at_15_wind_kn": 5.252,
       "pct_uts_at_15_wind": 35.0,
       "check_15_wind": "OK",
@@ -188,7 +188,7 @@
     {
       "sec": 2,
       "circuit": "11kV",
-      "conductor": "1 — 70+16+N50 bundled conductor (LV)",
+      "conductor": "1 \u2014 70+16+N50 bundled conductor (LV)",
       "t_at_15_wind_kn": 5.173,
       "pct_uts_at_15_wind": 34.5,
       "check_15_wind": "OK",
@@ -200,7 +200,7 @@
     {
       "sec": 2,
       "circuit": "LV",
-      "conductor": "1 — 70+16+N50 bundled conductor (LV)",
+      "conductor": "1 \u2014 70+16+N50 bundled conductor (LV)",
       "t_at_15_wind_kn": 5.173,
       "pct_uts_at_15_wind": 34.5,
       "check_15_wind": "OK",
@@ -229,18 +229,19 @@
       "total_bm_kn_m": 21.37,
       "pole_top_transverse_dan": 244,
       "pole_top_longitudinal_dan": 2277,
-      "unguyed_rec": "✕✕",
+      "unguyed_rec": "\u2715\u2715",
       "strutted_rec": "350 - 200/850 S",
       "guy_wire_load_dan": 4272,
       "load_without_tension_dan": 244,
-      "guy_arrangement": "H · α_g=30°",
+      "guy_arrangement": "H \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/350 H",
       "buckling_v_star_kn": 37.6,
       "safety_factor_2_5_kn": 94.0,
       "buckling_capacity_kn": 91.0,
       "buckling_check": "FAIL",
       "rec_on_buckling": "11/500 H",
-      "final_recommended": "11/500 H"
+      "final_recommended": "11/500 H",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -259,19 +260,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 80.49,
       "pole_top_transverse_dan": 918,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "1200 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 1053,
       "load_without_tension_dan": 391,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 10.43,
       "safety_factor_2_5_kn": 26.07,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/1200 U"
+      "final_recommended": "11/1200 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -290,19 +292,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 47.71,
       "pole_top_transverse_dan": 544,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 302,
       "load_without_tension_dan": 393,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 3.92,
       "safety_factor_2_5_kn": 9.79,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -321,19 +324,20 @@
       "bm_wind_equip_kn_m": 12.72,
       "total_bm_kn_m": 60.04,
       "pole_top_transverse_dan": 685,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "850 - 200/200 S",
       "guy_wire_load_dan": 302,
       "load_without_tension_dan": 534,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/850 L",
       "buckling_v_star_kn": 11.25,
       "safety_factor_2_5_kn": 28.14,
       "buckling_capacity_kn": 157.7,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/850 L",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "TF - 160kVA"
     },
     {
       "sec": 1,
@@ -352,19 +356,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 41.48,
       "pole_top_transverse_dan": 473,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "500 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 151,
       "load_without_tension_dan": 398,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 2.63,
       "safety_factor_2_5_kn": 6.58,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/500 U"
+      "final_recommended": "11/500 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -383,19 +388,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 53.31,
       "pole_top_transverse_dan": 608,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 377,
       "load_without_tension_dan": 419,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 4.69,
       "safety_factor_2_5_kn": 11.74,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -419,14 +425,15 @@
       "strutted_rec": "500 - 200/500 S",
       "guy_wire_load_dan": 2934,
       "load_without_tension_dan": 426,
-      "guy_arrangement": "M · α_g=30°",
+      "guy_arrangement": "M \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 M",
       "buckling_v_star_kn": 26.96,
       "safety_factor_2_5_kn": 67.4,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 M",
-      "final_recommended": "11/500 M"
+      "final_recommended": "11/500 M",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -445,19 +452,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 49.05,
       "pole_top_transverse_dan": 559,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 297,
       "load_without_tension_dan": 411,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 3.96,
       "safety_factor_2_5_kn": 9.9,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -476,19 +484,20 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 79.57,
       "pole_top_transverse_dan": 909,
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "1200 U",
       "strutted_rec": "500 - 200/200 S",
       "guy_wire_load_dan": 1111,
       "load_without_tension_dan": 352,
-      "guy_arrangement": "L · α_g=30°",
+      "guy_arrangement": "L \u00b7 \u03b1_g=30\u00b0",
       "rec_guy_unguy": "11/500 L",
       "buckling_v_star_kn": 10.74,
       "safety_factor_2_5_kn": 26.85,
       "buckling_capacity_kn": 106.6,
       "buckling_check": "PASS",
       "rec_on_buckling": "11/500 L",
-      "final_recommended": "11/1200 U"
+      "final_recommended": "11/1200 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -507,7 +516,7 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 58.93,
       "pole_top_transverse_dan": "Pending",
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "Pending",
       "guy_wire_load_dan": "Pending",
@@ -519,7 +528,8 @@
       "buckling_capacity_kn": null,
       "buckling_check": "Pending",
       "rec_on_buckling": "Pending",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -538,7 +548,7 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 39.07,
       "pole_top_transverse_dan": "Pending",
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "500 U",
       "strutted_rec": "Pending",
       "guy_wire_load_dan": "Pending",
@@ -550,7 +560,8 @@
       "buckling_capacity_kn": null,
       "buckling_check": "Pending",
       "rec_on_buckling": "Pending",
-      "final_recommended": "11/500 U"
+      "final_recommended": "11/500 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -569,7 +580,7 @@
       "bm_wind_equip_kn_m": 0.0,
       "total_bm_kn_m": 44.96,
       "pole_top_transverse_dan": "Pending",
-      "pole_top_longitudinal_dan": "—",
+      "pole_top_longitudinal_dan": "\u2014",
       "unguyed_rec": "850 U",
       "strutted_rec": "Pending",
       "guy_wire_load_dan": "Pending",
@@ -581,7 +592,8 @@
       "buckling_capacity_kn": null,
       "buckling_check": "Pending",
       "rec_on_buckling": "Pending",
-      "final_recommended": "11/850 U"
+      "final_recommended": "11/850 U",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -601,7 +613,7 @@
       "total_bm_kn_m": 19.83,
       "pole_top_transverse_dan": "Pending",
       "pole_top_longitudinal_dan": "Pending",
-      "unguyed_rec": "✕✕",
+      "unguyed_rec": "\u2715\u2715",
       "strutted_rec": "Pending",
       "guy_wire_load_dan": "Pending",
       "load_without_tension_dan": "Pending",
@@ -612,7 +624,8 @@
       "buckling_capacity_kn": null,
       "buckling_check": "Pending",
       "rec_on_buckling": "Pending",
-      "final_recommended": "11/500 H"
+      "final_recommended": "11/500 H",
+      "equipment": "\u2014"
     }
   ],
   "foundation_soil_bearing": [
@@ -625,12 +638,13 @@
       "mr_kn_m": 117.61,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 11.82,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 0.6,
       "foundation_type": "Type B",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -641,12 +655,13 @@
       "mr_kn_m": 155.17,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 19.13,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.31,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -657,12 +672,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.31,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -673,12 +689,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 7.36,
       "conductor_vertical_force_kn": 1.28,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "TF - 160kVA"
     },
     {
       "sec": 1,
@@ -689,12 +706,13 @@
       "mr_kn_m": 117.61,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 11.82,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.33,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 1,
@@ -705,12 +723,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.43,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -721,12 +740,13 @@
       "mr_kn_m": 98.82,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 8.19,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.55,
       "foundation_type": "Type B",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -737,12 +757,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.39,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -753,12 +774,13 @@
       "mr_kn_m": 155.17,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 19.13,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.12,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -769,12 +791,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.22,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -785,12 +808,13 @@
       "mr_kn_m": 117.61,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 11.82,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 1.2,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -801,12 +825,13 @@
       "mr_kn_m": 136.39,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 15.99,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 0.99,
       "foundation_type": "Type A",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     },
     {
       "sec": 2,
@@ -817,12 +842,13 @@
       "mr_kn_m": 117.61,
       "subgrade_k_kn_m3": 52500,
       "mr_gt_bmf_check": "OK",
-      "alt_recommendation": "—",
+      "alt_recommendation": "\u2014",
       "pole_weight_kn": 11.82,
       "equipment_weight_kn": 0.0,
       "conductor_vertical_force_kn": 0.52,
       "foundation_type": "Type B",
-      "foundation_status": "OK"
+      "foundation_status": "OK",
+      "equipment": "\u2014"
     }
   ],
   "ground_clearance": [

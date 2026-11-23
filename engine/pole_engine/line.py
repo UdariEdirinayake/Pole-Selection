@@ -746,6 +746,8 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "circuit_clearance_ok": all_cc_ok,
             "is_terminal": is_terminal,
             "is_section": is_section_pole,
+            "equipment": r.get("equipment") or (f"TF - {r.get('kva')}kVA" if r.get("kva") else ""),
+            "kva": r.get("kva"),
         })
 
     # Phase separation check

@@ -26,7 +26,7 @@ function transformLiveResults(calcResults: any) {
     pole_configuration: calcResults.config?.description || `Config ${calcResults.config?.config_no || '3'}`,
     final_recommended_pole: r.recommended || r.rec_guy_unguy || r.rec_on_buckling || '—',
     spur: r.is_terminal ? (r.pole_no === 1 ? 'Terminal (Start)' : 'Terminal (End)') : '—',
-    equipment: r.equipment || '—',
+    equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
     foundation_recommendation: r.foundation?.foundation_recommendation || (r.foundation?.foundation_type ? `Type ${r.foundation.foundation_type}` : 'Type A'),
     status: r.buckling_ok === false ? 'FAIL' : 'OK',
   }))
@@ -280,7 +280,7 @@ export const ResultsPage: React.FC = () => {
     { key: 'fore_span_m', header: 'Fore Span (m)' },
     { key: 'angle_deg', header: 'Angle (°)' },
     { key: 'eq_span_m', header: 'Equiv Span (m)' },
-    { key: 'bm_wind_line_kn_m', header: 'BM Line (kN·m)' },
+    { key: 'bm_wind_line_kn_m', header: 'BM Wind (kN·m)' },
     { key: 'bm_tension_kn_m', header: 'BM Tension (kN·m)' },
     { key: 'bm_wind_pole_kn_m', header: 'BM Pole (kN·m)' },
     { key: 'bm_wind_equip_kn_m', header: 'BM Equip (kN·m)' },

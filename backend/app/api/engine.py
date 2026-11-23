@@ -679,7 +679,23 @@ def run_full_engine(
         for c in conductors_db
     ]
 
-    from app.models import PoleCapacity, GuyWire, Insulator, SoilClass, StructureClearance
+    from app.models import PoleCapacity, GuyWire, Insulator, SoilClass, StructureClearance, Equipment
+    equip_db = db.query(Equipment).filter(Equipment.dataset_version_id == vid).all() if vid else db.query(Equipment).all()
+    equip_data = [
+        {
+            "equipment": e.equipment_name,
+            "width_m": e.width_m,
+            "height_m": e.height_m,
+            "depth_m": e.depth_m,
+            "weight_kg": e.weight_kg,
+            "area_m2": e.area_m2,
+            "tfh_11m_pole": e.tfh_11m_pole_m,
+            "tfh_13m_pole": e.tfh_13m_pole_m,
+            "TFH_11m_Pole": e.tfh_11m_pole_m,
+            "TFH_13m_Pole": e.tfh_13m_pole_m,
+        }
+        for e in equip_db
+    ]
     capacities_db = db.query(PoleCapacity).filter(PoleCapacity.dataset_version_id == vid).all() if vid else db.query(PoleCapacity).all()
     capacities_data = [
         {
@@ -808,6 +824,8 @@ def run_full_engine(
         "soil_classes": soil_data,
         "ground_clearances": gc_data,
         "circuit_clearances": cc_data,
+        "equipment": equip_data,
+        "transformers": equip_data,
     }
 
     res = compute_line(line_rows, settings, data_payload)

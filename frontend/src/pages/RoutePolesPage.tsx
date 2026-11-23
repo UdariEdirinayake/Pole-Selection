@@ -404,13 +404,21 @@ export const RoutePolesPage: React.FC = () => {
                         className="form-select"
                         value={row.equipment || 'None'}
                         onChange={(e) => handleFieldChange(idx, 'equipment', e.target.value)}
-                        style={{ width: '100%', padding: '0.3rem 0.4rem' }}
+                        style={{ width: '100%', padding: '0.3rem 0.4rem', fontSize: '0.8rem' }}
                       >
                         <option value="None">None</option>
-                        <option value="Transformer">Transformer</option>
-                        <option value="Switchgear">Switchgear / ABS</option>
-                        <option value="Sectionalizer">Sectionalizer</option>
-                        <option value="Auto Recloser">Auto Recloser</option>
+                        <optgroup label="Transformers (kVA)">
+                          <option value="TF - 50kVA">TF - 50 kVA (415 kg)</option>
+                          <option value="TF - 100kVA">TF - 100 kVA (580 kg)</option>
+                          <option value="TF - 160kVA">TF - 160 kVA (750 kg)</option>
+                          <option value="TF - 250kVA">TF - 250 kVA (900 kg)</option>
+                          <option value="TF - 400kVA">TF - 400 kVA (1310 kg)</option>
+                          <option value="TF - 630kVA">TF - 630 kVA (1950 kg)</option>
+                        </optgroup>
+                        <optgroup label="Switchgear & Protection">
+                          <option value="LBS">LBS (Load Break Switch - 100 kg)</option>
+                          <option value="AR">AR (Auto Recloser - 100 kg)</option>
+                        </optgroup>
                       </select>
                     </td>
                     <td>

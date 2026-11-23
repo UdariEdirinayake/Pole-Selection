@@ -20,13 +20,22 @@ function transformLiveResults(calcResults: any) {
     return isNaN(parsed) ? null : parsed
   }
 
+  const getEquip = (r: any): string => {
+    if (r.equipment && r.equipment !== 'None' && r.equipment !== '—' && r.equipment !== 'null') {
+      return String(r.equipment)
+    }
+    const kva = r.kva || r.transformer_kva || r.tfKva
+    if (kva && Number(kva) > 0) return `TF - ${kva}kVA`
+    return '—'
+  }
+
   const pole_summary = results.map((r: any) => ({
     sec: r.section,
     pole: r.pole_no,
     pole_configuration: calcResults.config?.description || `Config ${calcResults.config?.config_no || '3'}`,
     final_recommended_pole: r.recommended || r.rec_guy_unguy || r.rec_on_buckling || '—',
     spur: r.is_terminal ? (r.pole_no === 1 ? 'Terminal (Start)' : 'Terminal (End)') : '—',
-    equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
+    equipment: getEquip(r),
     foundation_recommendation: r.foundation?.foundation_recommendation || (r.foundation?.foundation_type ? `Type ${r.foundation.foundation_type}` : 'Type A'),
     status: r.buckling_ok === false ? 'FAIL' : 'OK',
   }))
@@ -68,7 +77,7 @@ function transformLiveResults(calcResults: any) {
     return {
       sec: r.section,
       pole: r.pole_no,
-      equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
+      equipment: getEquip(r),
       fore_span_m: r.fore,
       angle_deg: r.angle,
       eq_span_m: eqSpan != null ? Number(eqSpan.toFixed(1)) : '—',
@@ -106,7 +115,7 @@ function transformLiveResults(calcResults: any) {
     return {
       sec: r.section,
       pole: r.pole_no,
-      equipment: (r.equipment && r.equipment !== 'None') ? r.equipment : (r.kva ? `TF - ${r.kva}kVA` : '—'),
+      equipment: getEquip(r),
       soil_class: f.soil_class || r.soil || 'Medium',
       recommended_pole: r.recommended || r.rec_guy_unguy || '—',
       bmf_kn_m: Number(bmf.toFixed(2)),
@@ -197,8 +206,19 @@ export const ResultsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // If live calculation results were passed via navigation state, use them
-    const liveResults = (location.state as any)?.liveResults
+    // 1. If live calculation results were passed via navigation state, use them
+    let liveResults = (location.state as any)?.liveResults
+
+    // 2. Otherwise check latest calculation results saved in localStorage
+    if (!liveResults) {
+      const cached = localStorage.getItem('linedesign_latest_results')
+      if (cached) {
+        try {
+          liveResults = JSON.parse(cached)
+        } catch {}
+      }
+    }
+
     if (liveResults) {
       try {
         const transformed = transformLiveResults(liveResults)
@@ -207,36 +227,63 @@ export const ResultsPage: React.FC = () => {
           setIsLive(true)
           setLoading(false)
           return
-        } else {
-          console.error('transformLiveResults returned null. Raw data:', JSON.stringify(liveResults).slice(0, 500))
-          setError('Live calculation completed but result format could not be parsed. Check console for raw data.')
-          setLoading(false)
-          return
         }
       } catch (transformErr: any) {
-        console.error('transformLiveResults crashed:', transformErr, 'Raw data:', JSON.stringify(liveResults).slice(0, 500))
-        setError(`Live result transform error: ${transformErr.message}`)
-        setLoading(false)
-        return
+        console.error('transformLiveResults error:', transformErr)
       }
     }
 
-    // Otherwise fallback to sample results
-    setLoading(true)
-    fetch('/api/results/sample')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load sample benchmark results')
-        return res.json()
-      })
-      .then((data) => {
-        setResultsData(data.data)
-        setIsLive(false)
-      })
-      .catch((err) => {
-        console.error(err)
-        setError(err.message)
-      })
-      .finally(() => setLoading(false))
+    // 3. Otherwise try loading live calculations for the active project
+    const activeSaved = localStorage.getItem('pole_select_active_project')
+    if (activeSaved) {
+      try {
+        const parsed = JSON.parse(activeSaved)
+        if (parsed?.id) {
+          setLoading(true)
+          fetch('/api/engine/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: parsed.id }),
+          })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data?.calculation_results) {
+                const transformed = transformLiveResults(data.calculation_results)
+                if (transformed) {
+                  localStorage.setItem('linedesign_latest_results', JSON.stringify(data.calculation_results))
+                  setResultsData(transformed)
+                  setIsLive(true)
+                  setLoading(false)
+                  return
+                }
+              }
+              fallbackToSample()
+            })
+            .catch(() => fallbackToSample())
+          return
+        }
+      } catch {}
+    }
+
+    fallbackToSample()
+
+    function fallbackToSample() {
+      setLoading(true)
+      fetch('/api/results/sample')
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load sample benchmark results')
+          return res.json()
+        })
+        .then((data) => {
+          setResultsData(data.data)
+          setIsLive(false)
+        })
+        .catch((err) => {
+          console.error(err)
+          setError(err.message)
+        })
+        .finally(() => setLoading(false))
+    }
   }, [location.state])
 
   // Column definitions for Summary Tab

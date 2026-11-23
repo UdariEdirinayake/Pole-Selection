@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ArrowRight,
   Loader2,
   BookOpen,
-  ShieldCheck,
   Activity,
   ChevronDown,
   ChevronUp,
@@ -93,15 +92,26 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
 
 export const ReviewRunPage: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { activeProject, refreshProjects } = useProject()
   const [isRunning, setIsRunning] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
   const [projectDetails, setProjectDetails] = useState<any>(null)
-  const [calcResults, setCalcResults] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [calcResults, setCalcResults] = useState<any>(() => {
+    const stateLive = (location.state as any)?.liveResults
+    if (stateLive) return stateLive
+    const cached = localStorage.getItem('linedesign_latest_results')
+    if (cached) {
+      try {
+        return JSON.parse(cached)
+      } catch {}
+    }
+    return null
+  })
+  const [loading, setLoading] = useState(false)
 
   // Navigation tab for methodology
-  const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector' | 'audit'>('methodology')
+  const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector'>('methodology')
   const [selectedPoleNo, setSelectedPoleNo] = useState<number>(1)
 
   // Expandable methodology steps
@@ -110,8 +120,14 @@ export const ReviewRunPage: React.FC = () => {
   useEffect(() => {
     let isMounted = true
 
+    // Check if live calculation results were provided in route state
+    const stateLive = (location.state as any)?.liveResults
+    if (stateLive && isMounted) {
+      setCalcResults(stateLive)
+    }
+
     const loadProjectAndEngine = async () => {
-      let projectId: number | null = activeProject?.id ?? null
+      let projectId: number | null = (location.state as any)?.projectId || activeProject?.id || null
 
       if (!projectId) {
         try {
@@ -132,7 +148,6 @@ export const ReviewRunPage: React.FC = () => {
         return
       }
 
-      setLoading(true)
       try {
         // 1. Fetch full project details (poles, circuits, line arrangement)
         const projRes = await fetch(`/api/projects/${projectId}`)
@@ -146,16 +161,19 @@ export const ReviewRunPage: React.FC = () => {
           }
         }
 
-        // 2. Fetch calculation engine results for this specific project
-        const runRes = await fetch('/api/engine/run', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ project_id: projectId }),
-        })
-        if (runRes.ok) {
-          const rData = await runRes.json()
-          if (isMounted) {
-            setCalcResults(rData.calculation_results)
+        // 2. Fetch calculation engine results if not already available
+        if (!calcResults && !stateLive) {
+          const runRes = await fetch('/api/engine/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: projectId }),
+          })
+          if (runRes.ok) {
+            const rData = await runRes.json()
+            if (isMounted && rData.calculation_results) {
+              setCalcResults(rData.calculation_results)
+              localStorage.setItem('linedesign_latest_results', JSON.stringify(rData.calculation_results))
+            }
           }
         }
       } catch (err) {
@@ -169,7 +187,7 @@ export const ReviewRunPage: React.FC = () => {
     return () => {
       isMounted = false
     }
-  }, [activeProject?.id])
+  }, [activeProject?.id, location.state])
 
   // Poles of the current project
   const projectPoles: any[] = useMemo(() => {
@@ -354,10 +372,15 @@ export const ReviewRunPage: React.FC = () => {
   }, [selectedPoleNo, projectPoles, calcResults])
 
   const handleExecuteCalculations = async () => {
+    if (calcResults) {
+      navigate('/results', { state: { liveResults: calcResults, projectName: activeProjectName } })
+      return
+    }
+
     setIsRunning(true)
     setRunError(null)
     try {
-      let projectId: number | null = activeProject?.id ?? null
+      let projectId: number | null = (location.state as any)?.projectId || activeProject?.id || null
 
       if (!projectId) {
         const projRes = await fetch('/api/projects/')
@@ -385,8 +408,12 @@ export const ReviewRunPage: React.FC = () => {
       }
 
       const data = await res.json()
+      if (data.calculation_results) {
+        setCalcResults(data.calculation_results)
+        localStorage.setItem('linedesign_latest_results', JSON.stringify(data.calculation_results))
+      }
       await refreshProjects()
-      navigate('/results', { state: { liveResults: data.calculation_results, projectName: data.project_name } })
+      navigate('/results', { state: { liveResults: data.calculation_results, projectName: data.project_name || activeProjectName } })
     } catch (err: any) {
       console.error('Calculation run error:', err)
       setRunError(err.message || 'An unexpected error occurred while executing the calculation engine.')
@@ -508,29 +535,6 @@ export const ReviewRunPage: React.FC = () => {
         >
           <Activity size={16} />
           <span>Pole-by-Pole Step Inspector ({polesCount} Poles)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('audit')}
-          style={{
-            padding: '0.75rem 1.25rem',
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            color: activeTab === 'audit' ? 'var(--primary)' : 'var(--text-muted)',
-            borderBottom: activeTab === 'audit' ? '2px solid var(--primary)' : '2px solid transparent',
-            background: 'none',
-            borderTop: 'none',
-            borderLeft: 'none',
-            borderRight: 'none',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-        >
-          <ShieldCheck size={16} />
-          <span>Pre-Flight Integrity Checklist</span>
         </button>
       </div>
 
@@ -1387,42 +1391,6 @@ export const ReviewRunPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: PRE-FLIGHT AUDIT CHECKLIST */}
-      {activeTab === 'audit' && (
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 700 }}>Pre-Flight Audit Checks for {activeProjectName}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Route span continuity verified</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Fore span of pole n matches aft span of pole n+1 across all {polesCount} poles.
-              </div>
-            </div>
-
-            <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Sag-tension lookup charts mapped</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                {configuredCircuits.map((c: any) => `${c.circuit_name}: Table ${c.lookup_table || 'UQ'}`).join('; ')}.
-              </div>
-            </div>
-
-            <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Environmental wind parameters verified</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Conductor wind: 575 N/m²; Pole & equipment wind: 865 N/m² (confirmed by project owner).
-              </div>
-            </div>
-
-            <div style={{ padding: '0.85rem', borderLeft: '4px solid #10b981', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>Geotechnical soil classes assigned</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                All {polesCount} poles have soil classes 1 to 5 with 1/6 embedment depth verified.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Bottom footer action */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem', paddingBottom: '1.5rem' }}>
         <button
@@ -1433,7 +1401,7 @@ export const ReviewRunPage: React.FC = () => {
           style={{ height: '44px', minHeight: '44px', padding: '0 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
         >
           {isRunning ? <Loader2 size={17} className="spin" /> : null}
-          <span>{isRunning ? 'Running Analysis...' : 'Execute Calculations & View Results'}</span>
+          <span>{isRunning ? 'Loading Results...' : 'View Results'}</span>
           {!isRunning && <ArrowRight size={17} />}
         </button>
       </div>

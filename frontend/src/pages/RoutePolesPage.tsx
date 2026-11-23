@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, AlertTriangle, CheckCircle, MapPin, Upload, Loader2, Play, Download, FileSpreadsheet } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, CheckCircle, MapPin, Upload, Loader2, Play, Download } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { DEFAULT_LINE_POLES } from '../data/defaultPoles'
-import { ImportDropzone } from '../components/ImportDropzone'
 import { downloadSurveyTemplate, parseSurveyExcel } from '../utils/excelSurvey'
 
 export interface PoleRow {
@@ -53,7 +52,6 @@ export const RoutePolesPage: React.FC = () => {
     { num: '4', desc: 'Very stiff clay / dense sand' },
     { num: '5', desc: 'Hard clay / rock' },
   ])
-  const [showUploader, setShowUploader] = useState(false)
   const [saving, setSaving] = useState(false)
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null)
   const directFileInputRef = useRef<HTMLInputElement>(null)
@@ -222,6 +220,8 @@ export const RoutePolesPage: React.FC = () => {
         span_environment: 'across any road or street',
       }))
 
+      let calcData: any = null
+
       if (projectId) {
         const res = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
@@ -248,6 +248,8 @@ export const RoutePolesPage: React.FC = () => {
         if (!calcRes.ok) {
           const calcErr = await calcRes.json().catch(() => ({}))
           console.warn('Calculation warning:', calcErr.detail)
+        } else {
+          calcData = await calcRes.json()
         }
       } else {
         // Create new project with these poles
@@ -269,18 +271,28 @@ export const RoutePolesPage: React.FC = () => {
           const newProj = await newRes.json()
           projectId = newProj.id
           if (newProj.id) {
-            await fetch('/api/engine/run', {
+            const calcRes = await fetch('/api/engine/run', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ project_id: newProj.id }),
             })
+            if (calcRes.ok) {
+              calcData = await calcRes.json()
+            }
           }
         }
       }
 
+      if (calcData?.calculation_results) {
+        localStorage.setItem('linedesign_latest_results', JSON.stringify(calcData.calculation_results))
+        if (projectId) {
+          localStorage.setItem('linedesign_latest_project_id', String(projectId))
+        }
+      }
+
       await refreshProjects()
-      // Once calculations run, navigate directly to Review Methodology page
-      navigate('/review-run')
+      // Once calculations run, navigate directly to Review Methodology page with live results
+      navigate('/review-run', { state: { liveResults: calcData?.calculation_results, projectId } })
     } catch (e) {
       console.error('Error running calculations:', e)
       alert('Network error while running calculations.')
@@ -321,17 +333,6 @@ export const RoutePolesPage: React.FC = () => {
             <span>Import Excel</span>
           </button>
 
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setShowUploader(!showUploader)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.825rem', height: '36px' }}
-            title="Toggle drag-and-drop file upload box"
-          >
-            <FileSpreadsheet size={15} />
-            <span>{showUploader ? 'Hide Dropzone' : 'Dropzone'}</span>
-          </button>
-
           <input
             ref={directFileInputRef}
             type="file"
@@ -341,15 +342,6 @@ export const RoutePolesPage: React.FC = () => {
           />
         </div>
       </div>
-
-      {showUploader && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <ImportDropzone
-            onPolesImported={handlePolesImported}
-            onClose={() => setShowUploader(false)}
-          />
-        </div>
-      )}
 
       {importSuccessMsg && (
         <div

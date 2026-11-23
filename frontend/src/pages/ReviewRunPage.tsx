@@ -771,9 +771,9 @@ export const ReviewRunPage: React.FC = () => {
                 variables={COMMON_ROUTE_FORMULAS[3].variables}
                 substitution={
                   <div style={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
-                    • Operating Voltage V = <strong>11 kV</strong>, Maximum Equivalent Sag S_65 ≈ <strong>0.50 m</strong><br />
-                    • Calculated Minimum Required Clearance: D = 0.0075 × 11 + 0.50 × √0.50 = <strong>0.436 m</strong><br />
-                    • Standard Pin Insulator Crossarm Separation Provided = <strong>0.850 m</strong> ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
+                    • Conductor Sag @ 65°C S_65 ≈ <strong>0.50 m</strong>, Operating Voltage V = <strong>11 kV</strong><br />
+                    • Calculated Minimum Required Clearance: D = 0.75 × √0.50 + 11² / 20000 = 0.530 + 0.006 = <strong>0.536 m</strong><br />
+                    • Standard Pin Insulator Crossarm Separation Provided = <strong>0.850 m</strong> ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS: 0.850 m ≥ 0.536 m)</strong>
                   </div>
                 }
               />

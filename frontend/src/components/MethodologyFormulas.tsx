@@ -130,21 +130,33 @@ export const COMMON_ROUTE_FORMULAS: FormulaDefinition[] = [
     standardRef: 'LECO Standard Guidelines (docs/result.pdf, Page 9)',
     description: 'Calculates the required physical crossarm separation between phase conductors under maximum sag swing conditions.',
     equationSvg: (
-      <svg viewBox="0 0 250 64" style={{ width: '230px', height: '58px', display: 'block' }}>
-        <text x="15" y="40" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
-          D<tspan fontStyle="normal"> = 0.0075 · </tspan>V<tspan fontStyle="normal"> + 0.50 · </tspan>
+      <svg viewBox="0 0 250 64" style={{ width: '235px', height: '58px', display: 'block' }}>
+        <text x="10" y="40" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
+          D<tspan fontStyle="normal"> = 0.75 · </tspan>
         </text>
         {/* Radical: √S_65 */}
-        <path d="M 182,37 L 187,37 L 193,54 L 200,18 L 235,18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <text x="204" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" fill="currentColor">
+        <path d="M 88,37 L 93,37 L 99,54 L 106,18 L 140,18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="110" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" fill="currentColor">
           S<tspan fontSize="12" dy="4">65</tspan>
+        </text>
+        <text x="150" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="normal" fill="currentColor">
+          +
+        </text>
+        {/* Fraction: V^2 / 20000 */}
+        <text x="194" y="27" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          V<tspan fontSize="11" dy="-6">2</tspan>
+        </text>
+        <line x1="172" y1="34" x2="216" y2="34" stroke="currentColor" strokeWidth="1.5" />
+        <text x="194" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="14" fontStyle="normal" textAnchor="middle" fill="currentColor">
+          20000
         </text>
       </svg>
     ),
     variables: [
       { symbol: 'D', description: 'Minimum required spacing between phase conductors on crossarm', unit: 'm' },
-      { symbol: 'V', description: 'System operating phase-to-phase voltage (11 kV)', unit: 'kV' },
       { symbol: 'S_65', description: 'Maximum conductor sag at 65°C under maximum equivalent span', unit: 'm' },
+      { symbol: 'V', description: 'System operating phase-to-phase voltage (e.g. 11 kV)', unit: 'kV' },
+      { symbol: '20,000', description: 'Empirical voltage factor constant from LECO standard specification', unit: '-' },
     ],
   },
 ]

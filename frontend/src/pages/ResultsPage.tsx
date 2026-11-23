@@ -663,14 +663,6 @@ export const ResultsPage: React.FC = () => {
           {/* TAB 1: SUMMARY */}
           {activeTab === 'summary' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {/* Interactive Overhead Route Profile & Elevation Diagram */}
-              <div>
-                <LineProfileDiagram
-                  poles={profilePoles}
-                  projectName={(location.state as any)?.projectName || activeProject?.name || 'Kelaniya Distribution Feeder'}
-                />
-              </div>
-
               <div className="card">
                 <DataTable
                   title="Pole Selection Summary (Poles 1–13)"

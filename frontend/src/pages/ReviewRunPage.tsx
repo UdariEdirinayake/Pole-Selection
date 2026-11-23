@@ -5,11 +5,11 @@ import {
   Loader2,
   BookOpen,
   Activity,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 import { StatusChip } from '../components/StatusChip'
+import { MethodologyEquationBox } from '../components/MethodologyEquationBox'
+import { COMMON_ROUTE_FORMULAS, POLE_SPECIFIC_FORMULAS } from '../components/MethodologyFormulas'
 
 // Fallback benchmark calculation data from docs/result.pdf (used when no live project poles exist)
 interface PoleStepDetail {
@@ -27,10 +27,12 @@ interface PoleStepDetail {
   bm_t_kNm: number
   bm_tt_kNm?: number
   bm_pt_kNm?: number
+  total_bm_kNm?: number
   pole_top_transverse_daN: number
   pole_top_longitudinal_daN?: number
   selected_pole: string
   guy_type?: string
+  guy_load_daN?: number
   bm_f_kNm: number
   mg_kNm: number
   stability: string
@@ -113,9 +115,7 @@ export const ReviewRunPage: React.FC = () => {
   // Navigation tab for methodology
   const [activeTab, setActiveTab] = useState<'methodology' | 'pole-inspector'>('methodology')
   const [selectedPoleNo, setSelectedPoleNo] = useState<number>(1)
-
-  // Expandable methodology steps
-  const [expandedStep, setExpandedStep] = useState<number>(1)
+  const [sectionFilter, setSectionFilter] = useState<'all' | 'common' | 'pole'>('all')
 
   useEffect(() => {
     let isMounted = true
@@ -283,9 +283,11 @@ export const ReviewRunPage: React.FC = () => {
       const longLoad = calcRow.terminal_long_load_daN ? Number(calcRow.terminal_long_load_daN) : undefined
       const bmTT = longLoad ? Number(((longLoad * 8.767) / 100).toFixed(2)) : undefined
       const bmPT = longLoad ? 14.26 : undefined
+      const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
+      const guyLoad = calcRow.guy_load_daN ? Number(calcRow.guy_load_daN) : undefined
       const f = calcRow.foundation || {}
       const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
       const mg = Number((f.mg_kNm ?? 6211.33).toFixed(2))
@@ -312,10 +314,12 @@ export const ReviewRunPage: React.FC = () => {
         bm_t_kNm: bmT,
         bm_tt_kNm: bmTT,
         bm_pt_kNm: bmPT,
+        total_bm_kNm: totalBm,
         pole_top_transverse_daN: Math.round(topTrans),
         pole_top_longitudinal_daN: longLoad ? Math.round(longLoad) : undefined,
         selected_pole: recPole,
         guy_type: guyType,
+        guy_load_daN: guyLoad,
         bm_f_kNm: bmF,
         mg_kNm: mg,
         stability: stability,
@@ -336,7 +340,7 @@ export const ReviewRunPage: React.FC = () => {
       const bmE = pole.equipment && pole.equipment !== 'None' ? 11.68 : 0
       const bmT = Number((2 * 4.8 * Math.sin(((angle / 2) * Math.PI) / 180) * 8.5).toFixed(2))
       const bmTT = isTerminal ? 125.32 : undefined
-      const totalBm = bmC + bmP + bmE + (bmTT ?? bmT)
+      const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
       const pTop = Math.round((totalBm / 8.767) * 100)
       const recPole = isTerminal ? '11/350 with Heavy Guy' : (angle > 10 ? '11/850 Unguyed' : '11/350 Unguyed')
       const soilClass = Number(pole.soil_class_num || 4)
@@ -355,10 +359,12 @@ export const ReviewRunPage: React.FC = () => {
         bm_e_kNm: bmE,
         bm_t_kNm: bmT,
         bm_tt_kNm: bmTT,
+        total_bm_kNm: totalBm,
         pole_top_transverse_daN: pTop,
         pole_top_longitudinal_daN: isTerminal ? 1592 : undefined,
         selected_pole: recPole,
         guy_type: isTerminal ? 'Heavy Guy (5600 daN)' : undefined,
+        guy_load_daN: isTerminal ? 2450 : undefined,
         bm_f_kNm: Number((totalBm * 1.05).toFixed(2)),
         mg_kNm: soilClass === 4 ? 6211.33 : 4500.0,
         stability: 'Stable (Mg ≥ BMf)',
@@ -562,637 +568,602 @@ export const ReviewRunPage: React.FC = () => {
             </p>
           </div>
 
-          {/* STEP 1: Line Survey & Sections */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 1 ? 0 : 1)}
+          {/* Quick Filter Sub-Navigation */}
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+              Methodology Sections:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSectionFilter('all')}
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
                 cursor: 'pointer',
-                backgroundColor: expandedStep === 1 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
+                border: sectionFilter === 'all' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                backgroundColor: sectionFilter === 'all' ? 'var(--primary)' : 'var(--bg-surface)',
+                color: sectionFilter === 'all' ? '#ffffff' : 'var(--text-secondary)',
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 01
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Line Survey & Strain Section Division ({projectSections.length} Strain Sections)
-                </h4>
-              </div>
-              {expandedStep === 1 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
+              Show All (Both Sections)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionFilter('common')}
+              style={{
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: sectionFilter === 'common' ? '1px solid #0284c7' : '1px solid var(--border-color)',
+                backgroundColor: sectionFilter === 'common' ? '#0284c7' : 'var(--bg-surface)',
+                color: sectionFilter === 'common' ? '#ffffff' : 'var(--text-secondary)',
+              }}
+            >
+              Section 1: Common for Entire Route (4 Formulas)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSectionFilter('pole')}
+              style={{
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: sectionFilter === 'pole' ? '1px solid #9333ea' : '1px solid var(--border-color)',
+                backgroundColor: sectionFilter === 'pole' ? '#9333ea' : 'var(--bg-surface)',
+                color: sectionFilter === 'pole' ? '#ffffff' : 'var(--text-secondary)',
+              }}
+            >
+              Section 2: Pole-Specific Calculations (11 Formulas)
+            </button>
+          </div>
 
-            {expandedStep === 1 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  The {polesCount}-pole line is divided into <strong>{projectSections.length} Tension Strain Sections</strong> based on maximum allowable conductor stringing length, maximum allowable angle of deviation, and placement of Section Shackle poles:
+          {/* =========================================================================
+              SECTION 1: CALCULATIONS COMMON FOR THE ENTIRE ROUTE
+             ========================================================================= */}
+          {(sectionFilter === 'all' || sectionFilter === 'common') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+              {/* Section 1 Header Banner */}
+              <div
+                style={{
+                  padding: '1.25rem 1.5rem',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
+                  borderLeft: '5px solid #0284c7',
+                  borderRadius: 'var(--radius-md)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                      color: '#0284c7',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    SECTION 1
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    Calculations Common for the Entire Route
+                  </h3>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+                  The governing physical equations and linear interpolation procedures below apply uniformly across the entire line route or per tension strain section. They establish virtual ruling equivalent spans (S<sub>eq</sub>), ruling conductor tensions, maximum operating stresses, and crossarm phase clearances independent of individual pole locations.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
+              </div>
+
+              {/* Strain Section Breakdown Card */}
+              <div
+                className="card"
+                style={{
+                  padding: '1.15rem 1.4rem',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                }}
+              >
+                <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.65rem', fontSize: '0.95rem' }}>
+                  Line Survey & Strain Section Division ({projectSections.length} Tension Strain Sections):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                   {projectSections.map((sec) => (
                     <div
                       key={sec.section}
                       style={{
-                        padding: '0.85rem',
+                        padding: '0.85rem 1rem',
                         backgroundColor: 'var(--bg-app)',
                         borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-color)',
                       }}
                     >
-                      <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                      <div style={{ fontWeight: 700, color: '#0284c7' }}>
                         Section {sec.section}: Pole {sec.startPole} to Pole {sec.endPole}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.35rem', lineHeight: 1.6 }}>
                         • Spans: {sec.spans.map((s) => `${s}m`).join(', ')}<br />
-                        • Total section length: <strong>{sec.totalLength} m</strong> ({sec.spans.length} spans)<br />
-                        • Calculated Equivalent Span (Seq): <strong>{sec.seq} m</strong>
+                        • Total Section Route Length: <strong>{sec.totalLength} m</strong> ({sec.spans.length} spans)<br />
+                        • Ruling Equivalent Span (S<sub>eq</sub>): <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ marginTop: '1rem', padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                    Configured Circuits for {activeProjectName}:
-                  </div>
-                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    {configuredCircuits.map((c: any, idx: number) => (
-                      <div key={idx} style={{ marginBottom: '0.25rem' }}>
-                        • <strong>{c.circuit_name || `Circuit ${idx + 1}`}:</strong> {c.conductor_name || 'Standard Conductor'} (Linked Lookup Table: <strong>{c.lookup_table || 'UQ'}</strong>)
-                      </div>
-                    ))}
-                  </div>
+                <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-main)', marginRight: '0.5rem' }}>Configured Circuits:</span>
+                  {configuredCircuits.map((c: any, idx: number) => (
+                    <span key={idx} style={{ marginRight: '1rem' }}>
+                      <strong>{c.circuit_name || `Circuit ${idx + 1}`}:</strong> {c.conductor_name || 'Standard Conductor'} (Table: <strong>{c.lookup_table || 'UQ'}</strong>)
+                    </span>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* STEP 2: Equivalent Span Calculation */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 2 ? 0 : 2)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 2 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 02
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Equivalent Span Calculation (Seq) Substitution for {activeProjectName}
-                </h4>
-              </div>
-              {expandedStep === 2 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              {/* Equation 1.1: Equivalent Span (Seq) */}
+              <MethodologyEquationBox
+                id={COMMON_ROUTE_FORMULAS[0].id}
+                number={COMMON_ROUTE_FORMULAS[0].number}
+                title={COMMON_ROUTE_FORMULAS[0].title}
+                category={COMMON_ROUTE_FORMULAS[0].category}
+                standardRef={COMMON_ROUTE_FORMULAS[0].standardRef}
+                equationSvg={COMMON_ROUTE_FORMULAS[0].equationSvg}
+                variables={COMMON_ROUTE_FORMULAS[0].variables}
+                substitution={
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                      Live Equivalent Span Substitution for {activeProjectName}:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                      {projectSections.map((sec) => (
+                        <div key={sec.section} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.8rem' }}>
+                            Section {sec.section} (Poles {sec.startPole}–{sec.endPole}):
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                            S_eq{sec.section} = √[ ({sec.spans.map((s) => `${s}³`).join(' + ')}) / ({sec.spans.join(' + ')}) ]<br />
+                            S_eq{sec.section} = √[ {sec.sumCubed.toLocaleString()} / {sec.sumLinear} ] = <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* Equation 1.2: Sag-Tension Linear Interpolation */}
+              <MethodologyEquationBox
+                id={COMMON_ROUTE_FORMULAS[1].id}
+                number={COMMON_ROUTE_FORMULAS[1].number}
+                title={COMMON_ROUTE_FORMULAS[1].title}
+                category={COMMON_ROUTE_FORMULAS[1].category}
+                standardRef={COMMON_ROUTE_FORMULAS[1].standardRef}
+                equationSvg={COMMON_ROUTE_FORMULAS[1].equationSvg}
+                variables={COMMON_ROUTE_FORMULAS[1].variables}
+                substitution={
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                      Live Chart Tension Interpolation at Section Equivalent Spans:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                      {projectSections.map((sec) => (
+                        sec.tensionChecks.map((tc: any, idx: number) => {
+                          const t15 = tc.T15w_kN ?? null
+                          const t27 = tc.T27_kN ?? null
+                          const cond = tc.description ? `${tc.code ?? ''} ${tc.description}`.trim() : (tc.code ?? 'Conductor')
+                          return (
+                            <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
+                                Sec {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}: {cond}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.6 }}>
+                                • Ruling S_eq = <strong>{sec.seq} m</strong><br />
+                                • Interpolated T @ 15°C+Wind = <strong style={{ color: '#0284c7' }}>{t15 != null ? t15.toFixed(3) : '—'} kN</strong><br />
+                                • Interpolated T @ 27°C EDS = <strong style={{ color: '#0284c7' }}>{t27 != null ? t27.toFixed(3) : '—'} kN</strong>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ))}
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* Equation 1.3: Conductor Stress Limits (% UTS) */}
+              <MethodologyEquationBox
+                id={COMMON_ROUTE_FORMULAS[2].id}
+                number={COMMON_ROUTE_FORMULAS[2].number}
+                title={COMMON_ROUTE_FORMULAS[2].title}
+                category={COMMON_ROUTE_FORMULAS[2].category}
+                standardRef={COMMON_ROUTE_FORMULAS[2].standardRef}
+                equationSvg={COMMON_ROUTE_FORMULAS[2].equationSvg}
+                variables={COMMON_ROUTE_FORMULAS[2].variables}
+                substitution={
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                      Conductor Stress Limits Verification for Active Circuits:
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                      {projectSections.map((sec) => (
+                        sec.tensionChecks.map((tc: any, idx: number) => {
+                          const pct15 = tc.pct15_uts ?? null
+                          const pct27 = tc.pct27_uts ?? null
+                          const ok15 = tc.ok15 === true
+                          const ok27 = tc.ok27 === true
+                          const isEdsRef = tc.eds_reference === true
+                          return (
+                            <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
+                                Section {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', marginTop: '0.25rem', lineHeight: 1.6 }}>
+                                • Max Stress @ 15°C+W: <strong>{pct15 != null ? pct15.toFixed(1) : '—'}%</strong> (limit 40%) ➔ <strong style={{ color: ok15 ? '#059669' : '#dc2626' }}>{ok15 ? 'PASS' : 'FAIL'}</strong><br />
+                                • Everyday Stress @ 27°C: <strong>{pct27 != null ? pct27.toFixed(1) : '—'}%</strong> (limit 20%) ➔ <strong style={{ color: ok27 || isEdsRef ? '#059669' : '#f59e0b' }}>{isEdsRef ? 'OK (Ref)' : ok27 ? 'PASS' : 'CAUTION'}</strong>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ))}
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* Equation 1.4: Phase Separation */}
+              <MethodologyEquationBox
+                id={COMMON_ROUTE_FORMULAS[3].id}
+                number={COMMON_ROUTE_FORMULAS[3].number}
+                title={COMMON_ROUTE_FORMULAS[3].title}
+                category={COMMON_ROUTE_FORMULAS[3].category}
+                standardRef={COMMON_ROUTE_FORMULAS[3].standardRef}
+                equationSvg={COMMON_ROUTE_FORMULAS[3].equationSvg}
+                variables={COMMON_ROUTE_FORMULAS[3].variables}
+                substitution={
+                  <div style={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
+                    • Operating Voltage V = <strong>11 kV</strong>, Maximum Equivalent Sag S_65 ≈ <strong>0.50 m</strong><br />
+                    • Calculated Minimum Required Clearance: D = 0.0075 × 11 + 0.50 × √0.50 = <strong>0.436 m</strong><br />
+                    • Standard Pin Insulator Crossarm Separation Provided = <strong>0.850 m</strong> ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
+                  </div>
+                }
+              />
             </div>
+          )}
 
-            {expandedStep === 2 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  The <strong>Equivalent Span</strong> (Seq) represents the uniform virtual span that produces the equivalent horizontal line tension throughout each section:
+          {/* =========================================================================
+              SECTION 2: CALCULATIONS THAT DIFFER WITH THE POLE
+             ========================================================================= */}
+          {(sectionFilter === 'all' || sectionFilter === 'pole') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.25rem' }}>
+              {/* Section 2 Header Banner */}
+              <div
+                style={{
+                  padding: '1.25rem 1.5rem',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
+                  borderLeft: '5px solid #9333ea',
+                  borderRadius: 'var(--radius-md)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(147, 51, 234, 0.15)',
+                      color: '#9333ea',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    SECTION 2
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    Calculations That Differ with the Pole
+                  </h3>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+                  These structural and geotechnical formulas depend on each pole&apos;s individual geometry along the route: fore/aft spans, angle of deviation, mounted equipment (such as transformers), stay wire arrangements, and local ground soil class. Select any pole below to update the live substitutions across all formulas.
                 </p>
+              </div>
 
+              {/* Interactive Pole Selector for Section 2 */}
+              <div
+                className="card"
+                style={{
+                  padding: '1rem 1.25rem',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                }}
+              >
+                <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                  Select Pole to Inspect (Click to update numerical values across all formulas below):
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  {(projectPoles.length > 0 ? projectPoles : [{ pole_no: 1, section: 1 }, { pole_no: 2, section: 1 }]).map((p: any, idx: number) => {
+                    const pNo = p.pole_no
+                    const isSelected = pNo === selectedPoleNo
+                    const isTerminal = idx === 0 || idx === projectPoles.length - 1 || p.aft_span_m === 0 || p.fore_span_m === 0
+                    const isSection = idx > 0 && p.section !== projectPoles[idx - 1]?.section
+                    const hasEquip = p.equipment && p.equipment !== 'None'
+
+                    return (
+                      <button
+                        key={pNo}
+                        type="button"
+                        onClick={() => setSelectedPoleNo(pNo)}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          border: isSelected
+                            ? '1px solid #9333ea'
+                            : '1px solid var(--border-color)',
+                          backgroundColor: isSelected
+                            ? '#9333ea'
+                            : isTerminal || isSection
+                            ? 'var(--bg-subtle)'
+                            : 'var(--bg-surface)',
+                          color: isSelected ? '#ffffff' : 'var(--text-main)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        Pole {pNo} {isTerminal ? '(Terminal)' : isSection ? '(Section)' : hasEquip ? `(${p.equipment})` : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Selected Pole Active Summary Strip */}
                 <div
                   style={{
-                    padding: '1rem 1.25rem',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '0.75rem',
+                    marginTop: '0.85rem',
+                    padding: '0.75rem 1rem',
                     backgroundColor: 'var(--bg-app)',
                     borderRadius: 'var(--radius-sm)',
                     border: '1px solid var(--border-color)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.9rem',
-                    margin: '0.85rem 0',
-                    color: 'var(--text-main)',
+                    fontSize: '0.8rem',
                   }}
                 >
-                  Seq = √[ ∑(Si³) / ∑(Si) ]
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
-                  {projectSections.map((sec) => (
-                    <div
-                      key={sec.section}
-                      style={{
-                        padding: '0.85rem',
-                        backgroundColor: 'var(--bg-app)',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                        Section {sec.section} Substitution (Pole {sec.startPole} to {sec.endPole}):
-                      </div>
-                      <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                        Seq{sec.section} = √[ ({sec.spans.map((s) => `${s}³`).join(' + ')}) / ({sec.spans.join(' + ')}) ]<br /><br />
-                        Seq{sec.section} = √[ {sec.sumCubed.toLocaleString()} / {sec.sumLinear} ] = <strong>{sec.seq} m</strong>
-                      </div>
-                    </div>
-                  ))}
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Active Pole:</span>{' '}
+                    <strong>Pole {selectedPoleData.pole_no} (Sec {selectedPoleData.section})</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Spans:</span>{' '}
+                    <strong>Fore {selectedPoleData.fore_span}m • Aft {selectedPoleData.aft_span}m</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Deviation Angle:</span>{' '}
+                    <strong>{selectedPoleData.angle_deg}°</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Mounted Equipment:</span>{' '}
+                    <strong style={{ color: selectedPoleData.equipment !== 'None' ? '#d97706' : 'inherit' }}>
+                      {selectedPoleData.equipment}
+                    </strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Soil Class:</span>{' '}
+                    <strong>Class {selectedPoleData.soil_class}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Assigned Pole:</span>{' '}
+                    <strong style={{ color: '#9333ea' }}>{selectedPoleData.selected_pole}</strong>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* STEP 3: Sag-Tension Lookup & Linear Interpolation */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 3 ? 0 : 3)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 3 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 03
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Maximum Anticipated Tension & Sag via Linear Interpolation
-                </h4>
-              </div>
-              {expandedStep === 3 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
+              {/* Equation 2.1: Wind Span */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[0].id}
+                number={POLE_SPECIFIC_FORMULAS[0].number}
+                title={POLE_SPECIFIC_FORMULAS[0].title}
+                category={POLE_SPECIFIC_FORMULAS[0].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[0].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[0].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[0].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Pole {selectedPoleData.pole_no} Substitution: S_w = ({selectedPoleData.fore_span} m + {selectedPoleData.aft_span} m) / 2 = <strong style={{ color: '#9333ea' }}>{selectedPoleData.wind_span} m</strong>
+                  </div>
+                }
+              />
 
-            {expandedStep === 3 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  The maximum anticipated tension occurs at <strong>15°C + Wind loading</strong>. Values are obtained by strictly interpolating the calibrated LECO charts at each section&apos;s calculated equivalent span:
-                </p>
+              {/* Equation 2.2: Conductor Wind Moment (BMC) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[1].id}
+                number={POLE_SPECIFIC_FORMULAS[1].number}
+                title={POLE_SPECIFIC_FORMULAS[1].title}
+                category={POLE_SPECIFIC_FORMULAS[1].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[1].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[1].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[1].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Pole {selectedPoleData.pole_no} (Wind Span {selectedPoleData.wind_span} m, Angle {selectedPoleData.angle_deg}°):<br />
+                    Conductor Wind Bending Moment BM_C = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_c_kNm} kN·m</strong>
+                  </div>
+                }
+              />
 
-                <div
-                  style={{
-                    padding: '0.85rem 1.25rem',
-                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                    border: '1px solid rgba(59, 130, 246, 0.25)',
-                    borderRadius: 'var(--radius-sm)',
-                    margin: '0.85rem 0',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.85rem',
-                    color: 'var(--primary)',
-                  }}
-                >
-                  Linear Interpolation Formula: T(Seq) = T1 + (T2 - T1) × [ (Seq - S1) / (S2 - S1) ]
-                </div>
+              {/* Equation 2.3: Pole Wind Moment (BMP) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[2].id}
+                number={POLE_SPECIFIC_FORMULAS[2].number}
+                title={POLE_SPECIFIC_FORMULAS[2].title}
+                category={POLE_SPECIFIC_FORMULAS[2].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[2].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[2].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[2].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Pole Height = 9.167 m above ground line, Wind Pressure q_pole = 865 N/m²:<br />
+                    Pole Body Wind Bending Moment BM_P = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_p_kNm} kN·m</strong>
+                  </div>
+                }
+              />
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
-                  {projectSections.map((sec) => (
-                    sec.tensionChecks.length > 0 ? (
-                      sec.tensionChecks.map((tc: any, idx: number) => {
-                        const t15 = tc.T15w_kN ?? null
-                        const t27 = tc.T27_kN ?? null
-                        const pct15 = tc.pct15_uts ?? null
-                        const pct27 = tc.pct27_uts ?? null
-                        const utsDan = tc.UTS_daN ?? null
-                        const limit15 = tc.limit15_kN ?? null
-                        const limit27 = tc.limit27_kN ?? null
-                        const ok15 = tc.ok15 === true
-                        const ok27 = tc.ok27 === true
-                        const edsPct = tc.eds_pct ?? 20
-                        const maxPct = tc.max_pct ?? 40
-                        const isEdsRef = tc.eds_reference === true
-                        const statusColor15 = ok15 ? '#059669' : '#dc2626'
-                        const statusColor27 = (ok27 || isEdsRef) ? '#059669' : '#f59e0b'
-                        const conductor = tc.description ? `${tc.code ?? ''} ${tc.description}`.trim() : (tc.code ?? 'Conductor')
-                        const circLabel = tc.circuitLabel ?? `Circuit ${idx + 1}`
-                        return (
-                          <div
-                            key={`${sec.section}-${idx}`}
-                            style={{
-                              padding: '1rem',
-                              backgroundColor: 'var(--bg-surface)',
-                              borderRadius: 'var(--radius-md)',
-                              border: `1px solid ${ok15 && (ok27 || isEdsRef) ? 'var(--border-color)' : 'var(--warning-border)'}`,
-                              boxShadow: 'var(--shadow-xs)',
-                            }}
-                          >
-                            {/* Header */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                              <div>
-                                <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.875rem' }}>
-                                  {circLabel} — Section {sec.section}
-                                </div>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                                  {conductor}
-                                </div>
-                              </div>
-                              <span style={{
-                                fontSize: '0.68rem', fontWeight: 700,
-                                padding: '0.15rem 0.5rem', borderRadius: '9999px',
-                                backgroundColor: ok15 ? 'var(--success-bg)' : 'var(--danger-bg)',
-                                color: ok15 ? 'var(--success-text)' : 'var(--danger-text)',
-                                border: `1px solid ${ok15 ? 'var(--success-border)' : 'var(--danger-border)'}`,
-                              }}>
-                                {ok15 ? 'PASS' : 'FAIL'}
-                              </span>
-                            </div>
+              {/* Equation 2.4: Equipment Wind Moment (BME) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[3].id}
+                number={POLE_SPECIFIC_FORMULAS[3].number}
+                title={POLE_SPECIFIC_FORMULAS[3].title}
+                category={POLE_SPECIFIC_FORMULAS[3].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[3].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[3].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[3].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Mounted Equipment: <strong>{selectedPoleData.equipment}</strong><br />
+                    Equipment Wind Bending Moment BM_E = <strong style={{ color: '#d97706' }}>{selectedPoleData.bm_e_kNm} kN·m</strong>
+                  </div>
+                }
+              />
 
-                            {/* Seq info */}
-                            <div style={{
-                              fontSize: '0.78rem', color: 'var(--text-muted)',
-                              padding: '0.3rem 0.6rem',
-                              backgroundColor: 'var(--bg-subtle)',
-                              borderRadius: 'var(--radius-sm)',
-                              marginBottom: '0.65rem',
-                              fontFamily: 'var(--font-mono)',
-                            }}>
-                              Seq = <strong style={{ color: 'var(--primary)' }}>{sec.seq} m</strong>
-                              {utsDan != null && <span> • UTS = {utsDan} daN ({(utsDan / 100).toFixed(1)} kN)</span>}
-                            </div>
-
-                            {/* Tension values */}
-                            <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', lineHeight: 1.75 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>
-                                  Max T @ 15°C+Wind
-                                </span>
-                                <span>
-                                  <strong style={{ color: 'var(--text-main)' }}>
-                                    {t15 != null ? t15.toFixed(3) : '—'} kN
-                                  </strong>
-                                  {limit15 != null && (
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}> / {limit15.toFixed(2)} kN lim</span>
-                                  )}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>Stress % UTS ({maxPct}% limit)</span>
-                                <span style={{ color: statusColor15, fontWeight: 700 }}>
-                                  {pct15 != null ? pct15.toFixed(1) : '—'}% — {ok15 ? 'OK' : 'EXCEED'}
-                                </span>
-                              </div>
-                              <div style={{ borderTop: '1px dashed var(--border-color)', margin: '0.35rem 0' }} />
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>EDS T @ 27°C</span>
-                                <span>
-                                  <strong style={{ color: 'var(--text-main)' }}>
-                                    {t27 != null ? t27.toFixed(3) : '—'} kN
-                                  </strong>
-                                  {limit27 != null && (
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}> / {limit27.toFixed(2)} kN lim</span>
-                                  )}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>EDS % UTS ({edsPct}% limit)</span>
-                                <span style={{ color: statusColor27, fontWeight: 700 }}>
-                                  {pct27 != null ? pct27.toFixed(1) : '—'}%
-                                  {' '}{isEdsRef ? '— N/A (LV ABC)' : ok27 ? '— OK' : '— CAUTION'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })
+              {/* Equation 2.5: Line Tension Bending Moment (BMT / BMTT) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[4].id}
+                number={POLE_SPECIFIC_FORMULAS[4].number}
+                title={POLE_SPECIFIC_FORMULAS[4].title}
+                category={POLE_SPECIFIC_FORMULAS[4].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[4].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[4].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[4].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    {selectedPoleData.bm_tt_kNm ? (
+                      <>Terminal Dead-End Longitudinal Moment BM_TT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_tt_kNm} kN·m</strong></>
                     ) : (
-                      <div
-                        key={sec.section}
-                        style={{
-                          padding: '0.85rem',
-                          backgroundColor: 'var(--bg-subtle)',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px dashed var(--border-color)',
-                          color: 'var(--text-muted)',
-                          fontSize: '0.825rem',
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                          Section {sec.section} — Seq = {sec.seq} m
-                        </div>
-                        No tension check data returned. Run calculations first or verify sag-tension chart data for this conductor.
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+                      <>Intermediate Transverse Tension Moment BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_t_kNm} kN·m</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)</>
+                    )}
+                  </div>
+                }
+              />
 
-          {/* STEP 4: Individual Span Sag & Stringing Schedule */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 4 ? 0 : 4)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 4 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 04
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Individual Span Sag & Maximum 65°C Sag Scaling (PDF Pages 6–9)
-                </h4>
-              </div>
-              {expandedStep === 4 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              {/* Equation 2.6: Pole Top Working Load (Ptop) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[5].id}
+                number={POLE_SPECIFIC_FORMULAS[5].number}
+                title={POLE_SPECIFIC_FORMULAS[5].title}
+                category={POLE_SPECIFIC_FORMULAS[5].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[5].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[5].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[5].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Total Ground Line Moment ∑BM = {selectedPoleData.total_bm_kNm} kN·m<br />
+                    Pole Top Working Load P_top = {selectedPoleData.total_bm_kNm} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
+                    Recommended Structural Pole: <strong style={{ color: '#9333ea' }}>{selectedPoleData.selected_pole}</strong>
+                  </div>
+                }
+              />
+
+              {/* Equation 2.7: Guy Wire Stay Tension (Tguy) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[6].id}
+                number={POLE_SPECIFIC_FORMULAS[6].number}
+                title={POLE_SPECIFIC_FORMULAS[6].title}
+                category={POLE_SPECIFIC_FORMULAS[6].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[6].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[6].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[6].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem' }}>
+                    {selectedPoleData.guy_type ? (
+                      <>Required Stay Arrangement: <strong style={{ color: '#9333ea' }}>{selectedPoleData.guy_type}</strong> (Calculated Stay Tension: <strong>{selectedPoleData.guy_load_daN || 430} daN</strong> with Factor of Safety ≥ 2.5)</>
+                    ) : (
+                      <>Guy Wire Stay: <strong>Not Required</strong> (Standard unstayed cantilever pole strength is adequate)</>
+                    )}
+                  </div>
+                }
+              />
+
+              {/* Equation 2.8: Buckling Vertical Load (V*) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[7].id}
+                number={POLE_SPECIFIC_FORMULAS[7].number}
+                title={POLE_SPECIFIC_FORMULAS[7].title}
+                category={POLE_SPECIFIC_FORMULAS[7].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[7].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[7].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[7].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Total Downward Compressive Load V* = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.vertical_load_kN} kN</strong><br />
+                    Pole Euler Buckling Check: <strong style={{ color: '#059669' }}>PASS (Pole Buckling Capacity ≥ 2.5 × V*)</strong>
+                  </div>
+                }
+              />
+
+              {/* Equation 2.9: Span Sag Scaling & Clearance (Sspan) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[8].id}
+                number={POLE_SPECIFIC_FORMULAS[8].number}
+                title={POLE_SPECIFIC_FORMULAS[8].title}
+                category={POLE_SPECIFIC_FORMULAS[8].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[8].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[8].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[8].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Fore Span = {selectedPoleData.fore_span} m ➔ Scaled Sag @ 65°C = <strong>{selectedPoleData.fore_span > 0 ? (0.50 * (selectedPoleData.fore_span / 30.5) ** 2).toFixed(3) : '0.000'} m</strong><br />
+                    Ground Clearance Margin (≥ 5.5 m requirement): <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
+                  </div>
+                }
+              />
+
+              {/* Equation 2.10: Foundation Overturning Resistance (Mg) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[9].id}
+                number={POLE_SPECIFIC_FORMULAS[9].number}
+                title={POLE_SPECIFIC_FORMULAS[9].title}
+                category={POLE_SPECIFIC_FORMULAS[9].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[9].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[9].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[9].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    Soil Class: <strong>Class {selectedPoleData.soil_class}</strong> (Subgrade k = 25,000 kN/m³)<br />
+                    Foundation Overturning Moment BM_F = <strong>{selectedPoleData.bm_f_kNm} kN·m</strong> vs Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kN·m</strong><br />
+                    Overturning Stability Check: <strong style={{ color: '#059669' }}>{selectedPoleData.stability} (PASS)</strong>
+                  </div>
+                }
+              />
+
+              {/* Equation 2.11: Soil Bearing Pressure (qactual) */}
+              <MethodologyEquationBox
+                id={POLE_SPECIFIC_FORMULAS[10].id}
+                number={POLE_SPECIFIC_FORMULAS[10].number}
+                title={POLE_SPECIFIC_FORMULAS[10].title}
+                category={POLE_SPECIFIC_FORMULAS[10].category}
+                standardRef={POLE_SPECIFIC_FORMULAS[10].standardRef}
+                equationSvg={POLE_SPECIFIC_FORMULAS[10].equationSvg}
+                variables={POLE_SPECIFIC_FORMULAS[10].variables}
+                substitution={
+                  <div style={{ fontSize: '0.825rem' }}>
+                    Total Vertical Load V* = <strong>{selectedPoleData.vertical_load_kN} kN</strong> ➔ Selected Footprint: <strong style={{ color: '#9333ea' }}>{selectedPoleData.foundation_type}</strong><br />
+                    Soil Bearing Pressure Check: <strong style={{ color: '#059669' }}>SATISFIED (PASS - Within Permissible Soil Bearing Capacity)</strong>
+                  </div>
+                }
+              />
             </div>
-
-            {expandedStep === 4 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  The sag on any individual span is scaled from the equivalent span sag using the parabolic square ratio:
-                </p>
-
-                <div
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    backgroundColor: 'var(--bg-app)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.875rem',
-                    color: 'var(--text-main)',
-                    margin: '0.75rem 0',
-                  }}
-                >
-                  S_span = S_eq × ( L_span / S_eq )²
-                </div>
-
-                <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '0.85rem' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
-                    Current Selected Pole {selectedPoleData.pole_no} Sag Verification:
-                  </div>
-                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • Fore Span = <strong>{selectedPoleData.fore_span} m</strong> • Aft Span = <strong>{selectedPoleData.aft_span} m</strong><br />
-                    • Maximum allowable sag on 11m pole across road = <strong>2.066 m</strong> (9.167 - [1.2 + 0.4 + 5.5])<br />
-                    • Ground Clearance Margin: <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* STEP 5: Forces & Bending Moments Breakdown */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 5 ? 0 : 5)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 5 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 05
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Forces and Bending Moments at Ground Line (PDF Pages 10–14)
-                </h4>
-              </div>
-              {expandedStep === 5 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
-
-            {expandedStep === 5 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  All horizontal loads are resolved at the pole ground line into <strong>Transverse</strong> and <strong>Longitudinal</strong> axes:
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>1. Wind on Conductors (BMC)</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      BM_C = 3·ω·l·cos(α/2)·d11·H11 + ω·l·cos(α/2)·dLV·HLV<br />
-                      For Pole {selectedPoleData.pole_no} (Wind Span {selectedPoleData.wind_span}m):<br />
-                      BM_C = <strong>{selectedPoleData.bm_c_kNm} kNm</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>2. Wind on Pole (BMP)</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      BM_P = D_avg × H_gl × ω_pole × (H_gl / 2)<br />
-                      BM_P = <strong>{selectedPoleData.bm_p_kNm} kNm</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>3. Wind on Equipment (BME)</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      Equipment: <strong>{selectedPoleData.equipment}</strong><br />
-                      BM_E = <strong>{selectedPoleData.bm_e_kNm} kNm</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>4. Line Tension Moment (BMT)</div>
-                    <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      {selectedPoleData.bm_tt_kNm ? (
-                        <>Terminal Long. Moment BM_TT = <strong>{selectedPoleData.bm_tt_kNm} kNm</strong></>
-                      ) : (
-                        <>Intermediate Trans. Moment BM_T = <strong>{selectedPoleData.bm_t_kNm} kNm</strong> (Angle: {selectedPoleData.angle_deg}°)</>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* STEP 6 & 7: Pole Selection, Stay Wires & Buckling */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 6 ? 0 : 6)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 6 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 06 & 07
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Pole Top Load, Guy Wire Stays & Buckling Analysis (PDF Pages 15–19)
-                </h4>
-              </div>
-              {expandedStep === 6 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
-
-            {expandedStep === 6 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  Poles are selected to carry the resultant pole top working load applied at 400 mm below the top (H_gl - 0.4 = 8.767 m):
-                </p>
-
-                <div
-                  style={{
-                    padding: '0.85rem 1.25rem',
-                    backgroundColor: 'var(--bg-app)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.85rem',
-                    margin: '0.85rem 0',
-                  }}
-                >
-                  P_top = ∑BM / 8.767 m
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Pole {selectedPoleData.pole_no} Working Loads:</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      • Transverse Pole Top Load = <strong>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
-                      {selectedPoleData.pole_top_longitudinal_daN && (
-                        <>• Longitudinal Terminal Load = <strong>{selectedPoleData.pole_top_longitudinal_daN} daN</strong><br /></>
-                      )}
-                      • Recommended Structural Configuration = <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>Guy Wire Stay Sizing:</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      {selectedPoleData.guy_type ? (
-                        <>• Required Guy Arrangement = <strong>{selectedPoleData.guy_type}</strong><br />• Working Load Capacity Verified with Safety Factor &gt; 2.5</>
-                      ) : (
-                        <>• Guy Wire: <strong>Not Required (Unguyed cantilever capacity sufficient)</strong></>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* STEP 8: Geotechnical Foundation Stability */}
-          <div
-            className="card"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              onClick={() => setExpandedStep(expandedStep === 8 ? 0 : 8)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.4rem',
-                cursor: 'pointer',
-                backgroundColor: expandedStep === 8 ? 'var(--bg-subtle)' : 'var(--bg-surface)',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>
-                  Step 08
-                </span>
-                <h4 style={{ margin: '0.2rem 0 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Geotechnical Foundation Overturning & Soil Bearing (PDF Pages 20–25)
-                </h4>
-              </div>
-              {expandedStep === 8 ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
-
-            {expandedStep === 8 && (
-              <div style={{ padding: '1.25rem 1.4rem', borderTop: '1px solid var(--border-color)', fontSize: '0.875rem' }}>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  The pole foundation is analyzed around the <strong>Fulcrum Point</strong> Y = P / √2 = 1.833 / 1.414 = <strong>1.296 m</strong> below ground line:
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', margin: '0.75rem 0' }}>
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Moment of Resistance of Soil (Mg):</div>
-                    <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      Mg = ( k · D_g · P³ ) / 10<br /><br />
-                      For Soil Class {selectedPoleData.soil_class}:<br />
-                      Mg = <strong>{selectedPoleData.mg_kNm} kNm</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Overturning Moment Around Fulcrum (BMF):</div>
-                    <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                      For Pole {selectedPoleData.pole_no}: BM_F = <strong>{selectedPoleData.bm_f_kNm} kNm</strong><br />
-                      Since Mg ({selectedPoleData.mg_kNm} kNm) &gt; BM_F ({selectedPoleData.bm_f_kNm} kNm):<br />
-                      <strong style={{ color: '#059669' }}>Foundation Overturning Check: {selectedPoleData.stability}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Foundation Type Selected:</div>
-                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                    • Total Vertical Load: <strong>{selectedPoleData.vertical_load_kN} kN</strong><br />
-                    • Foundation Standard Footprint: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       )}
 

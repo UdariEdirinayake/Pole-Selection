@@ -206,6 +206,23 @@ export const MASTER_TABLES: TableMeta[] = [
     ],
   },
   {
+    id: 'equipment',
+    label: 'Pole-Mounted Transformers & Equipment',
+    fullName: 'Pole-Mounted Distribution Transformers & Switchgear Specifications',
+    category: 'Structural Library',
+    description: 'Dimensions (width, height, depth), mass (kg), wind area (m²), and mounting heights (11m & 13m poles) for 50kVA–630kVA transformers, LBS, and Auto Reclosers.',
+    editableFields: [
+      { key: 'equipment_name', label: 'Equipment Name', type: 'text' },
+      { key: 'width_m', label: 'Width (m)', type: 'number' },
+      { key: 'height_m', label: 'Height (m)', type: 'number' },
+      { key: 'depth_m', label: 'Depth (m)', type: 'number' },
+      { key: 'weight_kg', label: 'Weight (kg)', type: 'number' },
+      { key: 'area_m2', label: 'Wind Area (m²)', type: 'number' },
+      { key: 'tfh_11m_pole_m', label: 'Mount H (11m) (m)', type: 'number' },
+      { key: 'tfh_13m_pole_m', label: 'Mount H (13m) (m)', type: 'number' },
+    ],
+  },
+  {
     id: 'ground-clearances',
     label: 'Statutory Ground Clearances',
     fullName: 'Statutory Conductor Ground Clearance Standards',

@@ -277,7 +277,8 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
         return insulator_nominal_height_m(insulators_master, desc, 33 if band == "HH" else 11)
 
     def attach_ht(i: int) -> float:
-        return (heights[i] if i < len(heights) else 0.0) + ins_hgt_stage(i)
+        raw_h = (heights[i] if i < len(heights) else 0.0) + ins_hgt_stage(i)
+        return round(raw_h, 2)
 
     height_order = list(range(n_stages))
     height_order.sort(key=lambda idx: (attach_ht(idx), -idx), reverse=True)

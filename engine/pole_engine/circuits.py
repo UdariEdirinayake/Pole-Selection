@@ -189,8 +189,8 @@ def parse_levels(config: dict[str, Any]) -> dict[str, Any]:
     n_l = int(num(config.get("levels_L"), 0.0) or 0.0)
 
     pole_height = num(config.get("pole_height_m"), 11.0) or 11.0
-    h_hv = pole_height * 5.0 / 6.0 - 0.2
-    h_lv = pole_height * 5.0 / 6.0 - 1.4
+    h_hv = round(pole_height * 5.0 / 6.0 - 0.2, 2)
+    h_lv = round(pole_height * 5.0 / 6.0 - 1.4, 2)
 
     heights = []
     for _ in range(n_hh):

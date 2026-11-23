@@ -770,8 +770,8 @@ def run_full_engine(
     conductor_lv = next((str(c.conductor_code) for c in circuits if c.nominal_voltage_kv and c.nominal_voltage_kv < 1.0 and c.conductor_code is not None), "2")
 
     pole_h = 11.0
-    h_hv = pole_h * 5.0 / 6.0 - 0.2
-    h_lv = pole_h * 5.0 / 6.0 - 1.4
+    h_hv = round(pole_h * 5.0 / 6.0 - 0.2, 2)
+    h_lv = round(pole_h * 5.0 / 6.0 - 1.4, 2)
 
     configs_data = [{
         "config_no": "3",
@@ -780,7 +780,7 @@ def run_full_engine(
         "levels_HH": 0,
         "levels_H": 1,
         "levels_L": 1,
-        "heights_m": f"{h_hv:.4f};{h_lv:.4f}",
+        "heights_m": f"{h_hv:.2f};{h_lv:.2f}",
         "n_per_level": "3;1",
         "guy_h_m": 8.4,
         "tguy_h_m": 8.4

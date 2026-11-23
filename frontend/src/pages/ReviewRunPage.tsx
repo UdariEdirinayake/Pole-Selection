@@ -765,48 +765,131 @@ export const ReviewRunPage: React.FC = () => {
                   Linear Interpolation Formula: T(Seq) = T1 + (T2 - T1) × [ (Seq - S1) / (S2 - S1) ]
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
                   {projectSections.map((sec) => (
                     sec.tensionChecks.length > 0 ? (
-                      sec.tensionChecks.map((tc: any, idx: number) => (
-                        <div
-                          key={`${sec.section}-${idx}`}
-                          style={{
-                            padding: '0.85rem',
-                            backgroundColor: 'var(--bg-app)',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border-color)',
-                          }}
-                        >
-                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                            {tc.circuit || `Circuit ${idx + 1}`} ({tc.conductor || 'Conductor'}) — Section {sec.section}
+                      sec.tensionChecks.map((tc: any, idx: number) => {
+                        const t15 = tc.T15w_kN ?? null
+                        const t27 = tc.T27_kN ?? null
+                        const pct15 = tc.pct15_uts ?? null
+                        const pct27 = tc.pct27_uts ?? null
+                        const utsDan = tc.UTS_daN ?? null
+                        const limit15 = tc.limit15_kN ?? null
+                        const limit27 = tc.limit27_kN ?? null
+                        const ok15 = tc.ok15 === true
+                        const ok27 = tc.ok27 === true
+                        const edsPct = tc.eds_pct ?? 20
+                        const maxPct = tc.max_pct ?? 40
+                        const isEdsRef = tc.eds_reference === true
+                        const statusColor15 = ok15 ? '#059669' : '#dc2626'
+                        const statusColor27 = (ok27 || isEdsRef) ? '#059669' : '#f59e0b'
+                        const conductor = tc.description ? `${tc.code ?? ''} ${tc.description}`.trim() : (tc.code ?? 'Conductor')
+                        const circLabel = tc.circuitLabel ?? `Circuit ${idx + 1}`
+                        return (
+                          <div
+                            key={`${sec.section}-${idx}`}
+                            style={{
+                              padding: '1rem',
+                              backgroundColor: 'var(--bg-surface)',
+                              borderRadius: 'var(--radius-md)',
+                              border: `1px solid ${ok15 && (ok27 || isEdsRef) ? 'var(--border-color)' : 'var(--warning-border)'}`,
+                              boxShadow: 'var(--shadow-xs)',
+                            }}
+                          >
+                            {/* Header */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                              <div>
+                                <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.875rem' }}>
+                                  {circLabel} — Section {sec.section}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                                  {conductor}
+                                </div>
+                              </div>
+                              <span style={{
+                                fontSize: '0.68rem', fontWeight: 700,
+                                padding: '0.15rem 0.5rem', borderRadius: '9999px',
+                                backgroundColor: ok15 ? 'var(--success-bg)' : 'var(--danger-bg)',
+                                color: ok15 ? 'var(--success-text)' : 'var(--danger-text)',
+                                border: `1px solid ${ok15 ? 'var(--success-border)' : 'var(--danger-border)'}`,
+                              }}>
+                                {ok15 ? 'PASS' : 'FAIL'}
+                              </span>
+                            </div>
+
+                            {/* Seq info */}
+                            <div style={{
+                              fontSize: '0.78rem', color: 'var(--text-muted)',
+                              padding: '0.3rem 0.6rem',
+                              backgroundColor: 'var(--bg-subtle)',
+                              borderRadius: 'var(--radius-sm)',
+                              marginBottom: '0.65rem',
+                              fontFamily: 'var(--font-mono)',
+                            }}>
+                              Seq = <strong style={{ color: 'var(--primary)' }}>{sec.seq} m</strong>
+                              {utsDan != null && <span> • UTS = {utsDan} daN ({(utsDan / 100).toFixed(1)} kN)</span>}
+                            </div>
+
+                            {/* Tension values */}
+                            <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', lineHeight: 1.75 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>
+                                  Max T @ 15°C+Wind
+                                </span>
+                                <span>
+                                  <strong style={{ color: 'var(--text-main)' }}>
+                                    {t15 != null ? t15.toFixed(3) : '—'} kN
+                                  </strong>
+                                  {limit15 != null && (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}> / {limit15.toFixed(2)} kN lim</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Stress % UTS ({maxPct}% limit)</span>
+                                <span style={{ color: statusColor15, fontWeight: 700 }}>
+                                  {pct15 != null ? pct15.toFixed(1) : '—'}% — {ok15 ? 'OK' : 'EXCEED'}
+                                </span>
+                              </div>
+                              <div style={{ borderTop: '1px dashed var(--border-color)', margin: '0.35rem 0' }} />
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>EDS T @ 27°C</span>
+                                <span>
+                                  <strong style={{ color: 'var(--text-main)' }}>
+                                    {t27 != null ? t27.toFixed(3) : '—'} kN
+                                  </strong>
+                                  {limit27 != null && (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}> / {limit27.toFixed(2)} kN lim</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>EDS % UTS ({edsPct}% limit)</span>
+                                <span style={{ color: statusColor27, fontWeight: 700 }}>
+                                  {pct27 != null ? pct27.toFixed(1) : '—'}%
+                                  {' '}{isEdsRef ? '— N/A (LV ABC)' : ok27 ? '— OK' : '— CAUTION'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.3rem 0' }}>
-                            Seq = <strong>{sec.seq} m</strong> • Chart: Table {tc.lookup_table || 'UQ'}
-                          </div>
-                          <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                            • Max Tension @ 15°C + Wind = <strong>{Number(tc.tension_15c_wind_kn).toFixed(2)} kN</strong><br />
-                            • Stress: <strong>{Number(tc.pct_uts_at_15c_wind).toFixed(1)}% UTS</strong> (&lt; 40% UTS: <span style={{ color: '#059669', fontWeight: 700 }}>PASS</span>)<br />
-                            • Everyday Tension @ 27°C = <strong>{Number(tc.tension_27c_kn).toFixed(2)} kN</strong> ({Number(tc.pct_uts_at_27c).toFixed(1)}% UTS EDS: <span style={{ color: '#059669', fontWeight: 700 }}>PASS</span>)
-                          </div>
-                        </div>
-                      ))
+                        )
+                      })
                     ) : (
                       <div
                         key={sec.section}
                         style={{
                           padding: '0.85rem',
-                          backgroundColor: 'var(--bg-app)',
+                          backgroundColor: 'var(--bg-subtle)',
                           borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-color)',
+                          border: '1px dashed var(--border-color)',
+                          color: 'var(--text-muted)',
+                          fontSize: '0.825rem',
                         }}
                       >
-                        <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>
-                          Section {sec.section} Tension Interpolation (Seq = {sec.seq} m)
+                        <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                          Section {sec.section} — Seq = {sec.seq} m
                         </div>
-                        <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-                          Interpolated at Seq = {sec.seq} m using calibrated LECO sag-tension chart tables. Tension checks strictly conform to the 40% UTS maximum stress and 20% UTS everyday stress thresholds.
-                        </div>
+                        No tension check data returned. Run calculations first or verify sag-tension chart data for this conductor.
                       </div>
                     )
                   ))}

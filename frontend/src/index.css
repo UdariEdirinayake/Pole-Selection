@@ -9,32 +9,45 @@
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 
   /* Surfaces & Backgrounds */
-  --bg-app: #eef2f6;                  /* Professional cool slate canvas: provides distinct contrast so cards & panels pop */
-  --bg-header: #ffffff;               /* Crisp elevated white header */
-  --bg-sidebar: #f8fafc;              /* Sleek, cool slate navigation sidebar */
-  --bg-surface: #ffffff;              /* Crisp white cards, modals, and data tables */
+  --bg-app: #eef2f6;
+  /* Professional cool slate canvas: provides distinct contrast so cards & panels pop */
+  --bg-header: #ffffff;
+  /* Crisp elevated white header */
+  --bg-sidebar: #f8fafc;
+  /* Sleek, cool slate navigation sidebar */
+  --bg-surface: #ffffff;
+  /* Crisp white cards, modals, and data tables */
   --bg-surface-elevated: #ffffff;
-  --bg-subtle: #f1f5f9;               /* Slate-100 for input fills, stat cards, secondary panels */
-  --bg-muted: #e2e8f0;                /* Slate-200 for separators and subtle outlines */
+  --bg-subtle: #f1f5f9;
+  /* Slate-100 for input fills, stat cards, secondary panels */
+  --bg-muted: #e2e8f0;
+  /* Slate-200 for separators and subtle outlines */
   --bg-hover: #f1f5f9;
 
   /* Borders & Dividers */
   --border-light: #f1f5f9;
-  --border-color: #cbd5e1;            /* Slate-300: crisp, clean definition */
+  --border-color: #cbd5e1;
+  /* Slate-300: crisp, clean definition */
   --border-strong: #94a3b8;
   --border-focus: #2563eb;
 
   /* Text & Content */
-  --text-main: #0f172a;               /* Slate-900: sharp readability */
-  --text-secondary: #334155;          /* Slate-700 */
-  --text-muted: #64748b;              /* Slate-500 */
-  --text-tertiary: #94a3b8;           /* Slate-400 */
+  --text-main: #0f172a;
+  /* Slate-900: sharp readability */
+  --text-secondary: #334155;
+  /* Slate-700 */
+  --text-muted: #64748b;
+  /* Slate-500 */
+  --text-tertiary: #94a3b8;
+  /* Slate-400 */
   --text-inverse: #ffffff;
 
   /* Brand Accents */
-  --primary: #2563eb;                 /* Engineering royal blue */
+  --primary: #2563eb;
+  /* Engineering royal blue */
   --primary-hover: #1d4ed8;
-  --primary-subtle: #eff6ff;          /* Ice blue accent */
+  --primary-subtle: #eff6ff;
+  /* Ice blue accent */
   --primary-border: #bfdbfe;
 
   /* Semantic Status Colors */
@@ -79,10 +92,14 @@
 html.dark,
 .dark {
   /* Surfaces & Backgrounds */
-  --bg-app: #080d1a;                  /* Deep obsidian navy canvas */
-  --bg-header: #0e162a;               /* Sleek dark header */
-  --bg-sidebar: #0b1222;              /* Deep slate console sidebar */
-  --bg-surface: #111a30;              /* Elevated card & table container */
+  --bg-app: #080d1a;
+  /* Deep obsidian navy canvas */
+  --bg-header: #0e162a;
+  /* Sleek dark header */
+  --bg-sidebar: #0b1222;
+  /* Deep slate console sidebar */
+  --bg-surface: #111a30;
+  /* Elevated card & table container */
   --bg-surface-elevated: #16223f;
   --bg-subtle: #141f38;
   --bg-muted: #1e2c4f;
@@ -90,7 +107,8 @@ html.dark,
 
   /* Borders & Dividers */
   --border-light: #16223c;
-  --border-color: #1f3052;            /* Crisp glowing navy boundary */
+  --border-color: #1f3052;
+  /* Crisp glowing navy boundary */
   --border-strong: #2d4473;
   --border-focus: #3b82f6;
 
@@ -137,11 +155,14 @@ html.dark,
 }
 
 /* Base Resets */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: var(--font-sans);
@@ -159,7 +180,12 @@ html, body {
 }
 
 /* Accessibility: 44px Touch Targets */
-button, input, select, textarea, a.nav-link, .tab-btn {
+button,
+input,
+select,
+textarea,
+a.nav-link,
+.tab-btn {
   min-height: var(--touch-target-min);
 }
 
@@ -593,7 +619,8 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   color: var(--text-main);
 }
 
-.form-input, .form-select {
+.form-input,
+.form-select {
   width: 100%;
   height: 38px;
   min-height: 38px;
@@ -606,7 +633,8 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus,
+.form-select:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   outline: none;
@@ -717,14 +745,16 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   overflow-x: auto;
 }
 
-.data-table, .datatable {
+.data-table,
+.datatable {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.825rem;
 }
 
-.data-table th, .datatable th {
+.data-table th,
+.datatable th {
   background-color: var(--bg-subtle);
   color: var(--text-secondary);
   font-weight: 600;
@@ -740,7 +770,8 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   user-select: none;
 }
 
-.data-table td, .datatable td {
+.data-table td,
+.datatable td {
   padding: 0.65rem 1rem;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-main);
@@ -748,7 +779,9 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   font-variant-numeric: tabular-nums;
 }
 
-.data-table tr:hover, .datatable tr:hover, .table-row-hover:hover {
+.data-table tr:hover,
+.datatable tr:hover,
+.table-row-hover:hover {
   background-color: var(--bg-hover);
 }
 
@@ -896,7 +929,8 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   transition: all 0.2s ease;
 }
 
-.dropzone-box:hover, .dropzone-box.drag-over {
+.dropzone-box:hover,
+.dropzone-box.drag-over {
   border-color: var(--primary);
   background-color: var(--primary-subtle);
 }
@@ -1074,18 +1108,22 @@ button, input, select, textarea, a.nav-link, .tab-btn {
   .app-body {
     flex-direction: column;
   }
+
   .app-sidebar {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
   }
+
   .sidebar-nav {
     flex-direction: row;
     overflow-x: auto;
   }
+
   .route-diagram-wrapper {
     flex-direction: column;
   }
+
   .pole-drawer {
     width: 100%;
   }

@@ -4,6 +4,7 @@ import { DataTable, Column } from '../components/DataTable'
 import { StatusChip } from '../components/StatusChip'
 import { AlertCircle, CheckCircle, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { exportToExcel, exportToPDF } from '../utils/exportReport'
+import { useProject } from '../context/ProjectContext'
 
 function transformLiveResults(calcResults: any) {
   if (!calcResults || !Array.isArray(calcResults.results)) return null
@@ -199,6 +200,7 @@ function transformLiveResults(calcResults: any) {
 export const ResultsPage: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { activeProject } = useProject()
   const [activeTab, setActiveTab] = useState<'summary' | 'loads' | 'clearances'>('summary')
   const [resultsData, setResultsData] = useState<any>(null)
   const [isLive, setIsLive] = useState(false)
@@ -762,7 +764,10 @@ export const ResultsPage: React.FC = () => {
           <button
             type="button"
             className="btn-secondary"
-            onClick={() => exportToExcel(resultsData, 'LineDesign_Report')}
+            onClick={() => {
+              const pName = (location.state as any)?.projectName || activeProject?.name || 'LineDesign'
+              exportToExcel(resultsData, pName)
+            }}
             disabled={!resultsData}
             style={{ height: '44px', minHeight: '44px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             title="Download all result tables as a multi-sheet Excel workbook"
@@ -775,7 +780,15 @@ export const ResultsPage: React.FC = () => {
           <button
             type="button"
             className="btn-primary"
-            onClick={() => exportToPDF(resultsData, 'LineDesign_Report')}
+            onClick={() => {
+              const pName = (location.state as any)?.projectName || activeProject?.name || 'LineDesign'
+              exportToPDF(resultsData, {
+                projectName: pName,
+                lineArrangement: activeProject?.line_arrangement || '11 kV + LV bundle',
+                status: resultsData?.pole_summary?.some((p: any) => p.status === 'FAIL') ? 'FAIL' : 'PASS',
+                poleCount: resultsData?.pole_summary?.length || activeProject?.pole_count || 13,
+              })
+            }}
             disabled={!resultsData}
             style={{ height: '44px', minHeight: '44px', padding: '0 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             title="Download full engineering report as a formatted PDF"

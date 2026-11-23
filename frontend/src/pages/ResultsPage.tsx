@@ -38,7 +38,6 @@ function transformLiveResults(calcResults: any) {
     spur: r.is_terminal ? (r.pole_no === 1 ? 'Terminal (Start)' : 'Terminal (End)') : '—',
     equipment: getEquip(r),
     foundation_recommendation: r.foundation?.foundation_recommendation || (r.foundation?.foundation_type ? `Type ${r.foundation.foundation_type}` : 'Type A'),
-    status: r.buckling_ok === false ? 'FAIL' : 'OK',
   }))
 
   const conductor_tension_check = (calcResults.tensionChecks || []).map((t: any) => {
@@ -297,11 +296,6 @@ export const ResultsPage: React.FC = () => {
     { key: 'spur', header: 'Spur' },
     { key: 'equipment', header: 'Equipment' },
     { key: 'foundation_recommendation', header: 'Foundation Type' },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => <StatusChip status={row.status} />,
-    },
   ]
 
   const tensionCheckColumns: Column<any>[] = [

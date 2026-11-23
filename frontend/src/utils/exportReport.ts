@@ -194,7 +194,7 @@ export function exportToPDF(resultsData: any, metaInput: string | ProjectPDFMeta
   if (poleSummaryData.length > 0) {
     currentY = printSectionHeader('1. Pole Selection & Structural Summary', currentY)
 
-    const headers = ['Sec', 'Pole', 'Configuration', 'Recommended Pole', 'Spur / Type', 'Equipment', 'Foundation Type', 'Status']
+    const headers = ['Sec', 'Pole', 'Configuration', 'Recommended Pole', 'Spur / Type', 'Equipment', 'Foundation Type']
     const rows = poleSummaryData.map((r: any) => [
       String(r.sec ?? 1),
       `Pole ${r.pole ?? '—'}`,
@@ -203,7 +203,6 @@ export function exportToPDF(resultsData: any, metaInput: string | ProjectPDFMeta
       String(r.spur ?? '—'),
       String(r.equipment && r.equipment !== 'None' ? r.equipment : '—'),
       String(r.foundation_recommendation ?? 'Type A'),
-      String(r.status ?? 'OK'),
     ])
 
     autoTable(doc, {
@@ -215,26 +214,13 @@ export function exportToPDF(resultsData: any, metaInput: string | ProjectPDFMeta
       alternateRowStyles: { fillColor: altRowBg },
       margin: { left: marginX, right: marginX },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 14 },
-        1: { halign: 'center', cellWidth: 18, fontStyle: 'bold' },
-        2: { halign: 'left', cellWidth: 50 },
-        3: { halign: 'left', cellWidth: 52, fontStyle: 'bold' },
-        4: { halign: 'center', cellWidth: 35 },
-        5: { halign: 'center', cellWidth: 35, fontStyle: 'bold' },
-        6: { halign: 'center', cellWidth: 35 },
-        7: { halign: 'center', cellWidth: 30, fontStyle: 'bold' },
-      },
-      didParseCell: (data) => {
-        if (data.section === 'body' && data.column.index === 7) {
-          const val = String(data.cell.raw || '').toUpperCase()
-          if (val === 'OK' || val === 'PASS' || val === 'SATISFIED') {
-            data.cell.styles.textColor = [16, 149, 93]
-          } else if (val === 'FAIL') {
-            data.cell.styles.textColor = [220, 38, 38]
-          } else if (val === 'CAUTION') {
-            data.cell.styles.textColor = [217, 119, 6]
-          }
-        }
+        0: { halign: 'center', cellWidth: 16 },
+        1: { halign: 'center', cellWidth: 20, fontStyle: 'bold' },
+        2: { halign: 'left', cellWidth: 55 },
+        3: { halign: 'left', cellWidth: 58, fontStyle: 'bold' },
+        4: { halign: 'center', cellWidth: 40 },
+        5: { halign: 'center', cellWidth: 40, fontStyle: 'bold' },
+        6: { halign: 'center', cellWidth: 40 },
       },
     })
 

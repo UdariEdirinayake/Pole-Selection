@@ -287,13 +287,13 @@ export const ReviewRunPage: React.FC = () => {
       const bmP = Number((calcRow.bm_pole_kNm ?? 10.18).toFixed(2))
       const bmE = Number((calcRow.bm_equip_kNm ?? 0).toFixed(2))
       const bmT = Number((calcRow.bm_tension_kNm ?? 0).toFixed(2))
-      const longLoad = calcRow.terminal_long_load_daN ? Number(calcRow.terminal_long_load_daN) : undefined
+      const longLoad = calcRow.terminal_long_load_daN != null ? Number(calcRow.terminal_long_load_daN) : undefined
       const bmTT = calcRow.bm_tension_long_kNm != null && Number(calcRow.bm_tension_long_kNm) > 0
         ? Number(Number(calcRow.bm_tension_long_kNm).toFixed(2))
         : (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : undefined)
       const bmLong = calcRow.bm_long_kNm != null ? Number(Number(calcRow.bm_long_kNm).toFixed(2)) : undefined
       const bmPT = longLoad ? 14.26 : undefined
-      const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
+      const totalBm = Number((bmC + bmP + bmE + bmT).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
@@ -330,7 +330,7 @@ export const ReviewRunPage: React.FC = () => {
         bm_pt_kNm: bmPT,
         total_bm_kNm: totalBm,
         pole_top_transverse_daN: Math.round(topTrans),
-        pole_top_longitudinal_daN: longLoad ? Math.round(longLoad) : undefined,
+        pole_top_longitudinal_daN: longLoad != null ? Math.round(longLoad) : undefined,
         selected_pole: recPole,
         guy_type: guyType,
         guy_load_daN: guyLoad,
@@ -1028,20 +1028,22 @@ export const ReviewRunPage: React.FC = () => {
                 equationSvg={POLE_SPECIFIC_FORMULAS[5].equationSvg}
                 variables={POLE_SPECIFIC_FORMULAS[5].variables}
                 substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    <strong style={{ color: 'var(--text-secondary)' }}>Transverse Direction:</strong><br />
-                    Total Ground Line Moment ∑BM = {selectedPoleData.total_bm_kNm} kN·m<br />
-                    Pole Top Working Load P_top = {selectedPoleData.total_bm_kNm} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
+                      <strong style={{ color: 'var(--text-secondary)' }}>1. Transverse Direction:</strong><br />
+                      ∑BM_trans = BM_C + BM_P + BM_E + BM_T = {selectedPoleData.bm_c_kNm} + {selectedPoleData.bm_p_kNm} + {selectedPoleData.bm_e_kNm} + {selectedPoleData.bm_t_kNm} = {selectedPoleData.total_bm_kNm} kN·m<br />
+                      P_trans = ({selectedPoleData.total_bm_kNm} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong>
+                    </div>
                     {selectedPoleData.pole_top_longitudinal_daN != null && (
-                      <>
-                        <br />
-                        <strong style={{ color: 'var(--text-secondary)' }}>Longitudinal Direction:</strong><br />
-                        Total Longitudinal Moment ∑BM_long = {selectedPoleData.bm_long_kNm ?? '—'} kN·m<br />
-                        Pole Top Longitudinal Load P_long = {selectedPoleData.bm_long_kNm ?? '—'} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_longitudinal_daN} daN</strong><br />
-                      </>
+                      <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
+                        <strong style={{ color: 'var(--text-secondary)' }}>2. Longitudinal Direction:</strong><br />
+                        ∑BM_long = {selectedPoleData.bm_long_kNm ?? '—'} kN·m<br />
+                        P_long = ({selectedPoleData.bm_long_kNm ?? '—'} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_longitudinal_daN} daN</strong>
+                      </div>
                     )}
-                    <br />
-                    Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
+                    <div>
+                      Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
+                    </div>
                   </div>
                 }
               />

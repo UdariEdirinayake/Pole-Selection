@@ -328,28 +328,55 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     title: 'Equivalent Pole Top Working Load (Ptop)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Page 15',
-    description: 'Converts total ground line bending moment to an equivalent point working load applied 400 mm below pole top.',
+    description: 'Converts total transverse and longitudinal ground line bending moments to equivalent point working loads applied 400 mm below pole top.',
     equationSvg: (
-      <svg viewBox="0 0 240 64" style={{ width: '220px', height: '60px', display: 'block' }}>
-        <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
-          P<tspan fontSize="14" dy="4">top</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
+      <svg viewBox="0 0 430 118" style={{ width: '395px', height: '108px', display: 'block' }}>
+        {/* Transverse Pole Top Load */}
+        <text x="10" y="32" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
+          P<tspan fontSize="11" dy="3">trans</tspan><tspan fontSize="17" dy="-3" fontStyle="normal"> = </tspan>
         </text>
-        {/* Numerator: ∑ BM */}
-        <text x="96" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="normal" fill="currentColor">
-          ∑ BM
+        <text x="165" y="20" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="15" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          BM<tspan fontSize="10" dy="3">C</tspan><tspan fontSize="15" dy="-3" fontStyle="normal"> + </tspan>
+          BM<tspan fontSize="10" dy="3">P</tspan><tspan fontSize="15" dy="-3" fontStyle="normal"> + </tspan>
+          BM<tspan fontSize="10" dy="3">E</tspan><tspan fontSize="15" dy="-3" fontStyle="normal"> + </tspan>
+          BM<tspan fontSize="10" dy="3">T</tspan>
         </text>
-        {/* Fraction bar */}
-        <line x1="84" y1="33" x2="195" y2="33" stroke="currentColor" strokeWidth="1.8" />
-        {/* Denominator: H_gl - 0.40 */}
-        <text x="88" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
-          H<tspan fontSize="12" dy="3">gl</tspan><tspan fontStyle="normal" dy="-3"> - 0.40</tspan>
+        <line x1="76" y1="27" x2="254" y2="27" stroke="currentColor" strokeWidth="1.5" />
+        <text x="165" y="45" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="15" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          H<tspan fontSize="10" dy="3">gl</tspan><tspan fontSize="15" dy="-3" fontStyle="normal"> − 0.40</tspan>
+        </text>
+        <text x="260" y="32" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="normal" fill="currentColor">
+          × 100
+        </text>
+        <text x="422" y="32" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+          (Transverse)
+        </text>
+
+        {/* Longitudinal Pole Top Load */}
+        <text x="10" y="90" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
+          P<tspan fontSize="11" dy="3">long</tspan><tspan fontSize="17" dy="-3" fontStyle="normal"> = </tspan>
+        </text>
+        <text x="165" y="78" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="15" fontStyle="normal" textAnchor="middle" fill="currentColor">
+          ∑ <tspan fontStyle="italic">BM</tspan><tspan fontSize="10" dy="3" fontStyle="italic">long</tspan>
+        </text>
+        <line x1="76" y1="85" x2="254" y2="85" stroke="currentColor" strokeWidth="1.5" />
+        <text x="165" y="103" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="15" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          H<tspan fontSize="10" dy="3">gl</tspan><tspan fontSize="15" dy="-3" fontStyle="normal"> − 0.40</tspan>
+        </text>
+        <text x="260" y="90" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="normal" fill="currentColor">
+          × 100
+        </text>
+        <text x="422" y="90" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+          (Longitudinal)
         </text>
       </svg>
     ),
     variables: [
-      { symbol: 'P_top', description: 'Working load capacity required at 400 mm from pole top', unit: 'daN or kN' },
-      { symbol: '∑ BM', description: 'Total ground line bending moment = BM_C + BM_P + BM_E + BM_T', unit: 'kN·m' },
-      { symbol: 'H_gl', description: 'Free height of pole above ground line', unit: 'm' },
+      { symbol: 'P_trans', description: 'Transverse pole-top working load capacity required at 400 mm below pole top', unit: 'daN' },
+      { symbol: 'P_long', description: 'Longitudinal pole-top working load at 400 mm below pole top (unguyed limit: P_long ≤ 0.25 × P_cap)', unit: 'daN' },
+      { symbol: '∑BM_trans', description: 'Total transverse ground line moment = BM_C + BM_P + BM_E + BM_T', unit: 'kN·m' },
+      { symbol: '∑BM_long', description: 'Total longitudinal ground line moment: BM_TT + BM_PT + BM_E,long (terminal) or |∑ N_i · (T_1,i − T_2,i) · cos(α/2) · H_i| (section)', unit: 'kN·m' },
+      { symbol: 'H_gl', description: 'Free height of pole above ground line (e.g. 9.167 m for 11 m pole)', unit: 'm' },
       { symbol: '0.40', description: 'Standard point of application: 400 mm below pole top', unit: 'm' },
     ],
   },

@@ -314,7 +314,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
         {/* Terminal Pole Longitudinal Wind */}
         <text x="10" y="88" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="11" dy="3">PT</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = </tspan>
-          D<tspan fontSize="11" dy="3">avg</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
+          D<tspan fontSize="11" dy="3">long</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
           H<tspan fontSize="11" dy="3">gl</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
           q<tspan fontSize="11" dy="3">pole</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · (</tspan>
           H<tspan fontSize="11" dy="3">gl</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> / 2)</tspan>
@@ -327,7 +327,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     variables: [
       { symbol: 'BM_T', description: 'Transverse moment at ground line from conductor line deviation', unit: 'kN·m' },
       { symbol: 'BM_TT', description: 'Longitudinal moment at ground line from dead-end line tension', unit: 'kN·m' },
-      { symbol: 'BM_PT', description: 'Wind bending moment on the pole shaft in the longitudinal direction (terminal poles)', unit: 'kN·m' },
+      { symbol: 'BM_PT', description: 'Longitudinal wind moment on pole shaft using longitudinal pole breadth D_long (0.3879 m for 11 m pole)', unit: 'kN·m' },
       { symbol: 'N_i', description: 'Number of conductors in circuit stage i (e.g. 3 for 11 kV, 1 for LV bundle)', unit: '-' },
       { symbol: 'T_1,i , T_2,i', description: 'Aft and fore conductor horizontal tensions under 15°C + Wind', unit: 'kN' },
       { symbol: 'α', description: 'Line deviation angle at this pole', unit: 'degrees' },

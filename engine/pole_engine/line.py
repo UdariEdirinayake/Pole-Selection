@@ -215,6 +215,20 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
         if breadths:
             pole_breadth = max(breadths)
 
+    pole_long_breadth = pole_breadth
+    if capacities:
+        long_breadths = [
+            num(c.get("long_breadth_m") or c.get("avg_long_breadth_m"), 0.0) or 0.0
+            for c in capacities
+            if num(c.get("pole_height_m") or c.get("height_m")) == pole_height
+            and num(c.get("long_breadth_m") or c.get("avg_long_breadth_m"), 0.0) > 0
+            and not is_multi_pole_class(c)
+        ]
+        if long_breadths:
+            pole_long_breadth = max(long_breadths)
+    if num(settings.get("pole_long_breadth_m"), 0.0) and num(settings.get("pole_long_breadth_m"), 0.0) > 0:
+        pole_long_breadth = float(settings["pole_long_breadth_m"])
+
     rows = []
     for r in line_rows:
         rows.append({
@@ -468,18 +482,19 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
                 bm_t_long_section += (t1 - t2) * cos_half * ni * hi
 
         bm_p = bm_wind_pole(pole_height, pole_breadth, q_pole)
+        bm_pt = bm_wind_pole(pole_height, pole_long_breadth, q_pole)
         tf_row = find_equipment_row(data.get("equipment") or data.get("transformers"), r["equipment"] or r["kva"])
         equip_parts = bm_equip_parts(tf_row, pole_height, q_pole)
         bm_e = equip_parts["total_kn_m"]
 
         pole_top_load = to_pole_top(bm_c + bm_t + bm_p + bm_e, pole_height)
-        bm_long_full = (bm_t_long + bm_p + equip_parts["wind_bm_kn_m"] - equip_parts["weight_bm_kn_m"]) if is_terminal else abs(bm_t_long_section)
+        bm_long_full = (bm_t_long + bm_pt + equip_parts["wind_bm_kn_m"] - equip_parts["weight_bm_kn_m"]) if is_terminal else abs(bm_t_long_section)
         residual_load = to_pole_top(bm_c + bm_p + bm_e, pole_height)
 
         guy_h_use = tguy_h if is_terminal else guy_h
         ell = max(pole_height * 5.0 / 6.0 - 0.4, 0.5)
 
-        bm_guy_for_g = bm_t_long if is_terminal else (bm_t if bm_t > 0 else abs(bm_t_long_section))
+        bm_guy_for_g = (bm_t_long + bm_pt) if is_terminal else (bm_c + bm_e + bm_p + bm_t)
         guy_load = guy_wire_load_dan(bm_guy_for_g, guy_h_use, guy_angle, 0.0) if bm_guy_for_g > 0 else 0.0
         p_trans_dan = (bm_guy_for_g / guy_h_use) * 100.0 if bm_guy_for_g > 0 and guy_h_use > 0 else 0.0
 
@@ -718,6 +733,7 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "bm_wind_cond_kNm": bm_c,
             "bm_tension_kNm": 0.0 if is_terminal else bm_t,
             "bm_tension_long_kNm": bm_t_long if is_terminal else 0.0,
+            "bm_pt_kNm": bm_pt if is_terminal else 0.0,
             "bm_long_kNm": bm_long_full,
             "bm_pole_kNm": bm_p,
             "bm_equip_kNm": bm_e,

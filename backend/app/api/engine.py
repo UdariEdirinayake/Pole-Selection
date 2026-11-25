@@ -812,6 +812,7 @@ def run_full_engine(
         "wind_pressure_Nm2": dp_map.get("wind_conductor", 575.0),
         "wind_pole_Nm2": dp_map.get("wind_pole", 865.0),
         "guy_wire_angle_deg": dp_map.get("guy_angle_deg", 30.0),
+        "pole_long_breadth_m": dp_map.get(f"pole_long_breadth_{int(pole_h)}m"),
     }
 
     data_payload = {

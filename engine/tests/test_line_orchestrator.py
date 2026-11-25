@@ -105,3 +105,30 @@ def test_compute_line_runs_successfully(sample_data):
     assert res["results"][12]["pole_no"] == 13
     assert res["results"][0]["is_terminal"] is True
     assert res["results"][12]["is_terminal"] is True
+
+
+def test_guy_sizing_and_bm_pt_longitudinal_breadth(sample_data):
+    line_rows, settings, data = sample_data
+    settings_with_long = {**settings, "pole_long_breadth_m": 0.3879}
+    res = compute_line(line_rows, settings_with_long, data)
+    rows = res["results"]
+
+    # Pole 1 (terminal): BM_PT uses 0.3879 m breadth (~14.10 kN*m), not transverse BM_P (~10.18 kN*m)
+    p1 = rows[0]
+    assert p1["bm_pole_kNm"] == pytest.approx(10.175, abs=0.02)
+    assert p1["bm_pt_kNm"] == pytest.approx(14.098, abs=0.02)
+    assert p1["bm_guy_kNm"] == pytest.approx(p1["bm_tension_long_kNm"] + p1["bm_pt_kNm"], rel=1e-6)
+    expected_tguy_p1 = (p1["bm_guy_kNm"] / (8.4 * math.sin(math.radians(30.0)))) * 100.0
+    assert p1["guy_load_daN"] == pytest.approx(expected_tguy_p1, rel=1e-6)
+
+    # Residual wind load for pole class selection still excludes line tension and uses transverse BM_P
+    expected_res_p1 = ((p1["bm_wind_cond_kNm"] + p1["bm_pole_kNm"] + p1["bm_equip_kNm"]) / (11.0 * 5.0 / 6.0 - 0.4)) * 100.0
+    assert p1["load_without_tension_daN"] == pytest.approx(expected_res_p1, rel=1e-6)
+
+    # Pole 2 (intermediate): guy wire sized on BM_C + BM_E + BM_P + BM_T
+    p2 = rows[1]
+    assert p2["is_terminal"] is False
+    expected_bm_p2 = p2["bm_wind_cond_kNm"] + p2["bm_equip_kNm"] + p2["bm_pole_kNm"] + p2["bm_tension_kNm"]
+    assert p2["bm_guy_kNm"] == pytest.approx(expected_bm_p2, rel=1e-6)
+    expected_tguy_p2 = (expected_bm_p2 / (8.4 * math.sin(math.radians(30.0)))) * 100.0
+    assert p2["guy_load_daN"] == pytest.approx(expected_tguy_p2, rel=1e-6)

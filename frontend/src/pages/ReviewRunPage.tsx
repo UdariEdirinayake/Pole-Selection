@@ -280,7 +280,9 @@ export const ReviewRunPage: React.FC = () => {
       const bmE = Number((calcRow.bm_equip_kNm ?? 0).toFixed(2))
       const bmT = Number((calcRow.bm_tension_kNm ?? 0).toFixed(2))
       const longLoad = calcRow.terminal_long_load_daN ? Number(calcRow.terminal_long_load_daN) : undefined
-      const bmTT = longLoad ? Number(((longLoad * 8.767) / 100).toFixed(2)) : undefined
+      const bmTT = calcRow.bm_tension_long_kNm != null && Number(calcRow.bm_tension_long_kNm) > 0
+        ? Number(Number(calcRow.bm_tension_long_kNm).toFixed(2))
+        : (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : undefined)
       const bmPT = longLoad ? 14.26 : undefined
       const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)

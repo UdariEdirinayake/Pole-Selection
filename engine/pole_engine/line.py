@@ -716,6 +716,7 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "eq_span": eq_span,
             "bm_wind_cond_kNm": bm_c,
             "bm_tension_kNm": 0.0 if is_terminal else bm_t,
+            "bm_tension_long_kNm": bm_t_long if is_terminal else 0.0,
             "bm_long_kNm": bm_long_full,
             "bm_pole_kNm": bm_p,
             "bm_equip_kNm": bm_e,

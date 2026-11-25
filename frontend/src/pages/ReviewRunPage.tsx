@@ -298,7 +298,9 @@ export const ReviewRunPage: React.FC = () => {
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
       const guyLoad = calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined
-      const bmGuyKnm = calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : undefined
+      const bmGuyKnm = calcRow.bm_guy_kNm != null
+        ? Number(Number(calcRow.bm_guy_kNm).toFixed(2))
+        : (bmTT ?? (bmT > 0 ? bmT : bmLong))
       const guyHeightM = calcRow.guy_height_m ? Number(Number(calcRow.guy_height_m).toFixed(2)) : 8.4
       const guyAngleDeg = calcRow.guy_angle_deg ? Number(calcRow.guy_angle_deg) : 30
       const f = calcRow.foundation || {}

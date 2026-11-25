@@ -44,11 +44,11 @@ export const AppLayout: React.FC = () => {
   }
 
   const workflowItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, step: null },
-    { to: '/project-circuits', label: 'Project & circuits', icon: Layers, step: '1' },
-    { to: '/route-poles', label: 'Route & poles', icon: MapPin, step: '2' },
-    { to: '/review-run', label: 'Review methodology', icon: CheckSquare, step: '3' },
-    { to: '/results', label: 'Results', icon: BarChart3, step: '4' },
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/project-circuits', label: 'Project & circuits', icon: Layers },
+    { to: '/route-poles', label: 'Route & poles', icon: MapPin },
+    { to: '/review-run', label: 'Review methodology', icon: CheckSquare },
+    { to: '/results', label: 'Results', icon: BarChart3 },
   ]
 
   const secondaryNavItems = [
@@ -82,7 +82,6 @@ export const AppLayout: React.FC = () => {
           <div className="app-brand-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
             Line<span style={{ color: 'var(--primary)' }}>Design</span>
           </div>
-          <span className="version-tag" style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem' }}>v0.2</span>
         </div>
 
         <div className="header-right">
@@ -114,7 +113,6 @@ export const AppLayout: React.FC = () => {
         {/* Left Sidebar */}
         <aside className="app-sidebar" aria-label="Main Navigation">
           <div>
-            <div className="sidebar-section-title">Workflow</div>
             <nav className="sidebar-nav">
               {workflowItems.map((item) => {
                 const Icon = item.icon
@@ -126,7 +124,6 @@ export const AppLayout: React.FC = () => {
                   >
                     <Icon size={17} />
                     <span style={{ flex: 1 }}>{item.label}</span>
-                    {item.step && <span className="nav-step-num">{item.step}</span>}
                   </NavLink>
                 )
               })}
@@ -152,7 +149,7 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="sidebar-footer-card">
-            <h5 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>LineDesign v0.2</h5>
+            <h5 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>LineDesign</h5>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>
               Master data: {datasetVersion ? datasetVersion.name : 'LECO Master'}.<br />
               Imported {formattedDate}. All engineering constants come from the dataset.

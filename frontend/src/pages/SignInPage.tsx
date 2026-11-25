@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 export const SignInPage: React.FC = () => {
-  const [email, setEmail] = useState('designer@linedesign.local')
-  const [password, setPassword] = useState('DesignerPass123!')
+  const [email, setEmail] = useState('reviewer@linedesign.local')
+  const [password, setPassword] = useState('ReviewerPass123!')
   const [showPassword, setShowPassword] = useState(false)
   const [keepSignedIn, setKeepSignedIn] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -384,7 +384,7 @@ export const SignInPage: React.FC = () => {
                 href="#forgot"
                 onClick={(e) => {
                   e.preventDefault()
-                  alert('Default demo credentials are prefilled below. Click Designer, Reviewer, or Admin to sign in immediately.')
+                  alert('Default demo credentials are prefilled below. Click Reviewer or Admin to sign in immediately.')
                 }}
                 style={{
                   color: 'var(--primary)',
@@ -424,24 +424,7 @@ export const SignInPage: React.FC = () => {
               Demo accounts. Select one to sign in as that role.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
-              <button
-                type="button"
-                onClick={() => fillQuick('designer@linedesign.local', 'DesignerPass123!')}
-                className="btn-secondary"
-                style={{
-                  height: '36px',
-                  minHeight: '36px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  backgroundColor: 'var(--bg-subtle)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-main)',
-                }}
-              >
-                Designer
-              </button>
-
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem' }}>
               <button
                 type="button"
                 onClick={() => fillQuick('reviewer@linedesign.local', 'ReviewerPass123!')}
@@ -480,7 +463,7 @@ export const SignInPage: React.FC = () => {
 
           {/* Footer Version Tag */}
           <div style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            LineDesign v0.2
+            LineDesign
           </div>
         </div>
       </div>

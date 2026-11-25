@@ -392,6 +392,11 @@ a.nav-link,
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: sticky;
+  top: var(--header-height);
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  align-self: flex-start;
 }
 
 .sidebar-section-title {
@@ -1113,6 +1118,8 @@ a.nav-link,
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    position: static;
+    height: auto;
   }
 
   .sidebar-nav {

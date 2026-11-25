@@ -283,14 +283,14 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
   {
     id: 'eq-bm-tension',
     number: '2.5',
-    title: 'Line Tension Bending Moment (BMT / BMTT)',
+    title: 'Line Tension Bending Moment (BMT / BMTT / BMPT)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 13–14',
-    description: 'Transverse moment from line deviation angles at intermediate poles, or longitudinal moment at terminal dead-ends.',
+    description: 'Transverse moment from line deviation angles at intermediate poles, or longitudinal conductor tension and pole wind moments at terminal dead-ends.',
     equationSvg: (
-      <svg viewBox="0 0 430 70" style={{ width: '395px', height: '64px', display: 'block' }}>
+      <svg viewBox="0 0 430 104" style={{ width: '395px', height: '96px', display: 'block' }}>
         {/* Intermediate / Section Angle Pole */}
-        <text x="10" y="26" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+        <text x="10" y="24" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="11" dy="3">T</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = ∑ </tspan>
           N<tspan fontSize="11" dy="3">i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · (</tspan>
           T<tspan fontSize="11" dy="3">1,i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
@@ -298,7 +298,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
           α/2<tspan fontStyle="normal">) · </tspan>
           H<tspan fontSize="11" dy="3">i</tspan>
         </text>
-        <text x="420" y="26" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+        <text x="422" y="24" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
           (Angle Pole)
         </text>
         {/* Terminal Dead-End Pole */}
@@ -308,14 +308,26 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
           T<tspan fontSize="11" dy="3">i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
           H<tspan fontSize="11" dy="3">i</tspan>
         </text>
-        <text x="420" y="56" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+        <text x="422" y="56" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
           (Terminal Dead-End)
+        </text>
+        {/* Terminal Pole Longitudinal Wind */}
+        <text x="10" y="88" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          BM<tspan fontSize="11" dy="3">PT</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = </tspan>
+          D<tspan fontSize="11" dy="3">avg</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
+          H<tspan fontSize="11" dy="3">gl</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
+          q<tspan fontSize="11" dy="3">pole</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · (</tspan>
+          H<tspan fontSize="11" dy="3">gl</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> / 2)</tspan>
+        </text>
+        <text x="422" y="88" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+          (Terminal Pole Wind)
         </text>
       </svg>
     ),
     variables: [
       { symbol: 'BM_T', description: 'Transverse moment at ground line from conductor line deviation', unit: 'kN·m' },
       { symbol: 'BM_TT', description: 'Longitudinal moment at ground line from dead-end line tension', unit: 'kN·m' },
+      { symbol: 'BM_PT', description: 'Wind bending moment on the pole shaft in the longitudinal direction (terminal poles)', unit: 'kN·m' },
       { symbol: 'N_i', description: 'Number of conductors in circuit stage i (e.g. 3 for 11 kV, 1 for LV bundle)', unit: '-' },
       { symbol: 'T_1,i , T_2,i', description: 'Aft and fore conductor horizontal tensions under 15°C + Wind', unit: 'kN' },
       { symbol: 'α', description: 'Line deviation angle at this pole', unit: 'degrees' },

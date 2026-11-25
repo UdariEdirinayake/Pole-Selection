@@ -292,7 +292,7 @@ export const ReviewRunPage: React.FC = () => {
         ? Number(Number(calcRow.bm_tension_long_kNm).toFixed(2))
         : (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : undefined)
       const bmLong = calcRow.bm_long_kNm != null ? Number(Number(calcRow.bm_long_kNm).toFixed(2)) : undefined
-      const bmPT = longLoad ? 14.26 : undefined
+      const bmPT = bmTT ? bmP : undefined
       const totalBm = Number((bmC + bmP + bmE + bmT).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
@@ -1010,7 +1010,11 @@ export const ReviewRunPage: React.FC = () => {
                 substitution={
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
                     {selectedPoleData.bm_tt_kNm ? (
-                      <>Terminal Dead-End Longitudinal Moment BM_TT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_tt_kNm} kN·m</strong></>
+                      <>
+                        Terminal Dead-End Conductor Moment BM_TT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_tt_kNm} kN·m</strong><br />
+                        Terminal Pole Longitudinal Wind Moment BM_PT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm} kN·m</strong><br />
+                        Total Terminal Longitudinal Moment (BM_TT + BM_PT) = <strong style={{ color: 'var(--text-main)' }}>{(selectedPoleData.bm_tt_kNm + (selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm)).toFixed(2)} kN·m</strong>
+                      </>
                     ) : (
                       <>Intermediate Transverse Tension Moment BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_t_kNm} kN·m</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)</>
                     )}

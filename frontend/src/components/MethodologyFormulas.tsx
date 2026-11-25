@@ -288,30 +288,38 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Pages 13–14',
     description: 'Transverse moment from line deviation angles at intermediate poles, or longitudinal moment at terminal dead-ends.',
     equationSvg: (
-      <svg viewBox="0 0 320 68" style={{ width: '300px', height: '62px', display: 'block' }}>
-        {/* Intermediate Angle Pole */}
-        <text x="10" y="28" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
-          BM<tspan fontSize="11" dy="3">T</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = 2 · </tspan>
-          T<tspan fontSize="11" dy="3">max</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · sin(</tspan>
+      <svg viewBox="0 0 430 70" style={{ width: '395px', height: '64px', display: 'block' }}>
+        {/* Intermediate / Section Angle Pole */}
+        <text x="10" y="26" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          BM<tspan fontSize="11" dy="3">T</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = ∑ </tspan>
+          N<tspan fontSize="11" dy="3">i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · (</tspan>
+          T<tspan fontSize="11" dy="3">1,i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          T<tspan fontSize="11" dy="3">2,i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal">) · sin(</tspan>
           α/2<tspan fontStyle="normal">) · </tspan>
-          H<tspan fontSize="11" dy="3">eff</tspan>
-          <tspan fontStyle="normal" fontSize="13">  (Angle Pole)</tspan>
+          H<tspan fontSize="11" dy="3">i</tspan>
+        </text>
+        <text x="420" y="26" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+          (Angle Pole)
         </text>
         {/* Terminal Dead-End Pole */}
         <text x="10" y="56" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
-          BM<tspan fontSize="11" dy="3">TT</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = </tspan>
-          T<tspan fontSize="11" dy="3">max</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
-          H<tspan fontSize="11" dy="3">eff</tspan>
-          <tspan fontStyle="normal" fontSize="13">  (Terminal Dead-End)</tspan>
+          BM<tspan fontSize="11" dy="3">TT</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = ∑ </tspan>
+          N<tspan fontSize="11" dy="3">i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
+          T<tspan fontSize="11" dy="3">i</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> · </tspan>
+          H<tspan fontSize="11" dy="3">i</tspan>
+        </text>
+        <text x="420" y="56" fontFamily="system-ui, -apple-system, sans-serif" fontSize="11.5" fontStyle="normal" textAnchor="end" fill="currentColor" opacity="0.7">
+          (Terminal Dead-End)
         </text>
       </svg>
     ),
     variables: [
       { symbol: 'BM_T', description: 'Transverse moment at ground line from conductor line deviation', unit: 'kN·m' },
       { symbol: 'BM_TT', description: 'Longitudinal moment at ground line from dead-end line tension', unit: 'kN·m' },
-      { symbol: 'T_max', description: 'Total conductor horizontal tension under 15°C + Wind loading', unit: 'kN' },
+      { symbol: 'N_i', description: 'Number of conductors in circuit stage i (e.g. 3 for 11 kV, 1 for LV bundle)', unit: '-' },
+      { symbol: 'T_1,i , T_2,i', description: 'Aft and fore conductor horizontal tensions under 15°C + Wind', unit: 'kN' },
       { symbol: 'α', description: 'Line deviation angle at this pole', unit: 'degrees' },
-      { symbol: 'H_eff', description: 'Resultant effective attachment height of conductor tension', unit: 'm' },
+      { symbol: 'H_i', description: 'Attachment height above ground line for circuit stage i', unit: 'm' },
     ],
   },
   {

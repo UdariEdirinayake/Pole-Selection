@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Trash2, FolderOpen, Save } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
-import { StatusChip } from '../components/StatusChip'
 
 interface ProjectItem {
   id: number
@@ -21,7 +20,6 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [voltageFilter, setVoltageFilter] = useState('ALL')
-  const [statusFilter, setStatusFilter] = useState('ALL')
   const navigate = useNavigate()
 
   const loadProjects = async () => {
@@ -145,16 +143,8 @@ export const DashboardPage: React.FC = () => {
     return projects.reduce((acc, p) => acc + (p.pole_count || 0), 0)
   }, [projects])
 
-  const passCount = useMemo(() => {
-    return projects.filter((p) => (p.status || '').toUpperCase() === 'PASS').length
-  }, [projects])
-
-  const cautionCount = useMemo(() => {
-    return projects.filter((p) => (p.status || '').toUpperCase() === 'CAUTION').length
-  }, [projects])
-
-  const failCount = useMemo(() => {
-    return projects.filter((p) => (p.status || '').toUpperCase() === 'FAIL').length
+  const totalCircuits = useMemo(() => {
+    return projects.reduce((acc, p) => acc + (p.circuit_count || 0), 0)
   }, [projects])
 
   // Filtered list
@@ -176,17 +166,9 @@ export const DashboardPage: React.FC = () => {
         if (voltageFilter === '11kV' && !arr.includes('11')) return false
       }
 
-      // Status filter
-      if (statusFilter !== 'ALL') {
-        const normStatus = (p.status || 'NOT CALCULATED').toUpperCase()
-        if (statusFilter === 'PASS' && normStatus !== 'PASS') return false
-        if (statusFilter === 'CAUTION' && normStatus !== 'CAUTION') return false
-        if (statusFilter === 'FAIL' && normStatus !== 'FAIL') return false
-      }
-
       return true
     })
-  }, [projects, searchQuery, voltageFilter, statusFilter])
+  }, [projects, searchQuery, voltageFilter])
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '19 Nov 2026'
@@ -276,7 +258,7 @@ export const DashboardPage: React.FC = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 320px))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '1rem',
           marginBottom: '1.75rem',
         }}
@@ -292,7 +274,7 @@ export const DashboardPage: React.FC = () => {
           }}
         >
           <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-            Total projects
+            Total Projects
           </div>
           <div
             style={{
@@ -306,7 +288,65 @@ export const DashboardPage: React.FC = () => {
             {projects.length}
           </div>
           <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-            {totalPoles} poles in total
+            Active distribution feeder lines
+          </div>
+        </div>
+
+        {/* Total Route Poles Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            Total Route Poles
+          </div>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
+            }}
+          >
+            {totalPoles}
+          </div>
+          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+            Poles surveyed across all routes
+          </div>
+        </div>
+
+        {/* Configured Circuits Card */}
+        <div
+          className="card"
+          style={{
+            padding: '1.25rem 1.4rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            Configured Circuits
+          </div>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              margin: '0.35rem 0 0.2rem',
+              lineHeight: 1.1,
+            }}
+          >
+            {totalCircuits}
+          </div>
+          <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+            MV & LV circuit conductor stages
           </div>
         </div>
       </div>
@@ -391,6 +431,7 @@ export const DashboardPage: React.FC = () => {
               <option value="11kV">11 kV</option>
               <option value="LV_ONLY">LV only</option>
             </select>
+
           </div>
         </div>
 
@@ -435,11 +476,6 @@ export const DashboardPage: React.FC = () => {
               </thead>
               <tbody>
                 {filteredProjects.map((p) => {
-                  const displayStatus =
-                    p.status && !['ready', 'draft', 'pending'].includes(p.status.toLowerCase())
-                      ? p.status
-                      : 'NOT CALCULATED'
-
                   return (
                     <tr
                       key={p.id}

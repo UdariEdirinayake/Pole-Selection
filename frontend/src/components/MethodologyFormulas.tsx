@@ -359,28 +359,29 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     title: 'Guy Wire Stay Working Tension Load (Tguy)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 16–17',
-    description: 'Tension resolved along the stay wire to counteract transverse or longitudinal working forces.',
+    description: 'Stay wire tension balancing the overturning moment at ground line (T_guy · sin(θ) · H_s = BM).',
     equationSvg: (
-      <svg viewBox="0 0 230 64" style={{ width: '210px', height: '60px', display: 'block' }}>
+      <svg viewBox="0 0 260 68" style={{ width: '240px', height: '62px', display: 'block' }}>
         <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
           T<tspan fontSize="14" dy="4">guy</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
         </text>
-        {/* Numerator: P_trans */}
-        <text x="90" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" fill="currentColor">
-          P<tspan fontSize="12" dy="3">trans</tspan>
+        {/* Numerator: BM */}
+        <text x="135" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          BM
         </text>
         {/* Fraction bar */}
-        <line x1="84" y1="33" x2="160" y2="33" stroke="currentColor" strokeWidth="1.8" />
-        {/* Denominator: sin(θ) */}
-        <text x="90" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="normal" fill="currentColor">
-          sin(θ)
+        <line x1="86" y1="33" x2="186" y2="33" stroke="currentColor" strokeWidth="1.8" />
+        {/* Denominator: H_s · sin(θ) */}
+        <text x="135" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          H<tspan fontSize="12" dy="3">s</tspan><tspan fontSize="18" dy="-3" fontStyle="normal"> · sin(θ)</tspan>
         </text>
       </svg>
     ),
     variables: [
-      { symbol: 'T_guy', description: 'Tensile working force induced in guy wire stay', unit: 'kN or daN' },
-      { symbol: 'P_trans', description: 'Horizontal force resolved at the stay attachment level', unit: 'kN' },
-      { symbol: 'θ', description: 'Angle of stay wire relative to vertical pole axis (standard 30°)', unit: 'degrees' },
+      { symbol: 'T_guy', description: 'Guy wire stay working tension load (kN; × 100 gives daN)', unit: 'kN or daN' },
+      { symbol: 'θ', description: 'Angle between the guy wire and the pole (standard 30°)', unit: 'degrees' },
+      { symbol: 'H_s', description: 'Guy attachment height above ground (8.4 m for an 11 m pole)', unit: 'm' },
+      { symbol: 'BM', description: 'Overturning moment: transverse BM_C + BM_E + BM_P + BM_T (intermediate/section) or longitudinal BM_TT + BM_PT (terminal)', unit: 'kN·m' },
       { symbol: 'SF Stay', description: 'Safety factor = Ultimate stay strength / T_guy ≥ 2.5', unit: '—' },
     ],
   },

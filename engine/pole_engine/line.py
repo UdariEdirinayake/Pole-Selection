@@ -725,6 +725,8 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "terminal_long_load_daN": long_load_dan,
             "load_without_tension_daN": residual_load,
             "guy_load_daN": guy_load,
+            "bm_guy_kNm": bm_guy_for_g,
+            "guy_height_m": guy_h_use,
             "p_trans_daN": p_trans_dan,
             "guy_angle_deg": guy_angle,
             "unguyed": unguyed_label,

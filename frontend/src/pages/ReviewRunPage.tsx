@@ -26,6 +26,7 @@ interface PoleStepDetail {
   bm_e_kNm: number
   bm_t_kNm: number
   bm_tt_kNm?: number
+  bm_long_kNm?: number
   bm_pt_kNm?: number
   total_bm_kNm?: number
   pole_top_transverse_daN: number
@@ -33,7 +34,8 @@ interface PoleStepDetail {
   selected_pole: string
   guy_type?: string
   guy_load_daN?: number
-  p_trans_daN?: number
+  bm_guy_kNm?: number
+  guy_height_m?: number
   guy_angle_deg?: number
   bm_f_kNm: number
   mg_kNm: number
@@ -64,7 +66,8 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
     selected_pole: '11/350 with Heavy Guy',
     guy_type: 'Heavy Guy (5600 daN)',
     guy_load_daN: 2450,
-    p_trans_daN: 1225,
+    bm_guy_kNm: 125.32,
+    guy_height_m: 8.4,
     guy_angle_deg: 30,
     bm_f_kNm: 18.91,
     mg_kNm: 6211.33,
@@ -288,13 +291,15 @@ export const ReviewRunPage: React.FC = () => {
       const bmTT = calcRow.bm_tension_long_kNm != null && Number(calcRow.bm_tension_long_kNm) > 0
         ? Number(Number(calcRow.bm_tension_long_kNm).toFixed(2))
         : (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : undefined)
+      const bmLong = calcRow.bm_long_kNm != null ? Number(Number(calcRow.bm_long_kNm).toFixed(2)) : undefined
       const bmPT = longLoad ? 14.26 : undefined
       const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
       const guyLoad = calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined
-      const pTransDan = calcRow.p_trans_daN ? Number(Number(calcRow.p_trans_daN).toFixed(2)) : undefined
+      const bmGuyKnm = calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : undefined
+      const guyHeightM = calcRow.guy_height_m ? Number(Number(calcRow.guy_height_m).toFixed(2)) : 8.4
       const guyAngleDeg = calcRow.guy_angle_deg ? Number(calcRow.guy_angle_deg) : 30
       const f = calcRow.foundation || {}
       const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
@@ -321,6 +326,7 @@ export const ReviewRunPage: React.FC = () => {
         bm_e_kNm: bmE,
         bm_t_kNm: bmT,
         bm_tt_kNm: bmTT,
+        bm_long_kNm: bmLong,
         bm_pt_kNm: bmPT,
         total_bm_kNm: totalBm,
         pole_top_transverse_daN: Math.round(topTrans),
@@ -328,7 +334,8 @@ export const ReviewRunPage: React.FC = () => {
         selected_pole: recPole,
         guy_type: guyType,
         guy_load_daN: guyLoad,
-        p_trans_daN: pTransDan,
+        bm_guy_kNm: bmGuyKnm,
+        guy_height_m: guyHeightM,
         guy_angle_deg: guyAngleDeg,
         bm_f_kNm: bmF,
         mg_kNm: mg,
@@ -1022,8 +1029,18 @@ export const ReviewRunPage: React.FC = () => {
                 variables={POLE_SPECIFIC_FORMULAS[5].variables}
                 substitution={
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                    <strong style={{ color: 'var(--text-secondary)' }}>Transverse Direction:</strong><br />
                     Total Ground Line Moment ∑BM = {selectedPoleData.total_bm_kNm} kN·m<br />
                     Pole Top Working Load P_top = {selectedPoleData.total_bm_kNm} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong><br />
+                    {selectedPoleData.pole_top_longitudinal_daN != null && (
+                      <>
+                        <br />
+                        <strong style={{ color: 'var(--text-secondary)' }}>Longitudinal Direction:</strong><br />
+                        Total Longitudinal Moment ∑BM_long = {selectedPoleData.bm_long_kNm ?? '—'} kN·m<br />
+                        Pole Top Longitudinal Load P_long = {selectedPoleData.bm_long_kNm ?? '—'} / 8.767 m = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_longitudinal_daN} daN</strong><br />
+                      </>
+                    )}
+                    <br />
                     Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
                   </div>
                 }
@@ -1042,8 +1059,7 @@ export const ReviewRunPage: React.FC = () => {
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
                     {selectedPoleData.guy_type ? (
                       <>
-                        P_trans = BM_guy / h_guy × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.p_trans_daN?.toFixed(2) ?? '—'} daN</strong><br />
-                        T_guy = P_trans / sin(θ) = {selectedPoleData.p_trans_daN?.toFixed(2) ?? '—'} / sin({selectedPoleData.guy_angle_deg ?? 30}°) = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                        T_guy = BM / (H_s · sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm ?? '—'} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
                         Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
                       </>
                     ) : (

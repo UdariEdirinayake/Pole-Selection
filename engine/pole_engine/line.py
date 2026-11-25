@@ -481,6 +481,7 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
 
         bm_guy_for_g = bm_t_long if is_terminal else (bm_t if bm_t > 0 else abs(bm_t_long_section))
         guy_load = guy_wire_load_dan(bm_guy_for_g, guy_h_use, guy_angle, 0.0) if bm_guy_for_g > 0 else 0.0
+        p_trans_dan = (bm_guy_for_g / guy_h_use) * 100.0 if bm_guy_for_g > 0 and guy_h_use > 0 else 0.0
 
         long_load_dan = to_pole_top(bm_long_full, pole_height) if is_terminal else (abs(bm_t_long_section) / ell) * 100.0
 
@@ -724,6 +725,8 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "terminal_long_load_daN": long_load_dan,
             "load_without_tension_daN": residual_load,
             "guy_load_daN": guy_load,
+            "p_trans_daN": p_trans_dan,
+            "guy_angle_deg": guy_angle,
             "unguyed": unguyed_label,
             "guyed": guyed["label"] if guyed else "",
             "guy_arrangement": f"{g_cls} · α_g={int(guy_angle)}°" if guy_load > 0 else g_cls,

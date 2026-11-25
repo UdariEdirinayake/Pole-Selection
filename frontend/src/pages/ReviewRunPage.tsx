@@ -33,6 +33,8 @@ interface PoleStepDetail {
   selected_pole: string
   guy_type?: string
   guy_load_daN?: number
+  p_trans_daN?: number
+  guy_angle_deg?: number
   bm_f_kNm: number
   mg_kNm: number
   stability: string
@@ -61,6 +63,9 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
     pole_top_longitudinal_daN: 1592,
     selected_pole: '11/350 with Heavy Guy',
     guy_type: 'Heavy Guy (5600 daN)',
+    guy_load_daN: 2450,
+    p_trans_daN: 1225,
+    guy_angle_deg: 30,
     bm_f_kNm: 18.91,
     mg_kNm: 6211.33,
     stability: 'Stable (Mg ≥ BMf)',
@@ -288,7 +293,9 @@ export const ReviewRunPage: React.FC = () => {
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
-      const guyLoad = calcRow.guy_load_daN ? Number(calcRow.guy_load_daN) : undefined
+      const guyLoad = calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined
+      const pTransDan = calcRow.p_trans_daN ? Number(Number(calcRow.p_trans_daN).toFixed(2)) : undefined
+      const guyAngleDeg = calcRow.guy_angle_deg ? Number(calcRow.guy_angle_deg) : 30
       const f = calcRow.foundation || {}
       const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
       const mg = Number((f.mg_kNm ?? 6211.33).toFixed(2))
@@ -321,6 +328,8 @@ export const ReviewRunPage: React.FC = () => {
         selected_pole: recPole,
         guy_type: guyType,
         guy_load_daN: guyLoad,
+        p_trans_daN: pTransDan,
+        guy_angle_deg: guyAngleDeg,
         bm_f_kNm: bmF,
         mg_kNm: mg,
         stability: stability,
@@ -1030,9 +1039,13 @@ export const ReviewRunPage: React.FC = () => {
                 equationSvg={POLE_SPECIFIC_FORMULAS[6].equationSvg}
                 variables={POLE_SPECIFIC_FORMULAS[6].variables}
                 substitution={
-                  <div style={{ fontSize: '0.825rem' }}>
+                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
                     {selectedPoleData.guy_type ? (
-                      <>Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Calculated Stay Tension: <strong>{selectedPoleData.guy_load_daN || 430} daN</strong> with Factor of Safety ≥ 2.5)</>
+                      <>
+                        P_trans = BM_guy / h_guy × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.p_trans_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                        T_guy = P_trans / sin(θ) = {selectedPoleData.p_trans_daN?.toFixed(2) ?? '—'} / sin({selectedPoleData.guy_angle_deg ?? 30}°) = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                        Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
+                      </>
                     ) : (
                       <>Guy Wire Stay: <strong>Not Required</strong> (Standard unstayed cantilever pole strength is adequate)</>
                     )}

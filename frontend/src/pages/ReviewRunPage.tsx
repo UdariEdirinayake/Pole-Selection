@@ -60,13 +60,14 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
     bm_e_kNm: 0,
     bm_t_kNm: 0,
     bm_tt_kNm: 125.32,
-    bm_pt_kNm: 14.26,
+    bm_pt_kNm: 14.10,
+    bm_long_kNm: 139.42,
     pole_top_transverse_daN: 185,
     pole_top_longitudinal_daN: 1592,
     selected_pole: '11/350 with Heavy Guy',
     guy_type: 'Heavy Guy (5600 daN)',
-    guy_load_daN: 2450,
-    bm_guy_kNm: 125.32,
+    guy_load_daN: 3319.52,
+    bm_guy_kNm: 139.42,
     guy_height_m: 8.4,
     guy_angle_deg: 30,
     bm_f_kNm: 18.91,
@@ -294,17 +295,20 @@ export const ReviewRunPage: React.FC = () => {
       const bmLong = calcRow.bm_long_kNm != null ? Number(Number(calcRow.bm_long_kNm).toFixed(2)) : undefined
       const bmPT = calcRow.bm_pt_kNm != null && Number(calcRow.bm_pt_kNm) > 0
         ? Number(Number(calcRow.bm_pt_kNm).toFixed(2))
-        : (bmTT ? bmP : undefined)
+        : 14.10
       const totalBm = Number((bmC + bmP + bmE + bmT).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
       const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
-      const guyLoad = calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined
-      const bmGuyKnm = calcRow.bm_guy_kNm != null
-        ? Number(Number(calcRow.bm_guy_kNm).toFixed(2))
-        : (bmTT ?? (bmT > 0 ? bmT : bmLong))
+      const isTerminal = aft === 0 || fore === 0 || calcRow.is_terminal === true
       const guyHeightM = calcRow.guy_height_m ? Number(Number(calcRow.guy_height_m).toFixed(2)) : 8.4
       const guyAngleDeg = calcRow.guy_angle_deg ? Number(calcRow.guy_angle_deg) : 30
+      const bmGuyKnm = isTerminal
+        ? (bmTT != null ? Number((bmTT + (bmPT ?? 14.10)).toFixed(2)) : (calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : 139.42))
+        : (calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : Number((bmC + bmP + bmE + bmT).toFixed(2)))
+      const guyLoad = (guyType && !guyType.includes('Unguyed') && guyType !== 'X' && guyType !== '—')
+        ? Number(((bmGuyKnm / (guyHeightM * Math.sin((guyAngleDeg * Math.PI) / 180))) * 100).toFixed(2))
+        : (calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined)
       const f = calcRow.foundation || {}
       const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
       const mg = Number((f.mg_kNm ?? 6211.33).toFixed(2))
@@ -361,9 +365,12 @@ export const ReviewRunPage: React.FC = () => {
       const bmE = pole.equipment && pole.equipment !== 'None' ? 11.68 : 0
       const bmT = Number((2 * 4.8 * Math.sin(((angle / 2) * Math.PI) / 180) * 8.5).toFixed(2))
       const bmTT = isTerminal ? 125.32 : undefined
+      const bmPT = isTerminal ? 14.10 : undefined
       const totalBm = Number((bmC + bmP + bmE + (bmTT ?? bmT)).toFixed(2))
+      const bmGuy = isTerminal ? Number((125.32 + 14.10).toFixed(2)) : totalBm
       const pTop = Math.round((totalBm / 8.767) * 100)
       const recPole = isTerminal ? '11/350 with Heavy Guy' : (angle > 10 ? '11/850 Unguyed' : '11/350 Unguyed')
+      const guyL = isTerminal ? Number(((bmGuy / (8.4 * Math.sin((30 * Math.PI) / 180))) * 100).toFixed(2)) : undefined
       const soilClass = Number(pole.soil_class_num || 4)
 
       return {
@@ -380,12 +387,17 @@ export const ReviewRunPage: React.FC = () => {
         bm_e_kNm: bmE,
         bm_t_kNm: bmT,
         bm_tt_kNm: bmTT,
+        bm_pt_kNm: bmPT,
+        bm_long_kNm: isTerminal ? bmGuy : undefined,
         total_bm_kNm: totalBm,
         pole_top_transverse_daN: pTop,
         pole_top_longitudinal_daN: isTerminal ? 1592 : undefined,
         selected_pole: recPole,
         guy_type: isTerminal ? 'Heavy Guy (5600 daN)' : undefined,
-        guy_load_daN: isTerminal ? 2450 : undefined,
+        guy_load_daN: guyL,
+        bm_guy_kNm: bmGuy,
+        guy_height_m: 8.4,
+        guy_angle_deg: 30,
         bm_f_kNm: Number((totalBm * 1.05).toFixed(2)),
         mg_kNm: soilClass === 4 ? 6211.33 : 4500.0,
         stability: 'Stable (Mg ≥ BMf)',
@@ -1067,18 +1079,18 @@ export const ReviewRunPage: React.FC = () => {
                 variables={POLE_SPECIFIC_FORMULAS[6].variables}
                 substitution={
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    {selectedPoleData.guy_type ? (
+                    {selectedPoleData.guy_type && (selectedPoleData.guy_type.includes('Guy') || selectedPoleData.guy_type.includes('·') || (selectedPoleData.guy_load_daN && selectedPoleData.guy_load_daN > 0)) ? (
                       <>
                         {selectedPoleData.bm_tt_kNm ? (
                           <>
-                            <span style={{ color: 'var(--text-secondary)' }}>Longitudinal Load: BM = BM_TT + BM_PT = {selectedPoleData.bm_tt_kNm} + {selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm} = {selectedPoleData.bm_guy_kNm ?? '—'} kN·m</span><br />
+                            <span style={{ color: 'var(--text-secondary)' }}>Longitudinal Overturning Moment: BM = BM_TT + BM_PT = {selectedPoleData.bm_tt_kNm} + {selectedPoleData.bm_pt_kNm ?? 14.10} = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
                           </>
                         ) : (
                           <>
-                            <span style={{ color: 'var(--text-secondary)' }}>Transverse Load: BM = BM_C + BM_E + BM_P + BM_T = {selectedPoleData.bm_guy_kNm ?? '—'} kN·m</span><br />
+                            <span style={{ color: 'var(--text-secondary)' }}>Transverse Overturning Moment: BM = BM_C + BM_E + BM_P + BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
                           </>
                         )}
-                        T_S = BM / (H_S × sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm ?? '—'} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                        T_S = BM / (H_S × sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
                         Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
                       </>
                     ) : (

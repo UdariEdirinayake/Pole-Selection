@@ -395,33 +395,40 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
   {
     id: 'eq-guy-tension',
     number: '2.7',
-    title: 'Guy Wire Stay Working Tension Load (Tguy)',
+    title: 'Guy Wire Stay Working Tension Load (Ts / Tguy)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 16–17',
-    description: 'Stay wire tension balancing the overturning moment at ground line (T_guy · sin(θ) · H_s = BM).',
+    description: 'Tensile working force induced in guy wire stay balancing transverse or longitudinal overturning moments.',
     equationSvg: (
-      <svg viewBox="0 0 260 68" style={{ width: '240px', height: '62px', display: 'block' }}>
-        <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
-          T<tspan fontSize="14" dy="4">guy</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
+      <svg viewBox="0 0 570 76" style={{ width: '100%', maxWidth: '540px', height: '68px', display: 'block' }}>
+        {/* Left hand side: T_S = */}
+        <text x="6" y="42" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
+          T<tspan fontSize="14" dy="4">S</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
         </text>
-        {/* Numerator: BM */}
-        <text x="135" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" textAnchor="middle" fill="currentColor">
-          BM
+        {/* Numerator */}
+        <text x="305" y="27" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="13.2" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          (<tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">C</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">E</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">P</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">T</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal">) for Transverse Loads or (</tspan>
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">TT</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">PT</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal">) for Longitudinal Loads</tspan>)
         </text>
         {/* Fraction bar */}
-        <line x1="86" y1="33" x2="186" y2="33" stroke="currentColor" strokeWidth="1.8" />
-        {/* Denominator: H_s · sin(θ) */}
-        <text x="135" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" textAnchor="middle" fill="currentColor">
-          H<tspan fontSize="12" dy="3">s</tspan><tspan fontSize="18" dy="-3" fontStyle="normal"> · sin(θ)</tspan>
+        <line x1="48" y1="36" x2="562" y2="36" stroke="currentColor" strokeWidth="1.6" />
+        {/* Denominator */}
+        <text x="305" y="58" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          H<tspan fontSize="11" dy="3">S</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> × sin(θ)</tspan>
         </text>
       </svg>
     ),
     variables: [
-      { symbol: 'T_guy', description: 'Guy wire stay working tension load (kN; × 100 gives daN)', unit: 'kN or daN' },
-      { symbol: 'θ', description: 'Angle between the guy wire and the pole (standard 30°)', unit: 'degrees' },
-      { symbol: 'H_s', description: 'Guy attachment height above ground (8.4 m for an 11 m pole)', unit: 'm' },
-      { symbol: 'BM', description: 'Overturning moment: transverse BM_C + BM_E + BM_P + BM_T (intermediate/section) or longitudinal BM_TT + BM_PT (terminal)', unit: 'kN·m' },
-      { symbol: 'SF Stay', description: 'Safety factor = Ultimate stay strength / T_guy ≥ 2.5', unit: '—' },
+      { symbol: 'T_S', description: 'Guy wire stay working tension load (kN; × 100 gives daN)', unit: 'kN or daN' },
+      { symbol: 'BM_C + BM_E + BM_P + BM_T', description: 'Total ground-line bending moment for Transverse Loads (intermediate and section poles)', unit: 'kN·m' },
+      { symbol: 'BM_TT + BM_PT', description: 'Total ground-line bending moment for Longitudinal Loads (terminal dead-end poles)', unit: 'kN·m' },
+      { symbol: 'H_S', description: 'Guy attachment height above ground (e.g. 8.4 m for an 11 m pole)', unit: 'm' },
+      { symbol: 'θ', description: 'Angle between the guy wire and the vertical pole axis (standard 30°)', unit: 'degrees' },
+      { symbol: 'SF Stay', description: 'Safety factor = Ultimate stay strength / T_S ≥ 2.5', unit: '—' },
     ],
   },
   {

@@ -1056,7 +1056,7 @@ export const ReviewRunPage: React.FC = () => {
                 }
               />
 
-              {/* Equation 2.7: Guy Wire Stay Tension (Tguy) */}
+              {/* Equation 2.7: Guy Wire Stay Working Tension Load (Ts) */}
               <MethodologyEquationBox
                 id={POLE_SPECIFIC_FORMULAS[6].id}
                 number={POLE_SPECIFIC_FORMULAS[6].number}
@@ -1069,7 +1069,16 @@ export const ReviewRunPage: React.FC = () => {
                   <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
                     {selectedPoleData.guy_type ? (
                       <>
-                        T_guy = BM / (H_s · sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm ?? '—'} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                        {selectedPoleData.bm_tt_kNm ? (
+                          <>
+                            <span style={{ color: 'var(--text-secondary)' }}>Longitudinal Load: BM = BM_TT + BM_PT = {selectedPoleData.bm_tt_kNm} + {selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm} = {selectedPoleData.bm_guy_kNm ?? '—'} kN·m</span><br />
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ color: 'var(--text-secondary)' }}>Transverse Load: BM = BM_C + BM_E + BM_P + BM_T = {selectedPoleData.bm_guy_kNm ?? '—'} kN·m</span><br />
+                          </>
+                        )}
+                        T_S = BM / (H_S × sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm ?? '—'} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
                         Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
                       </>
                     ) : (

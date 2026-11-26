@@ -69,7 +69,20 @@ function transformLiveResults(calcResults: any) {
 
     const topTrans = toNum(r.pole_top_load_daN)
     const topLong = toNum(r.terminal_long_load_daN)
-    const guyLoad = toNum(r.guy_load_daN)
+
+    // Guy Wire Working Tension Load (Ts) per formula:
+    // Ts = (BM_C + BM_E + BM_P + BM_T for Transverse or BM_TT + BM_PT for Longitudinal) / (H_s * sin(theta)) * 100
+    const isTerminal = r.is_terminal === true || r.fore === 0 || r.aft === 0 || r.pole_no === 1 || r.pole_no === results.length
+    const bmTT = toNum(r.bm_tension_long_kNm) ?? (topLong && isTerminal ? Math.max(0, (topLong * 8.767) / 100 - bmPole) : 0)
+    const bmPT = toNum(r.bm_pt_kNm) ?? (isTerminal ? 14.10 : 0)
+    const bmGuy = toNum(r.bm_guy_kNm) ?? (isTerminal ? Number((bmTT + bmPT).toFixed(2)) : totalBm)
+    const guyH = toNum(r.guy_height_m) || 8.4
+    const guyAngle = toNum(r.guy_angle_deg) || 30.0
+    const denom = guyH * Math.sin((guyAngle * Math.PI) / 180)
+    const calculatedGuyLoad = denom > 0 && bmGuy > 0 ? (bmGuy / denom) * 100 : 0
+    const rawGuyLoad = toNum(r.guy_load_daN)
+    const guyLoad = (r.bm_guy_kNm != null && rawGuyLoad != null) ? rawGuyLoad : calculatedGuyLoad
+
     const noTenLoad = toNum(r.load_without_tension_daN)
     const buckCap = toNum(r.buckling_capacity_kN)
     const buckVStar = toNum(r.foundation?.guy_vert_kN) || toNum(r.buckling_demand_kN) || null
@@ -216,7 +229,13 @@ export const ResultsPage: React.FC = () => {
       const cached = localStorage.getItem('linedesign_latest_results')
       if (cached) {
         try {
-          liveResults = JSON.parse(cached)
+          const parsed = JSON.parse(cached)
+          // Only use cache if it was computed with updated engine (has bm_guy_kNm)
+          if (parsed?.results?.[0]?.bm_guy_kNm != null) {
+            liveResults = parsed
+          } else {
+            localStorage.removeItem('linedesign_latest_results')
+          }
         } catch {}
       }
     }

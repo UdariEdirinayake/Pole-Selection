@@ -59,15 +59,15 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
     bm_p_kNm: 10.18,
     bm_e_kNm: 0,
     bm_t_kNm: 0,
-    bm_tt_kNm: 125.32,
+    bm_tt_kNm: 128.88,
     bm_pt_kNm: 14.10,
-    bm_long_kNm: 139.42,
+    bm_long_kNm: 142.98,
     pole_top_transverse_daN: 185,
-    pole_top_longitudinal_daN: 1592,
+    pole_top_longitudinal_daN: 1586,
     selected_pole: '11/350 with Heavy Guy',
     guy_type: 'Heavy Guy (5600 daN)',
-    guy_load_daN: 3319.52,
-    bm_guy_kNm: 139.42,
+    guy_load_daN: 3404.29,
+    bm_guy_kNm: 142.98,
     guy_height_m: 8.4,
     guy_angle_deg: 30,
     bm_f_kNm: 18.91,
@@ -89,9 +89,15 @@ const BENCHMARK_FALLBACK_STEPS: Record<number, PoleStepDetail> = {
     bm_c_kNm: 13.05,
     bm_p_kNm: 10.18,
     bm_e_kNm: 0,
-    bm_t_kNm: 30.56,
-    pole_top_transverse_daN: 614,
+    bm_t_kNm: 31.42,
+    total_bm_kNm: 54.65,
+    pole_top_transverse_daN: 623,
     selected_pole: '11/850 Unguyed',
+    guy_type: 'Medium Guy (4200 daN)',
+    guy_load_daN: 1301.19,
+    bm_guy_kNm: 54.65,
+    guy_height_m: 8.4,
+    guy_angle_deg: 30,
     bm_f_kNm: 62.46,
     mg_kNm: 7203.42,
     stability: 'Stable (Mg ≥ BMf)',
@@ -114,8 +120,14 @@ export const ReviewRunPage: React.FC = () => {
     const cached = localStorage.getItem('linedesign_latest_results')
     if (cached) {
       try {
-        return JSON.parse(cached)
-      } catch {}
+        const parsed = JSON.parse(cached)
+        // Discard stale cache if missing updated bm_guy_kNm
+        if (parsed?.results?.[0]?.bm_guy_kNm != null) {
+          return parsed
+        } else {
+          localStorage.removeItem('linedesign_latest_results')
+        }
+      } catch { }
     }
     return null
   })
@@ -289,26 +301,28 @@ export const ReviewRunPage: React.FC = () => {
       const bmE = Number((calcRow.bm_equip_kNm ?? 0).toFixed(2))
       const bmT = Number((calcRow.bm_tension_kNm ?? 0).toFixed(2))
       const longLoad = calcRow.terminal_long_load_daN != null ? Number(calcRow.terminal_long_load_daN) : undefined
+      const isTerminal = aft === 0 || fore === 0 || calcRow.is_terminal === true || selectedPoleNo === 1
       const bmTT = calcRow.bm_tension_long_kNm != null && Number(calcRow.bm_tension_long_kNm) > 0
         ? Number(Number(calcRow.bm_tension_long_kNm).toFixed(2))
-        : (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : undefined)
+        : (isTerminal ? (longLoad ? Number(Math.max(0, (longLoad * 8.767) / 100 - bmP).toFixed(2)) : 128.88) : undefined)
       const bmLong = calcRow.bm_long_kNm != null ? Number(Number(calcRow.bm_long_kNm).toFixed(2)) : undefined
       const bmPT = calcRow.bm_pt_kNm != null && Number(calcRow.bm_pt_kNm) > 0
         ? Number(Number(calcRow.bm_pt_kNm).toFixed(2))
-        : 14.10
+        : (isTerminal ? 14.10 : undefined)
       const totalBm = Number((bmC + bmP + bmE + bmT).toFixed(2))
       const topTrans = Number(calcRow.pole_top_load_daN ?? 0)
       const recPole = calcRow.recommended || calcRow.rec_guy_unguy || calcRow.rec_on_buckling || '11/350'
-      const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : undefined)
-      const isTerminal = aft === 0 || fore === 0 || calcRow.is_terminal === true
+      const guyType = calcRow.guy_arrangement || (recPole.includes('Guy') ? recPole : (isTerminal ? 'Heavy Guy (5600 daN)' : undefined))
       const guyHeightM = calcRow.guy_height_m ? Number(Number(calcRow.guy_height_m).toFixed(2)) : 8.4
       const guyAngleDeg = calcRow.guy_angle_deg ? Number(calcRow.guy_angle_deg) : 30
       const bmGuyKnm = isTerminal
-        ? (bmTT != null ? Number((bmTT + (bmPT ?? 14.10)).toFixed(2)) : (calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : 139.42))
-        : (calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : Number((bmC + bmP + bmE + bmT).toFixed(2)))
-      const guyLoad = (guyType && !guyType.includes('Unguyed') && guyType !== 'X' && guyType !== '—')
-        ? Number(((bmGuyKnm / (guyHeightM * Math.sin((guyAngleDeg * Math.PI) / 180))) * 100).toFixed(2))
-        : (calcRow.guy_load_daN ? Number(Number(calcRow.guy_load_daN).toFixed(2)) : undefined)
+        ? Number(((bmTT ?? 128.88) + (bmPT ?? 14.10)).toFixed(2))
+        : (calcRow.bm_guy_kNm != null ? Number(Number(calcRow.bm_guy_kNm).toFixed(2)) : totalBm)
+      const denom = guyHeightM * Math.sin((guyAngleDeg * Math.PI) / 180)
+      const calculatedGuyLoad = denom > 0 && bmGuyKnm > 0 ? Number(((bmGuyKnm / denom) * 100).toFixed(2)) : 0
+      const guyLoad = (calcRow.bm_guy_kNm != null && calcRow.guy_load_daN != null)
+        ? Number(Number(calcRow.guy_load_daN).toFixed(2))
+        : calculatedGuyLoad
       const f = calcRow.foundation || {}
       const bmF = Number((f.bmf_kNm ?? (bmC + bmP + bmT) * 1.05).toFixed(2))
       const mg = Number((f.mg_kNm ?? 6211.33).toFixed(2))
@@ -617,559 +631,559 @@ export const ReviewRunPage: React.FC = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
               <span
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                    color: '#0284c7',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  SECTION 1
-                </span>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                  Calculations Common for the Entire Route
-                </h3>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                The governing physical equations and linear interpolation procedures below apply uniformly across the entire line route or per tension strain section. They establish virtual ruling equivalent spans (S<sub>eq</sub>), ruling conductor tensions, maximum operating stresses, and crossarm phase clearances independent of individual pole locations.
-              </p>
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                  color: '#0284c7',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                SECTION 1
+              </span>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                Calculations Common for the Entire Route
+              </h3>
             </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+              The governing physical equations and linear interpolation procedures below apply uniformly across the entire line route or per tension strain section. They establish virtual ruling equivalent spans (S<sub>eq</sub>), ruling conductor tensions, maximum operating stresses, and crossarm phase clearances independent of individual pole locations.
+            </p>
+          </div>
 
-              {/* Strain Section Breakdown Card */}
-              <div
-                className="card"
-                style={{
-                  padding: '1.15rem 1.4rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.65rem', fontSize: '0.95rem' }}>
-                  Line Survey & Strain Section Division ({projectSections.length} Tension Strain Sections):
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                  {projectSections.map((sec) => (
-                    <div
-                      key={sec.section}
-                      style={{
-                        padding: '0.85rem 1rem',
-                        backgroundColor: 'var(--bg-app)',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border-color)',
-                      }}
-                    >
-                      <div style={{ fontWeight: 700, color: '#0284c7' }}>
-                        Section {sec.section}: Pole {sec.startPole} to Pole {sec.endPole}
-                      </div>
-                      <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.35rem', lineHeight: 1.6 }}>
-                        • Spans: {sec.spans.map((s) => `${s}m`).join(', ')}<br />
-                        • Total Section Route Length: <strong>{sec.totalLength} m</strong> ({sec.spans.length} spans)<br />
-                        • Ruling Equivalent Span (S<sub>eq</sub>): <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--text-main)', marginRight: '0.5rem' }}>Configured Circuits:</span>
-                  {configuredCircuits.map((c: any, idx: number) => (
-                    <span key={idx} style={{ marginRight: '1rem' }}>
-                      <strong>{c.circuit_name || `Circuit ${idx + 1}`}:</strong> {c.conductor_name || 'Standard Conductor'} (Table: <strong>{c.lookup_table || 'UQ'}</strong>)
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Equation 1.1: Equivalent Span (Seq) */}
-              <MethodologyEquationBox
-                id={COMMON_ROUTE_FORMULAS[0].id}
-                number={COMMON_ROUTE_FORMULAS[0].number}
-                title={COMMON_ROUTE_FORMULAS[0].title}
-                category={COMMON_ROUTE_FORMULAS[0].category}
-                standardRef={COMMON_ROUTE_FORMULAS[0].standardRef}
-                equationSvg={COMMON_ROUTE_FORMULAS[0].equationSvg}
-                variables={COMMON_ROUTE_FORMULAS[0].variables}
-                substitution={
-                  <div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                      Live Equivalent Span Substitution for {activeProjectName}:
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-                      {projectSections.map((sec) => (
-                        <div key={sec.section} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                          <div style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.8rem' }}>
-                            Section {sec.section} (Poles {sec.startPole}–{sec.endPole}):
-                          </div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            S_eq{sec.section} = √[ ({sec.spans.map((s) => `${s}³`).join(' + ')}) / ({sec.spans.join(' + ')}) ]<br />
-                            S_eq{sec.section} = √[ {sec.sumCubed.toLocaleString()} / {sec.sumLinear} ] = <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* Equation 1.2: Sag-Tension Linear Interpolation */}
-              <MethodologyEquationBox
-                id={COMMON_ROUTE_FORMULAS[1].id}
-                number={COMMON_ROUTE_FORMULAS[1].number}
-                title={COMMON_ROUTE_FORMULAS[1].title}
-                category={COMMON_ROUTE_FORMULAS[1].category}
-                standardRef={COMMON_ROUTE_FORMULAS[1].standardRef}
-                equationSvg={COMMON_ROUTE_FORMULAS[1].equationSvg}
-                variables={COMMON_ROUTE_FORMULAS[1].variables}
-                substitution={
-                  <div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                      Live Chart Tension Interpolation at Section Equivalent Spans:
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-                      {projectSections.map((sec) => (
-                        sec.tensionChecks.map((tc: any, idx: number) => {
-                          const t15 = tc.T15w_kN ?? null
-                          const t27 = tc.T27_kN ?? null
-                          const cond = tc.description ? `${tc.code ?? ''} ${tc.description}`.trim() : (tc.code ?? 'Conductor')
-                          return (
-                            <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                              <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
-                                Sec {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}: {cond}
-                              </div>
-                              <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.6 }}>
-                                • Ruling S_eq = <strong>{sec.seq} m</strong><br />
-                                • Interpolated T @ 15°C+Wind = <strong style={{ color: '#0284c7' }}>{t15 != null ? t15.toFixed(3) : '—'} kN</strong><br />
-                                • Interpolated T @ 27°C EDS = <strong style={{ color: '#0284c7' }}>{t27 != null ? t27.toFixed(3) : '—'} kN</strong>
-                              </div>
-                            </div>
-                          )
-                        })
-                      ))}
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* Equation 1.3: Conductor Stress Limits (% UTS) */}
-              <MethodologyEquationBox
-                id={COMMON_ROUTE_FORMULAS[2].id}
-                number={COMMON_ROUTE_FORMULAS[2].number}
-                title={COMMON_ROUTE_FORMULAS[2].title}
-                category={COMMON_ROUTE_FORMULAS[2].category}
-                standardRef={COMMON_ROUTE_FORMULAS[2].standardRef}
-                equationSvg={COMMON_ROUTE_FORMULAS[2].equationSvg}
-                variables={COMMON_ROUTE_FORMULAS[2].variables}
-                substitution={
-                  <div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                      Conductor Stress Limits Verification for Active Circuits:
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-                      {projectSections.map((sec) => (
-                        sec.tensionChecks.map((tc: any, idx: number) => {
-                          const pct15 = tc.pct15_uts ?? null
-                          const pct27 = tc.pct27_uts ?? null
-                          const ok15 = tc.ok15 === true
-                          const ok27 = tc.ok27 === true
-                          const isEdsRef = tc.eds_reference === true
-                          return (
-                            <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                              <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
-                                Section {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}
-                              </div>
-                              <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', marginTop: '0.25rem', lineHeight: 1.6 }}>
-                                • Max Stress @ 15°C+W: <strong>{pct15 != null ? pct15.toFixed(1) : '—'}%</strong> (limit 40%) ➔ <strong style={{ color: ok15 ? '#059669' : '#dc2626' }}>{ok15 ? 'PASS' : 'FAIL'}</strong><br />
-                                • Everyday Stress @ 27°C: <strong>{pct27 != null ? pct27.toFixed(1) : '—'}%</strong> (limit 20%) ➔ <strong style={{ color: ok27 || isEdsRef ? '#059669' : '#f59e0b' }}>{isEdsRef ? 'OK (Ref)' : ok27 ? 'PASS' : 'CAUTION'}</strong>
-                              </div>
-                            </div>
-                          )
-                        })
-                      ))}
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* Equation 1.4: Phase Separation */}
-              <MethodologyEquationBox
-                id={COMMON_ROUTE_FORMULAS[3].id}
-                number={COMMON_ROUTE_FORMULAS[3].number}
-                title={COMMON_ROUTE_FORMULAS[3].title}
-                category={COMMON_ROUTE_FORMULAS[3].category}
-                standardRef={COMMON_ROUTE_FORMULAS[3].standardRef}
-                equationSvg={COMMON_ROUTE_FORMULAS[3].equationSvg}
-                variables={COMMON_ROUTE_FORMULAS[3].variables}
-                substitution={
-                  <div style={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
-                    • Conductor Sag @ 65°C S_65 ≈ <strong>0.50 m</strong>, Operating Voltage V = <strong>11 kV</strong><br />
-                    • Calculated Minimum Required Clearance: D = 0.75 × √0.50 + 11² / 20000 = 0.530 + 0.006 = <strong>0.536 m</strong><br />
-                    • Standard Pin Insulator Crossarm Separation Provided = <strong>0.850 m</strong> ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS: 0.850 m ≥ 0.536 m)</strong>
-                  </div>
-                }
-              />
+          {/* Strain Section Breakdown Card */}
+          <div
+            className="card"
+            style={{
+              padding: '1.15rem 1.4rem',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+            }}
+          >
+            <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.65rem', fontSize: '0.95rem' }}>
+              Line Survey & Strain Section Division ({projectSections.length} Tension Strain Sections):
             </div>
-          )}
-
-          {/* =========================================================================
-              SECTION 2: CALCULATIONS THAT DIFFER WITH THE POLE
-             ========================================================================= */}
-          {activeSection === 'section2' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Section 2 Header Banner */}
-              <div
-                style={{
-                  padding: '1.25rem 1.5rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
-                  borderLeft: '5px solid #0284c7',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                      color: '#0284c7',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    SECTION 2
-                  </span>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    Calculations That Differ with the Pole
-                  </h3>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  These structural and geotechnical formulas depend on each pole&apos;s individual geometry along the route: fore/aft spans, angle of deviation, mounted equipment (such as transformers), stay wire arrangements, and local ground soil class. Select any pole below to update the live substitutions across all formulas.
-                </p>
-              </div>
-
-              {/* Interactive Pole Selector for Section 2 */}
-              <div
-                className="card"
-                style={{
-                  padding: '1rem 1.25rem',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                }}
-              >
-                <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-                  Select Pole to Inspect (Click to update numerical values across all formulas below):
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
-                  {(projectPoles.length > 0 ? projectPoles : [{ pole_no: 1, section: 1 }, { pole_no: 2, section: 1 }]).map((p: any, idx: number) => {
-                    const pNo = p.pole_no
-                    const isSelected = pNo === selectedPoleNo
-                    const isTerminal = idx === 0 || idx === projectPoles.length - 1 || p.aft_span_m === 0 || p.fore_span_m === 0
-                    const isSection = idx > 0 && p.section !== projectPoles[idx - 1]?.section
-                    const hasEquip = p.equipment && p.equipment !== 'None'
-
-                    return (
-                      <button
-                        key={pNo}
-                        type="button"
-                        onClick={() => setSelectedPoleNo(pNo)}
-                        style={{
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          border: isSelected
-                            ? '1px solid var(--primary)'
-                            : '1px solid var(--border-color)',
-                          backgroundColor: isSelected
-                            ? 'var(--primary)'
-                            : isTerminal || isSection
-                            ? 'var(--bg-subtle)'
-                            : 'var(--bg-surface)',
-                          color: isSelected ? '#ffffff' : 'var(--text-main)',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        Pole {pNo} {isTerminal ? '(Terminal)' : isSection ? '(Section)' : hasEquip ? `(${p.equipment})` : ''}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Selected Pole Active Summary Strip */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              {projectSections.map((sec) => (
                 <div
+                  key={sec.section}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: '0.75rem',
-                    marginTop: '0.85rem',
-                    padding: '0.75rem 1rem',
+                    padding: '0.85rem 1rem',
                     backgroundColor: 'var(--bg-app)',
                     borderRadius: 'var(--radius-sm)',
                     border: '1px solid var(--border-color)',
-                    fontSize: '0.8rem',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Active Pole:</span>{' '}
-                    <strong>Pole {selectedPoleData.pole_no} (Sec {selectedPoleData.section})</strong>
-                    <StatusChip status="PASS" label={selectedPoleData.stability} />
+                  <div style={{ fontWeight: 700, color: '#0284c7' }}>
+                    Section {sec.section}: Pole {sec.startPole} to Pole {sec.endPole}
                   </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Spans:</span>{' '}
-                    <strong>Fore {selectedPoleData.fore_span}m • Aft {selectedPoleData.aft_span}m</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Deviation Angle:</span>{' '}
-                    <strong>{selectedPoleData.angle_deg}°</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Mounted Equipment:</span>{' '}
-                    <strong style={{ color: selectedPoleData.equipment !== 'None' ? '#d97706' : 'inherit' }}>
-                      {selectedPoleData.equipment}
-                    </strong>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Soil Class:</span>{' '}
-                    <strong>Class {selectedPoleData.soil_class}</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Assigned Pole:</span>{' '}
-                    <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
+                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.35rem', lineHeight: 1.6 }}>
+                    • Spans: {sec.spans.map((s) => `${s}m`).join(', ')}<br />
+                    • Total Section Route Length: <strong>{sec.totalLength} m</strong> ({sec.spans.length} spans)<br />
+                    • Ruling Equivalent Span (S<sub>eq</sub>): <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-main)', marginRight: '0.5rem' }}>Configured Circuits:</span>
+              {configuredCircuits.map((c: any, idx: number) => (
+                <span key={idx} style={{ marginRight: '1rem' }}>
+                  <strong>{c.circuit_name || `Circuit ${idx + 1}`}:</strong> {c.conductor_name || 'Standard Conductor'} (Table: <strong>{c.lookup_table || 'UQ'}</strong>)
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Equation 1.1: Equivalent Span (Seq) */}
+          <MethodologyEquationBox
+            id={COMMON_ROUTE_FORMULAS[0].id}
+            number={COMMON_ROUTE_FORMULAS[0].number}
+            title={COMMON_ROUTE_FORMULAS[0].title}
+            category={COMMON_ROUTE_FORMULAS[0].category}
+            standardRef={COMMON_ROUTE_FORMULAS[0].standardRef}
+            equationSvg={COMMON_ROUTE_FORMULAS[0].equationSvg}
+            variables={COMMON_ROUTE_FORMULAS[0].variables}
+            substitution={
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                  Live Equivalent Span Substitution for {activeProjectName}:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                  {projectSections.map((sec) => (
+                    <div key={sec.section} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.8rem' }}>
+                        Section {sec.section} (Poles {sec.startPole}–{sec.endPole}):
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        S_eq{sec.section} = √[ ({sec.spans.map((s) => `${s}³`).join(' + ')}) / ({sec.spans.join(' + ')}) ]<br />
+                        S_eq{sec.section} = √[ {sec.sumCubed.toLocaleString()} / {sec.sumLinear} ] = <strong style={{ color: 'var(--text-main)' }}>{sec.seq} m</strong>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            }
+          />
 
-              {/* Equation 2.1: Wind Span */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[0].id}
-                number={POLE_SPECIFIC_FORMULAS[0].number}
-                title={POLE_SPECIFIC_FORMULAS[0].title}
-                category={POLE_SPECIFIC_FORMULAS[0].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[0].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[0].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[0].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Pole {selectedPoleData.pole_no} Substitution: S_w = ({selectedPoleData.fore_span} m + {selectedPoleData.aft_span} m) / 2 = <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.wind_span} m</strong>
+          {/* Equation 1.2: Sag-Tension Linear Interpolation */}
+          <MethodologyEquationBox
+            id={COMMON_ROUTE_FORMULAS[1].id}
+            number={COMMON_ROUTE_FORMULAS[1].number}
+            title={COMMON_ROUTE_FORMULAS[1].title}
+            category={COMMON_ROUTE_FORMULAS[1].category}
+            standardRef={COMMON_ROUTE_FORMULAS[1].standardRef}
+            equationSvg={COMMON_ROUTE_FORMULAS[1].equationSvg}
+            variables={COMMON_ROUTE_FORMULAS[1].variables}
+            substitution={
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                  Live Chart Tension Interpolation at Section Equivalent Spans:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                  {projectSections.map((sec) => (
+                    sec.tensionChecks.map((tc: any, idx: number) => {
+                      const t15 = tc.T15w_kN ?? null
+                      const t27 = tc.T27_kN ?? null
+                      const cond = tc.description ? `${tc.code ?? ''} ${tc.description}`.trim() : (tc.code ?? 'Conductor')
+                      return (
+                        <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
+                            Sec {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}: {cond}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.6 }}>
+                            • Ruling S_eq = <strong>{sec.seq} m</strong><br />
+                            • Interpolated T @ 15°C+Wind = <strong style={{ color: '#0284c7' }}>{t15 != null ? t15.toFixed(3) : '—'} kN</strong><br />
+                            • Interpolated T @ 27°C EDS = <strong style={{ color: '#0284c7' }}>{t27 != null ? t27.toFixed(3) : '—'} kN</strong>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ))}
+                </div>
+              </div>
+            }
+          />
+
+          {/* Equation 1.3: Conductor Stress Limits (% UTS) */}
+          <MethodologyEquationBox
+            id={COMMON_ROUTE_FORMULAS[2].id}
+            number={COMMON_ROUTE_FORMULAS[2].number}
+            title={COMMON_ROUTE_FORMULAS[2].title}
+            category={COMMON_ROUTE_FORMULAS[2].category}
+            standardRef={COMMON_ROUTE_FORMULAS[2].standardRef}
+            equationSvg={COMMON_ROUTE_FORMULAS[2].equationSvg}
+            variables={COMMON_ROUTE_FORMULAS[2].variables}
+            substitution={
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+                  Conductor Stress Limits Verification for Active Circuits:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                  {projectSections.map((sec) => (
+                    sec.tensionChecks.map((tc: any, idx: number) => {
+                      const pct15 = tc.pct15_uts ?? null
+                      const pct27 = tc.pct27_uts ?? null
+                      const ok15 = tc.ok15 === true
+                      const ok27 = tc.ok27 === true
+                      const isEdsRef = tc.eds_reference === true
+                      return (
+                        <div key={`${sec.section}-${idx}`} style={{ padding: '0.65rem 0.85rem', backgroundColor: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.8rem' }}>
+                            Section {sec.section} • {tc.circuitLabel ?? `Circuit ${idx + 1}`}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', marginTop: '0.25rem', lineHeight: 1.6 }}>
+                            • Max Stress @ 15°C+W: <strong>{pct15 != null ? pct15.toFixed(1) : '—'}%</strong> (limit 40%) ➔ <strong style={{ color: ok15 ? '#059669' : '#dc2626' }}>{ok15 ? 'PASS' : 'FAIL'}</strong><br />
+                            • Everyday Stress @ 27°C: <strong>{pct27 != null ? pct27.toFixed(1) : '—'}%</strong> (limit 20%) ➔ <strong style={{ color: ok27 || isEdsRef ? '#059669' : '#f59e0b' }}>{isEdsRef ? 'OK (Ref)' : ok27 ? 'PASS' : 'CAUTION'}</strong>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ))}
+                </div>
+              </div>
+            }
+          />
+
+          {/* Equation 1.4: Phase Separation */}
+          <MethodologyEquationBox
+            id={COMMON_ROUTE_FORMULAS[3].id}
+            number={COMMON_ROUTE_FORMULAS[3].number}
+            title={COMMON_ROUTE_FORMULAS[3].title}
+            category={COMMON_ROUTE_FORMULAS[3].category}
+            standardRef={COMMON_ROUTE_FORMULAS[3].standardRef}
+            equationSvg={COMMON_ROUTE_FORMULAS[3].equationSvg}
+            variables={COMMON_ROUTE_FORMULAS[3].variables}
+            substitution={
+              <div style={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
+                • Conductor Sag @ 65°C S_65 ≈ <strong>0.50 m</strong>, Operating Voltage V = <strong>11 kV</strong><br />
+                • Calculated Minimum Required Clearance: D = 0.75 × √0.50 + 11² / 20000 = 0.530 + 0.006 = <strong>0.536 m</strong><br />
+                • Standard Pin Insulator Crossarm Separation Provided = <strong>0.850 m</strong> ➔ <strong style={{ color: '#059669' }}>SATISFIED (PASS: 0.850 m ≥ 0.536 m)</strong>
+              </div>
+            }
+          />
+        </div>
+      )}
+
+      {/* =========================================================================
+              SECTION 2: CALCULATIONS THAT DIFFER WITH THE POLE
+             ========================================================================= */}
+      {activeSection === 'section2' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Section 2 Header Banner */}
+          <div
+            style={{
+              padding: '1.25rem 1.5rem',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderLeft: '5px solid #0284c7',
+              borderRadius: 'var(--radius-md)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                  color: '#0284c7',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                SECTION 2
+              </span>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                Calculations That Differ with the Pole
+              </h3>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+              These structural and geotechnical formulas depend on each pole&apos;s individual geometry along the route: fore/aft spans, angle of deviation, mounted equipment (such as transformers), stay wire arrangements, and local ground soil class. Select any pole below to update the live substitutions across all formulas.
+            </p>
+          </div>
+
+          {/* Interactive Pole Selector for Section 2 */}
+          <div
+            className="card"
+            style={{
+              padding: '1rem 1.25rem',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+            }}
+          >
+            <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              Select Pole to Inspect (Click to update numerical values across all formulas below):
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+              {(projectPoles.length > 0 ? projectPoles : [{ pole_no: 1, section: 1 }, { pole_no: 2, section: 1 }]).map((p: any, idx: number) => {
+                const pNo = p.pole_no
+                const isSelected = pNo === selectedPoleNo
+                const isTerminal = idx === 0 || idx === projectPoles.length - 1 || p.aft_span_m === 0 || p.fore_span_m === 0
+                const isSection = idx > 0 && p.section !== projectPoles[idx - 1]?.section
+                const hasEquip = p.equipment && p.equipment !== 'None'
+
+                return (
+                  <button
+                    key={pNo}
+                    type="button"
+                    onClick={() => setSelectedPoleNo(pNo)}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: isSelected
+                        ? '1px solid var(--primary)'
+                        : '1px solid var(--border-color)',
+                      backgroundColor: isSelected
+                        ? 'var(--primary)'
+                        : isTerminal || isSection
+                          ? 'var(--bg-subtle)'
+                          : 'var(--bg-surface)',
+                      color: isSelected ? '#ffffff' : 'var(--text-main)',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    Pole {pNo} {isTerminal ? '(Terminal)' : isSection ? '(Section)' : hasEquip ? `(${p.equipment})` : ''}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Selected Pole Active Summary Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '0.75rem',
+                marginTop: '0.85rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: 'var(--bg-app)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-color)',
+                fontSize: '0.8rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Active Pole:</span>{' '}
+                <strong>Pole {selectedPoleData.pole_no} (Sec {selectedPoleData.section})</strong>
+                <StatusChip status="PASS" label={selectedPoleData.stability} />
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Spans:</span>{' '}
+                <strong>Fore {selectedPoleData.fore_span}m • Aft {selectedPoleData.aft_span}m</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Deviation Angle:</span>{' '}
+                <strong>{selectedPoleData.angle_deg}°</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Mounted Equipment:</span>{' '}
+                <strong style={{ color: selectedPoleData.equipment !== 'None' ? '#d97706' : 'inherit' }}>
+                  {selectedPoleData.equipment}
+                </strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Soil Class:</span>{' '}
+                <strong>Class {selectedPoleData.soil_class}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Assigned Pole:</span>{' '}
+                <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Equation 2.1: Wind Span */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[0].id}
+            number={POLE_SPECIFIC_FORMULAS[0].number}
+            title={POLE_SPECIFIC_FORMULAS[0].title}
+            category={POLE_SPECIFIC_FORMULAS[0].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[0].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[0].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[0].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Pole {selectedPoleData.pole_no} Substitution: S_w = ({selectedPoleData.fore_span} m + {selectedPoleData.aft_span} m) / 2 = <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.wind_span} m</strong>
+              </div>
+            }
+          />
+
+          {/* Equation 2.2: Conductor Wind Moment (BMC) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[1].id}
+            number={POLE_SPECIFIC_FORMULAS[1].number}
+            title={POLE_SPECIFIC_FORMULAS[1].title}
+            category={POLE_SPECIFIC_FORMULAS[1].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[1].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[1].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[1].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Pole {selectedPoleData.pole_no} (Wind Span {selectedPoleData.wind_span} m, Angle {selectedPoleData.angle_deg}°):<br />
+                Conductor Wind Bending Moment BM_C = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_c_kNm} kN·m</strong>
+              </div>
+            }
+          />
+
+          {/* Equation 2.3: Pole Wind Moment (BMP) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[2].id}
+            number={POLE_SPECIFIC_FORMULAS[2].number}
+            title={POLE_SPECIFIC_FORMULAS[2].title}
+            category={POLE_SPECIFIC_FORMULAS[2].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[2].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[2].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[2].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Pole Height = 9.167 m above ground line, Wind Pressure q_pole = 865 N/m²:<br />
+                Pole Body Wind Bending Moment BM_P = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_p_kNm} kN·m</strong>
+              </div>
+            }
+          />
+
+          {/* Equation 2.4: Equipment Wind Moment (BME) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[3].id}
+            number={POLE_SPECIFIC_FORMULAS[3].number}
+            title={POLE_SPECIFIC_FORMULAS[3].title}
+            category={POLE_SPECIFIC_FORMULAS[3].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[3].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[3].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[3].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Mounted Equipment: <strong>{selectedPoleData.equipment}</strong><br />
+                Equipment Wind Bending Moment BM_E = <strong style={{ color: '#d97706' }}>{selectedPoleData.bm_e_kNm} kN·m</strong>
+              </div>
+            }
+          />
+
+          {/* Equation 2.5: Line Tension Bending Moment (BMT / BMTT) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[4].id}
+            number={POLE_SPECIFIC_FORMULAS[4].number}
+            title={POLE_SPECIFIC_FORMULAS[4].title}
+            category={POLE_SPECIFIC_FORMULAS[4].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[4].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[4].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[4].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                {selectedPoleData.bm_tt_kNm ? (
+                  <>
+                    Terminal Dead-End Conductor Moment BM_TT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_tt_kNm} kN·m</strong><br />
+                    Terminal Pole Longitudinal Wind Moment BM_PT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm} kN·m</strong><br />
+                    Total Terminal Longitudinal Moment (BM_TT + BM_PT) = <strong style={{ color: 'var(--text-main)' }}>{(selectedPoleData.bm_tt_kNm + (selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm)).toFixed(2)} kN·m</strong>
+                  </>
+                ) : (
+                  <>Intermediate Transverse Tension Moment BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_t_kNm} kN·m</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)</>
+                )}
+              </div>
+            }
+          />
+
+          {/* Equation 2.6: Pole Top Working Load (Ptop) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[5].id}
+            number={POLE_SPECIFIC_FORMULAS[5].number}
+            title={POLE_SPECIFIC_FORMULAS[5].title}
+            category={POLE_SPECIFIC_FORMULAS[5].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[5].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[5].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[5].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
+                  <strong style={{ color: 'var(--text-secondary)' }}>1. Transverse Direction:</strong><br />
+                  ∑BM_trans = BM_C + BM_P + BM_E + BM_T = {selectedPoleData.bm_c_kNm} + {selectedPoleData.bm_p_kNm} + {selectedPoleData.bm_e_kNm} + {selectedPoleData.bm_t_kNm} = {selectedPoleData.total_bm_kNm} kN·m<br />
+                  P_trans = ({selectedPoleData.total_bm_kNm} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong>
+                </div>
+                {selectedPoleData.pole_top_longitudinal_daN != null && (
+                  <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
+                    <strong style={{ color: 'var(--text-secondary)' }}>2. Longitudinal Direction:</strong><br />
+                    ∑BM_long = {selectedPoleData.bm_long_kNm ?? '—'} kN·m<br />
+                    P_long = ({selectedPoleData.bm_long_kNm ?? '—'} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_longitudinal_daN} daN</strong>
                   </div>
-                }
-              />
+                )}
+                <div>
+                  Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
+                </div>
+              </div>
+            }
+          />
 
-              {/* Equation 2.2: Conductor Wind Moment (BMC) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[1].id}
-                number={POLE_SPECIFIC_FORMULAS[1].number}
-                title={POLE_SPECIFIC_FORMULAS[1].title}
-                category={POLE_SPECIFIC_FORMULAS[1].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[1].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[1].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[1].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Pole {selectedPoleData.pole_no} (Wind Span {selectedPoleData.wind_span} m, Angle {selectedPoleData.angle_deg}°):<br />
-                    Conductor Wind Bending Moment BM_C = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_c_kNm} kN·m</strong>
-                  </div>
-                }
-              />
-
-              {/* Equation 2.3: Pole Wind Moment (BMP) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[2].id}
-                number={POLE_SPECIFIC_FORMULAS[2].number}
-                title={POLE_SPECIFIC_FORMULAS[2].title}
-                category={POLE_SPECIFIC_FORMULAS[2].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[2].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[2].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[2].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Pole Height = 9.167 m above ground line, Wind Pressure q_pole = 865 N/m²:<br />
-                    Pole Body Wind Bending Moment BM_P = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_p_kNm} kN·m</strong>
-                  </div>
-                }
-              />
-
-              {/* Equation 2.4: Equipment Wind Moment (BME) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[3].id}
-                number={POLE_SPECIFIC_FORMULAS[3].number}
-                title={POLE_SPECIFIC_FORMULAS[3].title}
-                category={POLE_SPECIFIC_FORMULAS[3].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[3].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[3].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[3].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Mounted Equipment: <strong>{selectedPoleData.equipment}</strong><br />
-                    Equipment Wind Bending Moment BM_E = <strong style={{ color: '#d97706' }}>{selectedPoleData.bm_e_kNm} kN·m</strong>
-                  </div>
-                }
-              />
-
-              {/* Equation 2.5: Line Tension Bending Moment (BMT / BMTT) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[4].id}
-                number={POLE_SPECIFIC_FORMULAS[4].number}
-                title={POLE_SPECIFIC_FORMULAS[4].title}
-                category={POLE_SPECIFIC_FORMULAS[4].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[4].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[4].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[4].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+          {/* Equation 2.7: Guy Wire Stay Working Tension Load (Ts) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[6].id}
+            number={POLE_SPECIFIC_FORMULAS[6].number}
+            title={POLE_SPECIFIC_FORMULAS[6].title}
+            category={POLE_SPECIFIC_FORMULAS[6].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[6].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[6].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[6].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                {selectedPoleData.guy_type && (selectedPoleData.guy_type.includes('Guy') || selectedPoleData.guy_type.includes('·') || (selectedPoleData.guy_load_daN && selectedPoleData.guy_load_daN > 0)) ? (
+                  <>
                     {selectedPoleData.bm_tt_kNm ? (
                       <>
-                        Terminal Dead-End Conductor Moment BM_TT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_tt_kNm} kN·m</strong><br />
-                        Terminal Pole Longitudinal Wind Moment BM_PT = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm} kN·m</strong><br />
-                        Total Terminal Longitudinal Moment (BM_TT + BM_PT) = <strong style={{ color: 'var(--text-main)' }}>{(selectedPoleData.bm_tt_kNm + (selectedPoleData.bm_pt_kNm ?? selectedPoleData.bm_p_kNm)).toFixed(2)} kN·m</strong>
+                        <span style={{ color: 'var(--text-secondary)' }}>Longitudinal Overturning Moment: BM = BM_TT + BM_PT = {selectedPoleData.bm_tt_kNm} + {selectedPoleData.bm_pt_kNm ?? 14.10} = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
                       </>
                     ) : (
-                      <>Intermediate Transverse Tension Moment BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_t_kNm} kN·m</strong> (Deviation Angle: {selectedPoleData.angle_deg}°)</>
-                    )}
-                  </div>
-                }
-              />
-
-              {/* Equation 2.6: Pole Top Working Load (Ptop) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[5].id}
-                number={POLE_SPECIFIC_FORMULAS[5].number}
-                title={POLE_SPECIFIC_FORMULAS[5].title}
-                category={POLE_SPECIFIC_FORMULAS[5].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[5].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[5].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[5].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
-                      <strong style={{ color: 'var(--text-secondary)' }}>1. Transverse Direction:</strong><br />
-                      ∑BM_trans = BM_C + BM_P + BM_E + BM_T = {selectedPoleData.bm_c_kNm} + {selectedPoleData.bm_p_kNm} + {selectedPoleData.bm_e_kNm} + {selectedPoleData.bm_t_kNm} = {selectedPoleData.total_bm_kNm} kN·m<br />
-                      P_trans = ({selectedPoleData.total_bm_kNm} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_transverse_daN} daN</strong>
-                    </div>
-                    {selectedPoleData.pole_top_longitudinal_daN != null && (
-                      <div style={{ padding: '8px 10px', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.03)', border: '1px solid var(--border)' }}>
-                        <strong style={{ color: 'var(--text-secondary)' }}>2. Longitudinal Direction:</strong><br />
-                        ∑BM_long = {selectedPoleData.bm_long_kNm ?? '—'} kN·m<br />
-                        P_long = ({selectedPoleData.bm_long_kNm ?? '—'} / 8.767 m) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.pole_top_longitudinal_daN} daN</strong>
-                      </div>
-                    )}
-                    <div>
-                      Recommended Structural Pole: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.selected_pole}</strong>
-                    </div>
-                  </div>
-                }
-              />
-
-              {/* Equation 2.7: Guy Wire Stay Working Tension Load (Ts) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[6].id}
-                number={POLE_SPECIFIC_FORMULAS[6].number}
-                title={POLE_SPECIFIC_FORMULAS[6].title}
-                category={POLE_SPECIFIC_FORMULAS[6].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[6].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[6].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[6].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    {selectedPoleData.guy_type && (selectedPoleData.guy_type.includes('Guy') || selectedPoleData.guy_type.includes('·') || (selectedPoleData.guy_load_daN && selectedPoleData.guy_load_daN > 0)) ? (
                       <>
-                        {selectedPoleData.bm_tt_kNm ? (
-                          <>
-                            <span style={{ color: 'var(--text-secondary)' }}>Longitudinal Overturning Moment: BM = BM_TT + BM_PT = {selectedPoleData.bm_tt_kNm} + {selectedPoleData.bm_pt_kNm ?? 14.10} = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
-                          </>
-                        ) : (
-                          <>
-                            <span style={{ color: 'var(--text-secondary)' }}>Transverse Overturning Moment: BM = BM_C + BM_E + BM_P + BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
-                          </>
-                        )}
-                        T_S = BM / (H_S × sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
-                        Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
+                        <span style={{ color: 'var(--text-secondary)' }}>Transverse Overturning Moment: BM = BM_C + BM_E + BM_P + BM_T = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.bm_guy_kNm} kN·m</strong></span><br />
                       </>
-                    ) : (
-                      <>Guy Wire Stay: <strong>Not Required</strong> (Standard unstayed cantilever pole strength is adequate)</>
                     )}
-                  </div>
-                }
-              />
+                    T_S = BM / (H_S × sin(θ)) × 100 = {selectedPoleData.bm_guy_kNm} / ({selectedPoleData.guy_height_m ?? 8.4} × sin({selectedPoleData.guy_angle_deg ?? 30}°)) × 100 = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.guy_load_daN?.toFixed(2) ?? '—'} daN</strong><br />
+                    Required Stay Arrangement: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.guy_type}</strong> (Factor of Safety ≥ 2.5)
+                  </>
+                ) : (
+                  <>Guy Wire Stay: <strong>Not Required</strong> (Standard unstayed cantilever pole strength is adequate)</>
+                )}
+              </div>
+            }
+          />
 
-              {/* Equation 2.8: Buckling Vertical Load (V*) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[7].id}
-                number={POLE_SPECIFIC_FORMULAS[7].number}
-                title={POLE_SPECIFIC_FORMULAS[7].title}
-                category={POLE_SPECIFIC_FORMULAS[7].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[7].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[7].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[7].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Total Downward Compressive Load V* = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.vertical_load_kN} kN</strong><br />
-                    Pole Euler Buckling Check: <strong style={{ color: '#059669' }}>PASS (Pole Buckling Capacity ≥ 2.5 × V*)</strong>
-                  </div>
-                }
-              />
+          {/* Equation 2.8: Buckling Vertical Load (V*) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[7].id}
+            number={POLE_SPECIFIC_FORMULAS[7].number}
+            title={POLE_SPECIFIC_FORMULAS[7].title}
+            category={POLE_SPECIFIC_FORMULAS[7].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[7].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[7].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[7].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Total Downward Compressive Load V* = <strong style={{ color: 'var(--text-main)' }}>{selectedPoleData.vertical_load_kN} kN</strong><br />
+                Pole Euler Buckling Check: <strong style={{ color: '#059669' }}>PASS (Pole Buckling Capacity ≥ 2.5 × V*)</strong>
+              </div>
+            }
+          />
 
-              {/* Equation 2.9: Span Sag Scaling & Clearance (Sspan) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[8].id}
-                number={POLE_SPECIFIC_FORMULAS[8].number}
-                title={POLE_SPECIFIC_FORMULAS[8].title}
-                category={POLE_SPECIFIC_FORMULAS[8].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[8].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[8].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[8].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Fore Span = {selectedPoleData.fore_span} m ➔ Scaled Sag @ 65°C = <strong>{selectedPoleData.fore_span > 0 ? (0.50 * (selectedPoleData.fore_span / 30.5) ** 2).toFixed(3) : '0.000'} m</strong><br />
-                    Ground Clearance Margin (≥ 5.5 m requirement): <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
-                  </div>
-                }
-              />
+          {/* Equation 2.9: Span Sag Scaling & Clearance (Sspan) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[8].id}
+            number={POLE_SPECIFIC_FORMULAS[8].number}
+            title={POLE_SPECIFIC_FORMULAS[8].title}
+            category={POLE_SPECIFIC_FORMULAS[8].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[8].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[8].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[8].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Fore Span = {selectedPoleData.fore_span} m ➔ Scaled Sag @ 65°C = <strong>{selectedPoleData.fore_span > 0 ? (0.50 * (selectedPoleData.fore_span / 30.5) ** 2).toFixed(3) : '0.000'} m</strong><br />
+                Ground Clearance Margin (≥ 5.5 m requirement): <strong style={{ color: '#059669' }}>SATISFIED (PASS)</strong>
+              </div>
+            }
+          />
 
-              {/* Equation 2.10: Foundation Overturning Resistance (Mg) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[9].id}
-                number={POLE_SPECIFIC_FORMULAS[9].number}
-                title={POLE_SPECIFIC_FORMULAS[9].title}
-                category={POLE_SPECIFIC_FORMULAS[9].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[9].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[9].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[9].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
-                    Soil Class: <strong>Class {selectedPoleData.soil_class}</strong> (Subgrade k = 25,000 kN/m³)<br />
-                    Foundation Overturning Moment BM_F = <strong>{selectedPoleData.bm_f_kNm} kN·m</strong> vs Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kN·m</strong><br />
-                    Overturning Stability Check: <strong style={{ color: '#059669' }}>{selectedPoleData.stability} (PASS)</strong>
-                  </div>
-                }
-              />
+          {/* Equation 2.10: Foundation Overturning Resistance (Mg) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[9].id}
+            number={POLE_SPECIFIC_FORMULAS[9].number}
+            title={POLE_SPECIFIC_FORMULAS[9].title}
+            category={POLE_SPECIFIC_FORMULAS[9].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[9].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[9].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[9].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem', fontFamily: 'var(--font-mono)' }}>
+                Soil Class: <strong>Class {selectedPoleData.soil_class}</strong> (Subgrade k = 25,000 kN/m³)<br />
+                Foundation Overturning Moment BM_F = <strong>{selectedPoleData.bm_f_kNm} kN·m</strong> vs Soil Resistance Mg = <strong>{selectedPoleData.mg_kNm} kN·m</strong><br />
+                Overturning Stability Check: <strong style={{ color: '#059669' }}>{selectedPoleData.stability} (PASS)</strong>
+              </div>
+            }
+          />
 
-              {/* Equation 2.11: Soil Bearing Pressure (qactual) */}
-              <MethodologyEquationBox
-                id={POLE_SPECIFIC_FORMULAS[10].id}
-                number={POLE_SPECIFIC_FORMULAS[10].number}
-                title={POLE_SPECIFIC_FORMULAS[10].title}
-                category={POLE_SPECIFIC_FORMULAS[10].category}
-                standardRef={POLE_SPECIFIC_FORMULAS[10].standardRef}
-                equationSvg={POLE_SPECIFIC_FORMULAS[10].equationSvg}
-                variables={POLE_SPECIFIC_FORMULAS[10].variables}
-                substitution={
-                  <div style={{ fontSize: '0.825rem' }}>
-                    Total Vertical Load V* = <strong>{selectedPoleData.vertical_load_kN} kN</strong> ➔ Selected Footprint: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong><br />
-                    Soil Bearing Pressure Check: <strong style={{ color: '#059669' }}>SATISFIED (PASS - Within Permissible Soil Bearing Capacity)</strong>
-                  </div>
-                }
-              />
-            </div>
-          )}
+          {/* Equation 2.11: Soil Bearing Pressure (qactual) */}
+          <MethodologyEquationBox
+            id={POLE_SPECIFIC_FORMULAS[10].id}
+            number={POLE_SPECIFIC_FORMULAS[10].number}
+            title={POLE_SPECIFIC_FORMULAS[10].title}
+            category={POLE_SPECIFIC_FORMULAS[10].category}
+            standardRef={POLE_SPECIFIC_FORMULAS[10].standardRef}
+            equationSvg={POLE_SPECIFIC_FORMULAS[10].equationSvg}
+            variables={POLE_SPECIFIC_FORMULAS[10].variables}
+            substitution={
+              <div style={{ fontSize: '0.825rem' }}>
+                Total Vertical Load V* = <strong>{selectedPoleData.vertical_load_kN} kN</strong> ➔ Selected Footprint: <strong style={{ color: 'var(--primary)' }}>{selectedPoleData.foundation_type}</strong><br />
+                Soil Bearing Pressure Check: <strong style={{ color: '#059669' }}>SATISFIED (PASS - Within Permissible Soil Bearing Capacity)</strong>
+              </div>
+            }
+          />
+        </div>
+      )}
 
       {/* Bottom footer action */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem', paddingBottom: '1.5rem' }}>

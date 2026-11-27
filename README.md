@@ -8,6 +8,14 @@ Monorepo for LECO overhead electrical line structural pole selection, foundation
 
 ## Quick Start (Local Setup & Run)
 
+### Option A: One-Click Launcher for Windows (Recommended for Non-Technical Users)
+1. Install **Python 3.10+** (check *"Add Python to PATH"*) and **Node.js LTS**.
+2. Download this repository (**Code → Download ZIP**) and extract the folder.
+3. Double-click **`start_linedesign.bat`** in the main folder.
+   - On the first run, it automatically installs dependencies, imports the LECO master Excel workbook, asks you to set a login password, and opens `http://localhost:5173` in your browser.
+
+### Option B: Manual Setup (Developers)
+
 ### 1. Backend & Engine Setup
 ```bash
 cd backend

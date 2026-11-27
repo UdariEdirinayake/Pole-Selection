@@ -1,6 +1,54 @@
-# pole-select
+# pole-select (LineDesign)
 
-Monorepo for structural pole selection, engineering evaluation, and catalog management.
+Monorepo for LECO overhead electrical line structural pole selection, foundation & clearance verification, and master catalog management.
+
+> **Supervisor / Reviewer Summary:** See [docs/PROJECT_SUBMISSION_SUMMARY.md](docs/PROJECT_SUBMISSION_SUMMARY.md) for the complete architecture overview, engineering methodology (M1–M8), workflow, and verification summary.
+
+---
+
+## Quick Start (Local Setup & Run)
+
+### 1. Backend & Engine Setup
+```bash
+cd backend
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS/Linux:
+# source .venv/bin/activate
+
+pip install -r requirements.txt
+pip install -e ../engine
+```
+
+### 2. Initialize Database & Import Master Data
+Without a `.env` file, the backend defaults to local SQLite (`backend/pole_select.db`).
+```bash
+# Run from backend/
+alembic upgrade head
+python -m app.importers.excel_master ../data/source/LECO_Pole_Selection_Construction_Data.xlsx
+
+# Create an initial user (provide your own credentials via env vars)
+# Windows PowerShell:
+$env:ADMIN_EMAIL="reviewer@linedesign.local"; $env:ADMIN_PASSWORD="<your-password>"; $env:ADMIN_ROLE="reviewer"; python -m app.cli_init_admin
+```
+
+### 3. Start Backend & Frontend
+Terminal 1 (Backend on port 8000):
+```bash
+cd backend
+.venv\Scripts\uvicorn.exe app.main:app --reload --port 8000
+```
+
+Terminal 2 (Frontend on port 5173):
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+---
 
 ## Monorepo Layout
 

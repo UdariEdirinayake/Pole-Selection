@@ -31,15 +31,81 @@ function transformLiveResults(calcResults: any) {
     return '—'
   }
 
-  const pole_summary = results.map((r: any) => ({
-    sec: r.section,
-    pole: r.pole_no,
-    pole_configuration: calcResults.config?.description || `Config ${calcResults.config?.config_no || '3'}`,
-    final_recommended_pole: r.recommended || r.rec_guy_unguy || r.rec_on_buckling || '—',
-    spur: r.is_terminal ? (r.pole_no === 1 ? 'Terminal (Start)' : 'Terminal (End)') : '—',
-    equipment: getEquip(r),
-    foundation_recommendation: r.foundation?.foundation_recommendation || (r.foundation?.foundation_type ? `Type ${r.foundation.foundation_type}` : 'Type A'),
-  }))
+  const pole_summary = results.map((r: any) => {
+    const firstIns = Array.isArray(r.insulator_levels) && r.insulator_levels.length > 0 ? r.insulator_levels[0] : null
+    const tieLabel = r.tie || firstIns?.tie || (r.is_terminal || r.is_section ? 'TEN**' : '—')
+    return {
+      sec: r.section,
+      pole: r.pole_no,
+      pole_configuration: calcResults.config?.description || `Config ${calcResults.config?.config_no || '3'}`,
+      final_recommended_pole: r.recommended || r.rec_guy_unguy || r.rec_on_buckling || '—',
+      insulator_tie: tieLabel,
+      spur: r.is_terminal ? (r.pole_no === 1 ? 'Terminal (Start)' : 'Terminal (End)') : '—',
+      equipment: getEquip(r),
+      foundation_recommendation: r.foundation?.foundation_recommendation || (r.foundation?.foundation_type ? `Type ${r.foundation.foundation_type}` : 'Type A'),
+    }
+  })
+
+  const insulator_selection: any[] = []
+  results.forEach((r: any) => {
+    const roleLabel = r.is_terminal ? 'Terminal' : r.is_section ? 'Section' : 'Intermediate'
+    const windSpan = toNum(r.wind_span ?? r.eq_span)
+    const levels = Array.isArray(r.insulator_levels) ? r.insulator_levels : []
+
+    if (levels.length === 0) {
+      insulator_selection.push({
+        sec: r.section,
+        pole: r.pole_no,
+        role: roleLabel,
+        angle_deg: r.angle ?? 0,
+        wind_span_m: windSpan != null ? Number(windSpan.toFixed(1)) : '—',
+        circuit: '—',
+        t_kn: null,
+        r_kn: null,
+        r_recalc_kn: null,
+        cantilever_kn: null,
+        allowable_kn: null,
+        insulator: r.is_terminal || r.is_section ? 'TEN** (Dead-End)' : '—',
+        tie: r.tie || (r.is_terminal || r.is_section ? 'TEN**' : '—'),
+        status: 'PASS',
+        note: '',
+      })
+      return
+    }
+
+    levels.forEach((lv: any) => {
+      const tKn = toNum(lv.T_kN)
+      const rKn = toNum(lv.R_kN)
+      const rRecalc = toNum(lv.R_recalc_kN)
+      const cant = toNum(lv.cantilever_kN)
+      const allowKn = toNum(lv.allowable_kN) ?? (cant != null && cant > 0 ? cant / 2.0 : null)
+      const isDeadEnd = r.is_terminal || r.is_section || String(lv.insulator || '').includes('TEN')
+      let status = 'PASS'
+      if (lv.note && (String(lv.note).toLowerCase().includes('tension insulator required') || String(lv.note).toLowerCase().includes('exceeds'))) {
+        status = 'FAIL'
+      } else if (rRecalc != null) {
+        status = 'CAUTION'
+      }
+
+      insulator_selection.push({
+        sec: r.section,
+        pole: r.pole_no,
+        role: roleLabel,
+        angle_deg: r.angle ?? 0,
+        wind_span_m: windSpan != null ? Number(windSpan.toFixed(1)) : '—',
+        circuit: lv.band === 'HH' ? '33 kV' : '11 kV',
+        t_kn: tKn != null ? Number(tKn.toFixed(2)) : null,
+        r_kn: rKn != null ? Number(rKn.toFixed(2)) : null,
+        r_recalc_kn: rRecalc != null ? Number(rRecalc.toFixed(2)) : null,
+        cantilever_kn: cant != null ? Number(cant.toFixed(2)) : null,
+        allowable_kn: allowKn != null ? Number(allowKn.toFixed(2)) : null,
+        insulator: lv.insulator || '—',
+        tie: isDeadEnd ? 'TEN**' : (lv.tie || '—'),
+        status,
+        note: lv.note || '',
+      })
+    })
+  })
 
   const conductor_tension_check = (calcResults.tensionChecks || []).map((t: any) => {
     const pct15 = toNum(t.pct_uts_15c_wind ?? t.pct15_uts)
@@ -201,6 +267,7 @@ function transformLiveResults(calcResults: any) {
   return {
     pole_summary,
     conductor_tension_check,
+    insulator_selection,
     structural_loading,
     foundation_soil_bearing,
     ground_clearance,
@@ -230,8 +297,17 @@ export const ResultsPage: React.FC = () => {
       if (cached) {
         try {
           const parsed = JSON.parse(cached)
-          // Only use cache if it was computed with updated engine (has bm_guy_kNm)
-          if (parsed?.results?.[0]?.bm_guy_kNm != null) {
+          // Only use cache if it was computed with updated engine (has bm_guy_kNm, current Mg formula, BM_F breakdown, and insulator T_kN)
+          const hasInsulatorFields =
+            !Array.isArray(parsed?.results?.[0]?.insulator_levels) ||
+            parsed.results[0].insulator_levels.length === 0 ||
+            parsed.results[0].insulator_levels[0]?.T_kN != null
+          if (
+            parsed?.results?.[0]?.bm_guy_kNm != null &&
+            parsed?.results?.[0]?.foundation?.mg_formula === 'k_Dg_P3_div_10' &&
+            parsed?.results?.[0]?.foundation?.bm_c_f_kNm != null &&
+            hasInsulatorFields
+          ) {
             liveResults = parsed
           } else {
             localStorage.removeItem('linedesign_latest_results')
@@ -331,9 +407,56 @@ export const ResultsPage: React.FC = () => {
     { key: 'pole', header: 'Pole' },
     { key: 'pole_configuration', header: 'Configuration' },
     { key: 'final_recommended_pole', header: 'Recommended Pole' },
+    { key: 'insulator_tie', header: 'Tie / Dead-End' },
     { key: 'spur', header: 'Spur' },
     { key: 'equipment', header: 'Equipment' },
     { key: 'foundation_recommendation', header: 'Foundation Type' },
+  ]
+
+  const insulatorColumns: Column<any>[] = [
+    { key: 'sec', header: 'Sec' },
+    { key: 'pole', header: 'Pole' },
+    { key: 'role', header: 'Role' },
+    { key: 'circuit', header: 'Circuit' },
+    { key: 'angle_deg', header: 'Angle α (°)' },
+    { key: 'wind_span_m', header: 'Wind Span s (m)' },
+    {
+      key: 't_kn',
+      header: 'Max Tension T (kN)',
+      render: (row) => (row.t_kn != null ? row.t_kn.toFixed(2) : '—'),
+    },
+    {
+      key: 'r_kn',
+      header: 'Pin Load R (kN)',
+      render: (row) => {
+        if (row.r_kn == null) return '—'
+        if (row.r_recalc_kn != null) {
+          return `${row.r_kn.toFixed(2)} (2×: ${row.r_recalc_kn.toFixed(2)})`
+        }
+        return row.r_kn.toFixed(2)
+      },
+    },
+    {
+      key: 'cantilever_kn',
+      header: 'Ultimate Pin (kN)',
+      render: (row) => (row.cantilever_kn != null ? row.cantilever_kn.toFixed(2) : '—'),
+    },
+    {
+      key: 'allowable_kn',
+      header: 'Allowable ÷2 (kN)',
+      render: (row) => (row.allowable_kn != null ? row.allowable_kn.toFixed(2) : '—'),
+    },
+    { key: 'insulator', header: 'Selected Insulator' },
+    {
+      key: 'tie',
+      header: 'Preform Tie',
+      render: (row) => <strong style={{ color: 'var(--primary)' }}>{row.tie}</strong>,
+    },
+    {
+      key: 'status',
+      header: 'Check',
+      render: (row) => <StatusChip status={row.status} label={row.status === 'CAUTION' ? '2× PIN' : row.status} />,
+    },
   ]
 
   const tensionCheckColumns: Column<any>[] = [
@@ -697,6 +820,37 @@ export const ResultsPage: React.FC = () => {
                   columns={tensionCheckColumns}
                   data={resultsData.conductor_tension_check || []}
                   csvFilename="conductor_tension_check.csv"
+                />
+              </div>
+
+              <div className="card">
+                <div
+                  style={{
+                    padding: '10px 16px',
+                    borderBottom: '1px solid var(--border-color)',
+                    backgroundColor: 'var(--bg-subtle, rgba(148, 163, 184, 0.08))',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>
+                    <strong>Pin Load Check:</strong>{' '}
+                    <code>R = 2·T·sin(α/2) + ω·d·s·cos(α/2) &lt; Ultimate Pin Strength / 2</code> (SF = 2)
+                  </span>
+                  <span>
+                    <strong>Preform Ties (Vertical):</strong>{' '}
+                    TTIE ≤ 10° · STIE ≤ 20° · 2STIE ≤ 40° · &gt;40° or Dead-End → TEN**
+                  </span>
+                </div>
+                <DataTable
+                  title="Insulator Pin Cantilever & Tie Selection"
+                  columns={insulatorColumns}
+                  data={resultsData.insulator_selection || []}
+                  csvFilename="insulator_pin_tie_selection.csv"
                 />
               </div>
 

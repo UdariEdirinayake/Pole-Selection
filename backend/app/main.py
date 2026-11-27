@@ -1,6 +1,8 @@
 import datetime
-from fastapi import FastAPI, Depends
+import logging
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -34,6 +36,17 @@ app.include_router(master_router)
 app.include_router(projects_router)
 app.include_router(results_router)
 app.include_router(engine_router)
+
+logger = logging.getLogger("linedesign.api")
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled server error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {type(exc).__name__}"},
+    )
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])

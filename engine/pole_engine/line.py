@@ -692,17 +692,42 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
         for i in range(n_hh + n_h):
             b = "HH" if i < n_hh else "H"
             volt = "33kV" if b == "HH" else "11kV"
+            target_kv = 33.0 if b == "HH" else 11.0
             sc = stage_cond[i]
             sel_desc = ins_desc_hh if b == "HH" else ins_desc_h
+            if not sel_desc and insulators_master:
+                pin_match = next(
+                    (
+                        str(x.get("description") or "").strip()
+                        for x in insulators_master
+                        if num(x.get("voltage_level_kV") or x.get("voltage_level_kv")) == target_kv
+                        and "pin" in str(x.get("description") or "").lower()
+                    ),
+                    None,
+                )
+                any_match = next(
+                    (
+                        str(x.get("description") or "").strip()
+                        for x in insulators_master
+                        if num(x.get("voltage_level_kV") or x.get("voltage_level_kv")) == target_kv
+                    ),
+                    None,
+                )
+                sel_desc = pin_match or any_match or ""
             cant = cant_of(sel_desc, insulators_master)
 
+            t1_val = stage_t1[i] if i < len(stage_t1) else 0.0
+            t2_val = stage_t2[i] if i < len(stage_t2) else 0.0
             res = select_insulator_by_angle(
                 r["angle"], sel_desc, volt, dead_end, ttie_max, stie_max,
-                {"T1_kN": stage_t1[i] if i < len(stage_t1) else 0.0, "T2_kN": stage_t2[i] if i < len(stage_t2) else 0.0, "qCond": q_cond, "dia_m": dia_m(sc), "windSpan": wind_span, "cantilever_kN": cant}
+                {"T1_kN": t1_val, "T2_kN": t2_val, "qCond": q_cond, "dia_m": dia_m(sc), "windSpan": wind_span, "cantilever_kN": cant}
             )
             lv_res = {
                 "band": b, "stage": i, "insulator": res["insulator"], "tie": res["tie"], "detail": res["detail"],
-                "R_kN": res["R_kN"], "R_recalc_kN": res["R_recalc_kN"], "cantilever_kN": cant or None, "note": res.get("note") or ""
+                "T_kN": max(t1_val, t2_val),
+                "R_kN": res["R_kN"], "R_recalc_kN": res["R_recalc_kN"],
+                "cantilever_kN": cant or None, "allowable_kN": res.get("allowable_kN"),
+                "note": res.get("note") or ""
             }
             ins_levels.append(lv_res)
             rk = ins_rank(res)
@@ -736,7 +761,11 @@ def compute_line(line_rows: list[dict[str, Any]], settings: dict[str, Any], data
             "bm_pt_kNm": bm_pt if is_terminal else 0.0,
             "bm_long_kNm": bm_long_full,
             "bm_pole_kNm": bm_p,
+            "pole_breadth_m": pole_breadth,
+            "pole_long_breadth_m": pole_long_breadth,
             "bm_equip_kNm": bm_e,
+            "equip_area_m2": equip_parts.get("area_m2", 0.0),
+            "equip_height_m": (equip_parts["h_tf_m"] + equip_parts["b_m"] / 2.0) if equip_parts.get("area_m2", 0.0) > 0 else 0.0,
             "pole_top_load_daN": pole_top_load,
             "terminal_long_load_daN": long_load_dan,
             "load_without_tension_daN": residual_load,

@@ -43,7 +43,9 @@ def test_compute_foundation_basic():
         }
     }
     res = compute_foundation(opts)
-    assert res["embedment_m"] == 11.0 / 6.0
+    expected_p = 11.0 / 6.0
+    expected_mg = (25000.0 * 0.35 * (expected_p ** 3)) / 10.0
+    assert res["embedment_m"] == expected_p
     assert res["bmf_kNm"] > 0
-    assert res["mg_kNm"] > 0
+    assert res["mg_kNm"] == pytest.approx(expected_mg, rel=1e-9)
     assert res["foundation_type"] in ("A", "B", "C", "X")

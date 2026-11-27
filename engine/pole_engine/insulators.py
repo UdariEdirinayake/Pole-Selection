@@ -40,9 +40,11 @@ def select_insulator_by_angle(
     is_dead_end: bool,
     ttie_max: float = 10.0,
     stie_max: float = 20.0,
-    opts: Optional[dict[str, Any]] = None
+    opts: Optional[dict[str, Any]] = None,
+    double_stie_max: float = 40.0,
+    mounting: str = "vertical",
 ) -> dict[str, Any]:
-    """Select insulator and tie type by angle and cantilever check (original tool line 11423-11469)."""
+    """Select insulator and preform tie fitting by LECO pin cantilever check and angle table."""
     desc = (selected_desc or "").strip() or f"{voltage_label} insulator"
     if is_dead_end:
         return {
@@ -51,15 +53,23 @@ def select_insulator_by_angle(
             "detail": "TEN**",
             "R_kN": None,
             "R_recalc_kN": None,
+            "allowable_kN": None,
             "note": ""
         }
 
     a = num(angle_deg, 0.0) or 0.0
-    t_max = num(ttie_max, 10.0) or 10.0
-    s_max = num(stie_max, 20.0) or 20.0
+    if mounting == "85_deg":
+        t_max = None  # Top Tie not allowed at 85° from vertical
+        s_max = 15.0
+        d_max = 30.0
+    else:
+        t_max = num(ttie_max, 10.0) or 10.0
+        s_max = num(stie_max, 20.0) or 20.0
+        d_max = num(double_stie_max, 40.0) or 40.0
 
     r_res = None
     r_recalc = None
+    allowable_kn = None
     note = ""
     base = None
 
@@ -71,36 +81,46 @@ def select_insulator_by_angle(
         sw = num(opts.get("windSpan"), 0.0) or 0.0
         s = math.sin(to_rad(a) / 2.0)
         c = math.cos(to_rad(a) / 2.0)
+        # R = 2 * T * sin(alpha/2) + w * d * s * cos(alpha/2) (t1 + t2 reduces to 2*T when T1 == T2)
         r_res = t1 * s + t2 * s + qc * d * sw * c
         cant = num(opts.get("cantilever_kN"), 0.0) or 0.0
+        allowable_kn = (cant / 2.0) if cant > 0 else None  # SF = 2: R < Ultimate Pin Strength / 2
 
-        if cant > 0 and r_res > cant + 1e-9:
+        if allowable_kn is not None and r_res >= allowable_kn:
             s4 = math.sin(to_rad(a) / 4.0)
             r_recalc = t1 * s4 + t2 * s4 + qc * d * sw * c
-            if r_recalc <= cant + 1e-9:
+            if r_recalc < allowable_kn and a <= d_max:
                 base = {
                     "insulator": f"2×{desc}",
                     "tie": "2STIE",
-                    "detail": f"2×{desc} (R>{cant} kN → 2× pin)"
+                    "detail": f"2×{desc} (R≥{allowable_kn:.2f} kN → 2× pin)"
                 }
             else:
                 base = {
-                    "insulator": desc,
-                    "tie": "—",
-                    "detail": desc,
+                    "insulator": f"{voltage_label} TEN**",
+                    "tie": "TEN**",
+                    "detail": f"TEN** (R≥{allowable_kn:.2f} kN)",
                     "note": "Tension Insulator required, re-run program with making section"
                 }
 
     if not base:
-        if a <= t_max:
+        if t_max is not None and a <= t_max:
             base = {"insulator": desc, "tie": "TTIE", "detail": desc}
         elif a <= s_max:
             base = {"insulator": desc, "tie": "STIE", "detail": desc}
-        else:
+        elif a <= d_max:
             base = {"insulator": f"2×{desc}", "tie": "2STIE", "detail": f"2×{desc}"}
+        else:
+            base = {
+                "insulator": f"{voltage_label} TEN**",
+                "tie": "TEN**",
+                "detail": f"TEN** (α={a}° > {d_max:.0f}°)",
+                "note": f"Angle > {d_max:.0f}° exceeds Double Side Tie limit; Tension Insulator required"
+            }
 
     base["R_kN"] = r_res
     base["R_recalc_kN"] = r_recalc
+    base["allowable_kN"] = allowable_kn
     base["note"] = base.get("note") or note
     return base
 

@@ -707,6 +707,7 @@ def run_full_engine(
             "critical_buckling_kn": c.critical_buckling_kn,
             "critical_buckling_kN": c.critical_buckling_kn,
             "avg_breadth_m": c.avg_breadth_m,
+            "long_breadth_m": c.long_breadth_m or (0.3879 if c.height_m == 11 else (0.320 if c.height_m == 9 else 0.450)),
             "below_gl_breadth_m": c.below_gl_breadth_m,
             "weight_kg": c.weight_kg,
             "footprint_mm": c.footprint_mm,
@@ -805,10 +806,21 @@ def run_full_engine(
     dp_db = db.query(DesignParameter).filter(DesignParameter.dataset_version_id == vid).all() if vid else db.query(DesignParameter).all()
     dp_map = {p.parameter_name: p.value for p in dp_db}
 
+    ins_h_default = next(
+        (i["description"] for i in insulators_data if float(i.get("voltage_level_kV") or 0) == 11.0 and "pin" in str(i.get("description") or "").lower()),
+        next((i["description"] for i in insulators_data if float(i.get("voltage_level_kV") or 0) == 11.0), "")
+    )
+    ins_hh_default = next(
+        (i["description"] for i in insulators_data if float(i.get("voltage_level_kV") or 0) == 33.0 and "pin" in str(i.get("description") or "").lower()),
+        next((i["description"] for i in insulators_data if float(i.get("voltage_level_kV") or 0) == 33.0), "")
+    )
+
     settings = {
         "config_no": configs_data[0]["config_no"],
         "conductor_H": conductor_h,
         "conductor_LV": conductor_lv,
+        "insulator_H_desc": ins_h_default,
+        "insulator_HH_desc": ins_hh_default,
         "wind_pressure_Nm2": dp_map.get("wind_conductor", 575.0),
         "wind_pole_Nm2": dp_map.get("wind_pole", 865.0),
         "guy_wire_angle_deg": dp_map.get("guy_angle_deg", 30.0),

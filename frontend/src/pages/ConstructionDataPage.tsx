@@ -165,6 +165,8 @@ export const MASTER_TABLES: TableMeta[] = [
       { key: 'critical_buckling_kn', label: 'Buckling (kN)', type: 'number' },
       { key: 'weight_kg', label: 'Mass (kg)', type: 'number' },
       { key: 'footprint_mm', label: 'Footprint', type: 'text' },
+      { key: 'avg_breadth_m', label: 'Transverse Breadth (m)', type: 'number' },
+      { key: 'long_breadth_m', label: 'Longitudinal Breadth (m)', type: 'number' },
       { key: 'below_gl_breadth_m', label: 'Below-GL (m)', type: 'number' },
     ],
   },
@@ -285,10 +287,13 @@ export const ConstructionDataPage: React.FC = () => {
         const data = await res.json()
         setItems(data.items || [])
       } else {
+        const err = await res.json().catch(() => ({}))
+        setSaveError(err.detail || `Failed to load catalog (HTTP ${res.status}).`)
         setItems([])
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to load master table:', e)
+      setSaveError(e?.message || 'Network error while loading master table.')
       setItems([])
     } finally {
       setLoading(false)

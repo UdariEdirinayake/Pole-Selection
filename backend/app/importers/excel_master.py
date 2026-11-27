@@ -445,6 +445,10 @@ def import_excel_master(filepath: str) -> DatasetVersion:
 
                 needs_conf, conf_note = check_confirmation(list(r), {})
 
+                long_b = 0.388 if (h_m or 11.0) == 11.0 else (0.320 if (h_m or 9.0) == 9.0 else 0.450)
+                if "2x" in (c_label or "").lower():
+                    long_b = round(long_b * 2, 3)
+
                 pc = PoleCapacity(
                     dataset_version_id=version_id,
                     source_sheet="Pole Capacities",
@@ -456,6 +460,7 @@ def import_excel_master(filepath: str) -> DatasetVersion:
                     capacity_kn=dan_to_kn(cap_dan),
                     cost_rank=cost_rank,
                     avg_breadth_m=avg_b,
+                    long_breadth_m=long_b,
                     critical_buckling_kn=buckle,
                     below_gl_breadth_m=gl_b,
                     weight_kg=wt_kg,

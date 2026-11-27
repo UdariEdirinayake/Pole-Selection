@@ -204,6 +204,9 @@ class PoleCapacity(Base, BaseMasterTable):
     avg_breadth_m = Column(Float, nullable=True)
     avg_breadth_m_unit = Column(String(20), default="m")
 
+    long_breadth_m = Column(Float, nullable=True)
+    long_breadth_m_unit = Column(String(20), default="m")
+
     critical_buckling_kn = Column(Float, nullable=True)
     critical_buckling_kn_unit = Column(String(20), default="kN")
 

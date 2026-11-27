@@ -2,7 +2,7 @@
 
 Rules:
 - Embedment ratio P = PH / 6 must be loaded from design_parameter or explicit input, never hard-coded.
-- Overturning moment about fulcrum at depth delta = P / sqrt(2).
+- Overturning moment of resistance Mg = (k * D_g * P^3) / 10 (k = subgrade kN/m²/m, D_g = avg width below ground level m, P = embedment m).
 - Soil subgrade and bearing capacity loaded strictly from master data (SoilClass table).
 - Footprint parsed from PoleCapacity footprint_mm.
 - Replicate Foundation Type A, B, C selection logic.
@@ -105,10 +105,9 @@ def compute_foundation(opts: dict[str, Any]) -> dict[str, Any]:
     tf_row = find_equipment_row(data.get("equipment") or data.get("transformers"), tf_key)
     ep = bm_equip_parts(tf_row, pole_height, q_pole)
 
-    if ep.get("area_m2") or ep.get("weight_kg"):
+    if ep.get("area_m2"):
         wind_f = ep["area_m2"] * qp * (ep["h_tf_m"] + ep["b_m"] / 2.0 + delta)
-        weight_f = ep["weight_bm_kn_m"]
-        bm_e_f = wind_f + weight_f
+        bm_e_f = wind_f
     else:
         a_area = num(opts.get("tfArea"), 0.0) or 0.0
         force_eq = a_area * qp
@@ -131,20 +130,18 @@ def compute_foundation(opts: dict[str, Any]) -> dict[str, Any]:
         0.0
     ) or 0.0
 
-    b_gl = num(cap_row.get("below_gl_breadth_m") if cap_row else None, b) or b
-    theta_soil = 0.01  # rad
-    sum_cube = math.pow(delta, 3) + math.pow(max(p_embed - delta, 0.0), 3)
-    mg = (k_subgrade * b_gl * theta_soil / 3.0) * sum_cube
+    d_g = num(cap_row.get("below_gl_breadth_m") if cap_row else None, b) or b
+    mg = (k_subgrade * d_g * math.pow(p_embed, 3)) / 10.0
     stable = mg > bmf
 
     b_min = None
-    if k_subgrade > 0 and sum_cube > 0:
-        denom = (k_subgrade * theta_soil / 3.0) * sum_cube
+    if k_subgrade > 0 and p_embed > 0:
+        denom = (k_subgrade * math.pow(p_embed, 3)) / 10.0
         if denom > 0:
             b_min = bmf / denom
 
     alt_rec = "—" if stable else (
-        f"Min below-GL breadth B ≥ {b_min:.3f} m (or breast/heel block)" if b_min is not None
+        f"Min below-GL breadth Dg ≥ {b_min:.3f} m (or breast/heel block)" if b_min is not None
         else "Breast block / heel block or enlarge hole and concrete"
     )
 
@@ -202,7 +199,14 @@ def compute_foundation(opts: dict[str, Any]) -> dict[str, Any]:
     return {
         "soil_class": soil_class,
         "bmf_kNm": bmf,
+        "bm_c_f_kNm": bm_c_f,
+        "bm_p_f_kNm": bm_p_f,
+        "bm_e_f_kNm": bm_e_f,
+        "bm_t_f_kNm": bm_t_f if not is_guyed_or_strut else 0.0,
+        "bm_long_f_kNm": bm_long_f if not is_guyed_or_strut else 0.0,
+        "is_guyed_or_strut": is_guyed_or_strut,
         "mg_kNm": mg,
+        "mg_formula": "k_Dg_P3_div_10",
         "subgrade_k": k_subgrade,
         "stable": stable,
         "overturning_alt": alt_rec,
@@ -219,7 +223,7 @@ def compute_foundation(opts: dict[str, Any]) -> dict[str, Any]:
         "embedment_m": p_embed,
         "fulcrum_delta_m": delta,
         "footprint_mm": footprint_str,
-        "below_gl_m": b_gl,
+        "below_gl_m": d_g,
         "B_min_m": b_min,
         "area_min_m2": area_min_m2,
         "foundation_recommendation": found_rec

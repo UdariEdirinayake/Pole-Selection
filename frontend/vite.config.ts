@@ -9,10 +9,10 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
-      '/health': 'http://localhost:8000',
+      '/health': 'http://127.0.0.1:8000',
     }
   },
   test: {

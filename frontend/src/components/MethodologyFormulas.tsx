@@ -25,7 +25,7 @@ export const COMMON_ROUTE_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 4',
     description: 'Calculates the virtual uniform ruling span that yields the identical horizontal tension throughout each continuous tension strain section.',
     equationSvg: (
-      <svg viewBox="0 0 250 68" style={{ width: '230px', height: '62px', display: 'block' }}>
+      <svg viewBox="0 0 250 68" style={{ width: '310px', height: '84px', display: 'block' }}>
         {/* S_eq = */}
         <text x="12" y="42" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="22" fontStyle="italic" fill="currentColor">
           S<tspan fontSize="15" dy="5">eq</tspan><tspan fontSize="22" dy="-5" fontStyle="normal"> =</tspan>
@@ -59,7 +59,7 @@ export const COMMON_ROUTE_FORMULAS: FormulaDefinition[] = [
     standardRef: 'LECO Standard Chart Lookup (docs/result.pdf, Page 5)',
     description: 'Strict linear interpolation between adjacent calibration chart rows. Catenary equations are prohibited per engineering rules.',
     equationSvg: (
-      <svg viewBox="0 0 340 68" style={{ width: '310px', height: '62px', display: 'block' }}>
+      <svg viewBox="0 0 340 68" style={{ width: '420px', height: '84px', display: 'block' }}>
         <text x="10" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
           T<tspan fontStyle="normal">(</tspan>S<tspan fontSize="13" dy="3">eq</tspan><tspan fontStyle="normal" dy="-3">) = </tspan>T<tspan fontSize="13" dy="3">1</tspan><tspan fontStyle="normal" dy="-3"> + (</tspan>T<tspan fontSize="13" dy="3">2</tspan><tspan fontStyle="normal" dy="-3"> - </tspan>T<tspan fontSize="13" dy="3">1</tspan><tspan fontStyle="normal" dy="-3">) ×</tspan>
         </text>
@@ -93,7 +93,7 @@ export const COMMON_ROUTE_FORMULAS: FormulaDefinition[] = [
     standardRef: 'LECO Standard Guidelines (docs/result.pdf, Page 5)',
     description: 'Ensures everyday and extreme loading tensions do not exceed mandated fatigue and failure safety thresholds.',
     equationSvg: (
-      <svg viewBox="0 0 250 68" style={{ width: '220px', height: '60px', display: 'block' }}>
+      <svg viewBox="0 0 250 68" style={{ width: '310px', height: '84px', display: 'block' }}>
         <text x="12" y="40" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="normal" fill="currentColor">
           % UTS =
         </text>
@@ -130,7 +130,7 @@ export const COMMON_ROUTE_FORMULAS: FormulaDefinition[] = [
     standardRef: 'LECO Standard Guidelines (docs/result.pdf, Page 9)',
     description: 'Calculates the required physical crossarm separation between phase conductors under maximum sag swing conditions.',
     equationSvg: (
-      <svg viewBox="0 0 250 64" style={{ width: '235px', height: '58px', display: 'block' }}>
+      <svg viewBox="0 0 250 64" style={{ width: '320px', height: '82px', display: 'block' }}>
         <text x="10" y="40" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
           D<tspan fontStyle="normal"> = 0.75 · </tspan>
         </text>
@@ -174,7 +174,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 10',
     description: 'Half of the sum of the adjacent spans supported by the pole, governing all transverse wind loadings.',
     equationSvg: (
-      <svg viewBox="0 0 240 64" style={{ width: '210px', height: '58px', display: 'block' }}>
+      <svg viewBox="0 0 240 64" style={{ width: '300px', height: '80px', display: 'block' }}>
         <text x="14" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
           S<tspan fontSize="14" dy="4">w</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> =</tspan>
         </text>
@@ -204,7 +204,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 11',
     description: 'Transverse moment exerted at ground line by wind pressure acting across all conductors.',
     equationSvg: (
-      <svg viewBox="0 0 340 68" style={{ width: '315px', height: '62px', display: 'block' }}>
+      <svg viewBox="0 0 340 68" style={{ width: '430px', height: '86px', display: 'block' }}>
         <text x="10" y="42" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="13" dy="4">C</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> = ∑ [ </tspan>
           n<tspan fontSize="13" dy="4">c</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> · </tspan>
@@ -234,7 +234,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 12',
     description: 'Bending moment exerted at ground line by wind pressure acting upon the exposed surface of the pole body.',
     equationSvg: (
-      <svg viewBox="0 0 290 64" style={{ width: '270px', height: '60px', display: 'block' }}>
+      <svg viewBox="0 0 290 64" style={{ width: '380px', height: '84px', display: 'block' }}>
         <text x="12" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="13" dy="4">P</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> = </tspan>
           D<tspan fontSize="13" dy="4">avg</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> · </tspan>
@@ -264,7 +264,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 13',
     description: 'Accounts for wind force on pole-mounted equipment (such as distribution transformers, reclosers, or switchgear).',
     equationSvg: (
-      <svg viewBox="0 0 250 60" style={{ width: '230px', height: '56px', display: 'block' }}>
+      <svg viewBox="0 0 250 60" style={{ width: '330px', height: '78px', display: 'block' }}>
         <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="14" dy="4">E</tspan><tspan fontSize="20" dy="-4" fontStyle="normal"> = </tspan>
           A<tspan fontSize="14" dy="4">eq</tspan><tspan fontSize="20" dy="-4" fontStyle="normal"> · </tspan>
@@ -288,7 +288,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Pages 13–14',
     description: 'Transverse moment from line deviation angles at intermediate poles, or longitudinal conductor tension and pole wind moments at terminal dead-ends.',
     equationSvg: (
-      <svg viewBox="0 0 430 104" style={{ width: '395px', height: '96px', display: 'block' }}>
+      <svg viewBox="0 0 430 104" style={{ width: '530px', height: '128px', display: 'block' }}>
         {/* Intermediate / Section Angle Pole */}
         <text x="10" y="24" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
           BM<tspan fontSize="11" dy="3">T</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = ∑ </tspan>
@@ -342,7 +342,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
     standardRef: 'docs/result.pdf, Page 15',
     description: 'Converts total transverse and longitudinal ground line bending moments to equivalent point working loads applied 400 mm below pole top.',
     equationSvg: (
-      <svg viewBox="0 0 430 118" style={{ width: '395px', height: '108px', display: 'block' }}>
+      <svg viewBox="0 0 430 118" style={{ width: '530px', height: '145px', display: 'block' }}>
         {/* Transverse Pole Top Load */}
         <text x="10" y="32" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
           P<tspan fontSize="11" dy="3">trans</tspan><tspan fontSize="17" dy="-3" fontStyle="normal"> = </tspan>
@@ -390,17 +390,51 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
       { symbol: '∑BM_long', description: 'Total longitudinal ground line moment: BM_TT + BM_PT + BM_E,long (terminal) or |∑ N_i · (T_1,i − T_2,i) · cos(α/2) · H_i| (section)', unit: 'kN·m' },
       { symbol: 'H_gl', description: 'Free height of pole above ground line (e.g. 9.167 m for 11 m pole)', unit: 'm' },
       { symbol: '0.40', description: 'Standard point of application: 400 mm below pole top', unit: 'm' },
+      { symbol: 'Recommended Pole', description: 'Lightest single unguyed pole class with P_cap ≥ P_trans and P_long ≤ 0.25 × P_cap; otherwise proceeds to guyed (EQ 2.7–2.9) or strutted selection', unit: '—' },
+    ],
+  },
+  {
+    id: 'eq-residual-wind-load',
+    number: '2.7',
+    title: 'Pole Top Load on Transverse Direction Without Tension (Pres)',
+    category: 'pole',
+    standardRef: 'engine/pole_engine/line.py, line 492',
+    description: 'Calculates the residual transverse wind-only pole-top load (excluding conductor tension) to select the initial guyed pole class used for subsequent buckling checks.',
+    equationSvg: (
+      <svg viewBox="0 0 340 68" style={{ width: '420px', height: '84px', display: 'block' }}>
+        <text x="10" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
+          P<tspan fontSize="12" dy="4">res</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> = </tspan>
+        </text>
+        <text x="148" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          BM<tspan fontSize="11" dy="3">C</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          BM<tspan fontSize="11" dy="3">P</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          BM<tspan fontSize="11" dy="3">E</tspan>
+        </text>
+        <line x1="72" y1="32" x2="224" y2="32" stroke="currentColor" strokeWidth="1.6" />
+        <text x="148" y="51" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          H<tspan fontSize="11" dy="3">gl</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> − 0.40</tspan>
+        </text>
+        <text x="232" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="normal" fill="currentColor">
+          × 100
+        </text>
+      </svg>
+    ),
+    variables: [
+      { symbol: 'P_res', description: 'Pole-top load on transverse direction without tension, used to select the guyed pole class', unit: 'daN' },
+      { symbol: 'BM_C, BM_P, BM_E', description: 'Conductor, pole body, and equipment wind bending moments', unit: 'kN·m' },
+      { symbol: 'H_gl − 0.40', description: 'Pole-top load lever arm above ground line (8.767 m for 11 m pole)', unit: 'm' },
+      { symbol: 'Pole Selection', description: 'Lightest single pole class with capacity ≥ P_res; passed forward to Euler buckling check', unit: '—' },
     ],
   },
   {
     id: 'eq-guy-tension',
-    number: '2.7',
+    number: '2.8',
     title: 'Guy Wire Stay Working Tension Load (Ts / Tguy)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 16–17',
-    description: 'Tensile working force induced in guy wire stay balancing transverse or longitudinal overturning moments.',
+    description: 'Tensile working force induced in guy wire stay balancing transverse or longitudinal overturning moments, and stay class selection.',
     equationSvg: (
-      <svg viewBox="0 0 570 76" style={{ width: '100%', maxWidth: '540px', height: '68px', display: 'block' }}>
+      <svg viewBox="0 0 570 76" style={{ width: '100%', minWidth: '600px', height: '84px', display: 'block' }}>
         {/* Left hand side: T_S = */}
         <text x="6" y="42" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
           T<tspan fontSize="14" dy="4">S</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
@@ -412,7 +446,7 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
           <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">P</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
           <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">T</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal">) for Transverse Loads or (</tspan>
           <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">TT</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal"> + </tspan>
-          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">PT</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal">) for Longitudinal Loads</tspan>)
+          <tspan fontStyle="italic">BM</tspan><tspan fontSize="9.5" dy="2.5">PT</tspan><tspan fontSize="13.2" dy="-2.5" fontStyle="normal">) for Longitudinal Loads</tspan>
         </text>
         {/* Fraction bar */}
         <line x1="48" y1="36" x2="562" y2="36" stroke="currentColor" strokeWidth="1.6" />
@@ -428,45 +462,46 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
       { symbol: 'BM_TT + BM_PT', description: 'Total ground-line bending moment for Longitudinal Loads (terminal dead-end poles)', unit: 'kN·m' },
       { symbol: 'H_S', description: 'Guy attachment height above ground (e.g. 8.4 m for an 11 m pole)', unit: 'm' },
       { symbol: 'θ', description: 'Angle between the guy wire and the vertical pole axis (standard 30°)', unit: 'degrees' },
-      { symbol: 'SF Stay', description: 'Safety factor = Ultimate stay strength / T_S ≥ 2.5', unit: '—' },
+      { symbol: 'Guy Classification', description: 'Light (L): T_S ≤ 2,000 daN | Medium (M): 2,000 < T_S ≤ 3,500 daN | Heavy (H): 3,500 < T_S ≤ 5,600 daN | Double Heavy (2H): ≤ 11,200 daN', unit: 'daN' },
     ],
   },
   {
     id: 'eq-buckling-load',
-    number: '2.8',
+    number: '2.9',
     title: 'Guyed Pole Vertical Buckling Load (V*)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 18–19',
     description: 'Downwards vertical axial thrust on the pole under guy wire reaction and equipment weights.',
     equationSvg: (
-      <svg viewBox="0 0 340 64" style={{ width: '315px', height: '60px', display: 'block' }}>
-        <text x="10" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
+      <svg viewBox="0 0 430 72" style={{ width: '510px', height: '86px', display: 'block' }}>
+        <text x="8" y="28" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
           V<tspan fontStyle="normal">* = </tspan>
-          T<tspan fontSize="13" dy="4">guy</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> · cos(θ) + </tspan>
-          W<tspan fontSize="13" dy="4">pole</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> + </tspan>
-          W<tspan fontSize="13" dy="4">eq</tspan><tspan fontSize="19" dy="-4" fontStyle="normal"> + </tspan>
-          W<tspan fontSize="13" dy="4">c</tspan>
+          V<tspan fontSize="11" dy="3">cond</tspan><tspan fontSize="17" dy="-3" fontStyle="normal"> + </tspan>
+          <tspan fontStyle="italic">T</tspan><tspan fontSize="11" dy="3">S</tspan><tspan fontSize="17" dy="-3" fontStyle="normal"> · cos(θ) / 100 + </tspan>
+          V<tspan fontSize="11" dy="3">eq</tspan>
+        </text>
+        <text x="8" y="56" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="15" fontStyle="normal" fill="currentColor">
+          Buckling Demand = |<tspan fontStyle="italic">V</tspan>*| × 2.5 ≤ <tspan fontStyle="italic">P</tspan><tspan fontSize="11" dy="3">cr</tspan>
         </text>
       </svg>
     ),
     variables: [
       { symbol: 'V*', description: 'Total vertical compressive design load on guyed pole shaft', unit: 'kN' },
-      { symbol: 'T_guy · cos(θ)', description: 'Downwards vertical component of stay wire tension', unit: 'kN' },
-      { symbol: 'W_pole', description: 'Self-weight of pole shaft above ground line', unit: 'kN' },
-      { symbol: 'W_eq', description: 'Weight of pole-mounted equipment (transformer + oil)', unit: 'kN' },
-      { symbol: 'W_c', description: 'Vertical weight of conductors and hardware attachments', unit: 'kN' },
-      { symbol: 'Buckling Check', description: 'Pole Euler buckling capacity P_cr ≥ 2.5 × V*', unit: 'kN' },
+      { symbol: 'V_cond', description: 'Sum of catenary vertical conductor end reactions (fore + aft spans)', unit: 'kN' },
+      { symbol: 'T_S · cos(θ) / 100', description: 'Downwards vertical component of guy wire tension (T_S in daN)', unit: 'kN' },
+      { symbol: 'V_eq', description: 'Weight of pole-mounted equipment: (m_eq × 9.81) / 1000', unit: 'kN' },
+      { symbol: 'P_cr', description: 'Critical Euler buckling capacity from PoleCapacity master table (≥ 2.5 × |V*|)', unit: 'kN' },
     ],
   },
   {
     id: 'eq-sag-scaling',
-    number: '2.9',
+    number: '2.10',
     title: 'Individual Span Maximum Sag Scaling (65°C)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Page 7',
     description: 'Scales individual span sag from ruling equivalent span sag using the parabolic square ratio.',
     equationSvg: (
-      <svg viewBox="0 0 260 64" style={{ width: '240px', height: '60px', display: 'block' }}>
+      <svg viewBox="0 0 260 64" style={{ width: '320px', height: '80px', display: 'block' }}>
         <text x="12" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
           S<tspan fontSize="13" dy="4">span</tspan><tspan fontSize="20" dy="-4" fontStyle="normal"> = </tspan>
           S<tspan fontSize="13" dy="4">eq</tspan><tspan fontSize="20" dy="-4" fontStyle="normal"> × </tspan>
@@ -489,65 +524,244 @@ export const POLE_SPECIFIC_FORMULAS: FormulaDefinition[] = [
   },
   {
     id: 'eq-foundation-mg',
-    number: '2.10',
-    title: 'Geotechnical Soil Overturning Moment of Resistance (Mg)',
+    number: '2.11',
+    title: 'Moment of Resistance of Soil (Mg)',
     category: 'pole',
-    standardRef: 'docs/result.pdf, Pages 20–22',
-    description: 'Soil passive resistance moment around fulcrum point Y = P / √2 = 1.296 m below ground.',
+    standardRef: 'LECO Standard Specification',
+    description: 'Capability of the soil to resist the overturning moment of the pole.',
     equationSvg: (
-      <svg viewBox="0 0 240 64" style={{ width: '220px', height: '60px', display: 'block' }}>
-        <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
-          M<tspan fontSize="14" dy="4">g</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
+      <svg viewBox="0 0 260 66" style={{ width: '320px', height: '82px', display: 'block' }}>
+        <text x="12" y="39" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="20" fontStyle="italic" fill="currentColor">
+          M<tspan fontSize="13" dy="4">g</tspan><tspan fontSize="20" dy="-4" fontStyle="normal"> = </tspan>
         </text>
-        {/* Numerator: k · D_g · P³ */}
-        <text x="82" y="26" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" fill="currentColor">
-          k · D<tspan fontSize="12" dy="3">g</tspan><tspan dy="-3"> · P</tspan><tspan fontSize="12" dy="-8">3</tspan>
+        {/* Numerator: k × D_g × P^3 */}
+        <text x="148" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="italic" textAnchor="middle" fill="currentColor">
+          k<tspan fontStyle="normal"> × </tspan>D<tspan fontSize="12" dy="3">g</tspan><tspan fontSize="18" dy="-3" fontStyle="normal"> × </tspan>P<tspan fontSize="12" dy="-6" fontStyle="normal">3</tspan>
         </text>
         {/* Fraction bar */}
-        <line x1="72" y1="34" x2="165" y2="34" stroke="currentColor" strokeWidth="1.8" />
+        <line x1="78" y1="33" x2="218" y2="33" stroke="currentColor" strokeWidth="1.7" />
         {/* Denominator: 10 */}
-        <text x="108" y="53" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="normal" fill="currentColor">
+        <text x="148" y="54" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="18" fontStyle="normal" textAnchor="middle" fill="currentColor">
           10
         </text>
       </svg>
     ),
     variables: [
-      { symbol: 'M_g', description: 'Moment of resistance of soil against overturning around fulcrum', unit: 'kN·m' },
-      { symbol: 'k', description: 'Modulus of subgrade reaction of soil (e.g. 25,000 kN/m³ for Medium)', unit: 'kN/m³' },
-      { symbol: 'D_g', description: 'Average diameter of pole embedded in ground foundation', unit: 'm' },
-      { symbol: 'P', description: 'Depth of pole embedment in ground (1.833 m for 11 m pole)', unit: 'm' },
-      { symbol: 'Stability Check', description: 'Soil Resistance M_g ≥ Overturning Moment BMF', unit: 'kN·m' },
+      { symbol: 'M_g', description: 'Moment of resistance of soil against pole overturning', unit: 'kN·m' },
+      { symbol: 'P', description: 'Pole embedded depth (P = H / 6 = 1.833 m for 11 m pole)', unit: 'm' },
+      { symbol: 'k', description: 'Modulus of subgrade reaction (rupturing capacity of soil)', unit: 'kN/m²/m' },
+      { symbol: 'D_g', description: 'Average pole width below the ground level (from PoleCapacity master table)', unit: 'm' },
+      { symbol: 'BM_F', description: 'Foundation overturning moment at fulcrum depth δ (check: M_g > BM_F)', unit: 'kN·m' },
+    ],
+  },
+  {
+    id: 'eq-foundation-bmf',
+    number: '2.12',
+    title: 'Foundation Overturning Bending Moment (BMF)',
+    category: 'pole',
+    standardRef: 'engine/pole_engine/foundation.py, lines 74–123',
+    description: 'Total overturning moment acting at the geotechnical fulcrum depth δ = P / √2 below ground line, incorporating all constituent wind moments (conductors, pole shaft, equipment) and line tension moments at the fulcrum lever arm in a unified formulation.',
+    equationSvg: (
+      <div style={{ width: '100%', minWidth: '720px', display: 'flex', flexDirection: 'column', gap: '0.9rem', padding: '0.2rem 0' }}>
+        {/* Master Formula Box */}
+        <div
+          style={{
+            padding: '1rem 1.4rem',
+            backgroundColor: 'var(--bg-subtle)',
+            borderRadius: '6px',
+            borderLeft: '4px solid var(--primary)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Times New Roman', 'Cambria Math', serif",
+              fontSize: '1.45rem',
+              fontStyle: 'italic',
+              fontWeight: 700,
+              color: 'var(--text-main)',
+              letterSpacing: '0.4px',
+              display: 'flex',
+              alignItems: 'baseline',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
+            <span>BM<sub style={{ fontSize: '0.95rem' }}>F</sub> = BM<sub style={{ fontSize: '0.95rem' }}>C,F</sub> + BM<sub style={{ fontSize: '0.95rem' }}>P,F</sub> + BM<sub style={{ fontSize: '0.95rem' }}>E,F</sub></span>
+            <span style={{ fontSize: '1.2rem', fontStyle: 'normal', color: 'var(--text-secondary)' }}>
+              [ + BM<sub style={{ fontSize: '0.85rem' }}>T,F</sub> + |BM<sub style={{ fontSize: '0.85rem' }}>long,F</sub>| <span style={{ fontSize: '0.9rem' }}>(if unguyed)</span> ]
+            </span>
+          </div>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.45rem', lineHeight: 1.5 }}>
+            Geotechnical Fulcrum Depth: <strong><em>δ</em> = <em>P</em> / √2</strong> (where embedment <em>P</em> = <em>H</em> / 6) &nbsp;•&nbsp; Overturning Stability Check: <strong><em>M</em><sub>g</sub> &gt; <em>BM</em><sub>F</sub></strong>
+          </div>
+        </div>
+
+        {/* 5 Constituent Equations */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Term 1: Conductor Wind Moment */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.15rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', gap: '1rem' }}>
+            <div style={{ fontFamily: "'Times New Roman', 'Cambria Math', serif", fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-main)', letterSpacing: '0.2px' }}>
+              <span style={{ fontStyle: 'normal', fontWeight: 700, color: 'var(--primary)', marginRight: '0.6rem' }}>1.</span>
+              BM<sub style={{ fontSize: '0.85rem' }}>C,F</sub> = ∑ [ n<sub style={{ fontSize: '0.85rem' }}>c</sub> · (q<sub style={{ fontSize: '0.85rem' }}>w</sub> / 1000) · S<sub style={{ fontSize: '0.85rem' }}>w</sub> · cos(α/2) · d<sub style={{ fontSize: '0.85rem' }}>c</sub> · (H<sub style={{ fontSize: '0.85rem' }}>c</sub> + δ) ]
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.25rem 0.65rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              Conductor Wind Moment
+            </span>
+          </div>
+
+          {/* Term 2: Pole Shaft Wind Moment */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.15rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', gap: '1rem' }}>
+            <div style={{ fontFamily: "'Times New Roman', 'Cambria Math', serif", fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-main)', letterSpacing: '0.2px' }}>
+              <span style={{ fontStyle: 'normal', fontWeight: 700, color: 'var(--primary)', marginRight: '0.6rem' }}>2.</span>
+              BM<sub style={{ fontSize: '0.85rem' }}>P,F</sub> = D<sub style={{ fontSize: '0.85rem' }}>avg</sub> · H<sub style={{ fontSize: '0.85rem' }}>gl</sub> · (q<sub style={{ fontSize: '0.85rem' }}>pole</sub> / 1000) · (H<sub style={{ fontSize: '0.85rem' }}>gl</sub> / 2 + δ)
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.25rem 0.65rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              Pole Shaft Wind Moment
+            </span>
+          </div>
+
+          {/* Term 3: Equipment Wind Moment */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.15rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', gap: '1rem' }}>
+            <div style={{ fontFamily: "'Times New Roman', 'Cambria Math', serif", fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-main)', letterSpacing: '0.2px' }}>
+              <span style={{ fontStyle: 'normal', fontWeight: 700, color: 'var(--primary)', marginRight: '0.6rem' }}>3.</span>
+              BM<sub style={{ fontSize: '0.85rem' }}>E,F</sub> = A<sub style={{ fontSize: '0.85rem' }}>e</sub> · (q<sub style={{ fontSize: '0.85rem' }}>pole</sub> / 1000) · (H<sub style={{ fontSize: '0.85rem' }}>e</sub> + δ)
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.25rem 0.65rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              Equipment Wind Moment
+            </span>
+          </div>
+
+          {/* Term 4: Line Angle Tension Moment */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.15rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', gap: '1rem' }}>
+            <div style={{ fontFamily: "'Times New Roman', 'Cambria Math', serif", fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-main)', letterSpacing: '0.2px' }}>
+              <span style={{ fontStyle: 'normal', fontWeight: 700, color: 'var(--primary)', marginRight: '0.6rem' }}>4.</span>
+              BM<sub style={{ fontSize: '0.85rem' }}>T,F</sub> = ∑ n<sub style={{ fontSize: '0.85rem' }}>i</sub> · (T<sub style={{ fontSize: '0.85rem' }}>1,i</sub> + T<sub style={{ fontSize: '0.85rem' }}>2,i</sub>) · sin(α/2) · (H<sub style={{ fontSize: '0.85rem' }}>i</sub> + δ)
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.25rem 0.65rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              Line Angle Tension Moment (0 if guyed)
+            </span>
+          </div>
+
+          {/* Term 5: Longitudinal Tension Moment */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.15rem', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '6px', gap: '1rem' }}>
+            <div style={{ fontFamily: "'Times New Roman', 'Cambria Math', serif", fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-main)', letterSpacing: '0.2px' }}>
+              <span style={{ fontStyle: 'normal', fontWeight: 700, color: 'var(--primary)', marginRight: '0.6rem' }}>5.</span>
+              BM<sub style={{ fontSize: '0.85rem' }}>long,F</sub> = ∑ n<sub style={{ fontSize: '0.85rem' }}>i</sub> · (T<sub style={{ fontSize: '0.85rem' }}>1,i</sub> − T<sub style={{ fontSize: '0.85rem' }}>2,i</sub>) · cos(α/2) · (H<sub style={{ fontSize: '0.85rem' }}>i</sub> + δ)
+              <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontStyle: 'normal' }}> &nbsp;[Terminal: ∑ n<sub style={{ fontSize: '0.75rem' }}>i</sub> · T<sub style={{ fontSize: '0.75rem' }}>2,i</sub> · (H<sub style={{ fontSize: '0.75rem' }}>i</sub> + δ)]</span>
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.25rem 0.65rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+              Longitudinal Tension Moment (0 if guyed)
+            </span>
+          </div>
+        </div>
+      </div>
+    ),
+    variables: [
+      { symbol: 'BM_F', description: 'Total foundation overturning bending moment about fulcrum δ = P / √2', unit: 'kN·m' },
+      { symbol: 'BM_C,F', description: 'Conductor wind overturning moment about fulcrum: ∑ n_c · (q_w/1000) · S_w · cos(α/2) · d_c · (H_c + δ)', unit: 'kN·m' },
+      { symbol: 'BM_P,F', description: 'Pole shaft wind overturning moment about fulcrum: D_avg · H_gl · (q_pole/1000) · (H_gl/2 + δ)', unit: 'kN·m' },
+      { symbol: 'BM_E,F', description: 'Equipment wind overturning moment about fulcrum: A_e · (q_pole/1000) · (H_e + δ)', unit: 'kN·m' },
+      { symbol: 'BM_T,F', description: 'Transverse line deviation conductor tension moment about fulcrum (0 if guyed or strutted)', unit: 'kN·m' },
+      { symbol: 'BM_long,F', description: 'Longitudinal conductor tension moment about fulcrum (0 if guyed or strutted)', unit: 'kN·m' },
+      { symbol: 'δ', description: 'Geotechnical fulcrum depth below ground line: δ = P / √2 (P = H / 6 embedment depth)', unit: 'm' },
+      { symbol: 'q_w, q_pole', description: 'Conductor wind pressure (575 N/m²) and pole body wind pressure (865 N/m²)', unit: 'N/m²' },
+      { symbol: 'D_avg', description: 'Average pole breadth above ground line (from PoleCapacity master table)', unit: 'm' },
+      { symbol: 'A_e, H_e', description: 'Equipment wind area and mounting height above ground line', unit: 'm², m' },
+      { symbol: 'Check: M_g > BM_F', description: 'Soil overturning stability requires soil resistance moment M_g to exceed BM_F', unit: 'kN·m' },
     ],
   },
   {
     id: 'eq-foundation-bearing',
-    number: '2.11',
-    title: 'Soil Bearing Pressure and Vertical Foundation Capacity',
+    number: '2.13',
+    title: 'Vertical Load on Foundation and Soil Bearing Pressure (V_tot & q_actual)',
     category: 'pole',
     standardRef: 'docs/result.pdf, Pages 23–25',
-    description: 'Verifies the downward compressive vertical load does not exceed soil bearing limits.',
+    description: 'Computes total downward vertical foundation load summing pole self-weight, equipment, conductor dead weights, and stay vertical reactions, and verifies bearing contact pressure.',
     equationSvg: (
-      <svg viewBox="0 0 230 64" style={{ width: '210px', height: '60px', display: 'block' }}>
-        <text x="14" y="38" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="21" fontStyle="italic" fill="currentColor">
-          q<tspan fontSize="13" dy="4">actual</tspan><tspan fontSize="21" dy="-4" fontStyle="normal"> = </tspan>
+      <svg viewBox="0 0 540 84" style={{ width: '100%', minWidth: '580px', height: '94px', display: 'block' }}>
+        {/* V_tot = W_pole + W_tf + W_cond + Guy_vert */}
+        <text x="10" y="26" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          V<tspan fontSize="11" dy="3">tot</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> (V*) = </tspan>
+          W<tspan fontSize="11" dy="3">pole</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          W<tspan fontSize="11" dy="3">tf</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          W<tspan fontSize="11" dy="3">cond</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> + </tspan>
+          Guy<tspan fontSize="11" dy="3">vert</tspan>
         </text>
-        {/* Numerator: V* */}
-        <text x="102" y="25" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="19" fontStyle="italic" fill="currentColor">
-          V<tspan fontStyle="normal">*</tspan>
-        </text>
-        {/* Fraction bar */}
-        <line x1="90" y1="33" x2="148" y2="33" stroke="currentColor" strokeWidth="1.8" />
-        {/* Denominator: A_base */}
-        <text x="96" y="52" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
-          A<tspan fontSize="12" dy="3">base</tspan>
+        {/* q_actual = V* / A_base <= q_permissible */}
+        <text x="10" y="62" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          q<tspan fontSize="11" dy="3">actual</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = </tspan>
+          V<tspan fontStyle="normal">*</tspan><tspan fontStyle="normal"> / </tspan>A<tspan fontSize="11" dy="3">base</tspan>
+          <tspan fontStyle="normal"> ≤ q</tspan><tspan fontSize="11" dy="3">permissible</tspan>
         </text>
       </svg>
     ),
     variables: [
-      { symbol: 'q_actual', description: 'Vertical contact pressure exerted on soil foundation', unit: 'kN/m²' },
-      { symbol: 'V*', description: 'Total vertical downward load (stay vertical force + dead weights)', unit: 'kN' },
-      { symbol: 'A_base', description: 'Effective foundation base contact area (Type A or Type B footprint)', unit: 'm²' },
-      { symbol: 'Bearing Check', description: 'q_actual ≤ Permissible soil bearing capacity for soil class', unit: 'kN/m²' },
+      { symbol: 'V_tot (V*)', description: 'Total vertical downward compressive load on foundation: W_pole + W_tf + W_cond + Guy_vert', unit: 'kN' },
+      { symbol: 'W_pole', description: 'Weight of the pole shaft: (m_pole × 9.81) / 1000', unit: 'kN' },
+      { symbol: 'W_tf', description: 'Weight of pole-mounted transformer / equipment: (m_eq × 9.81) / 1000', unit: 'kN' },
+      { symbol: 'W_cond', description: 'Weight of conductors in weight span: ∑ (w_i × n_i × S_weight × 9.81) / 1000', unit: 'kN' },
+      { symbol: 'Guy_vert', description: 'Vertical downward component of guy stay reaction: (T_S × cos(θ)) / 100', unit: 'kN' },
+      { symbol: 'A_base', description: 'Effective foundation base contact area (Type A, B, or C footprint)', unit: 'm²' },
+      { symbol: 'q_actual', description: 'Vertical contact pressure exerted on soil foundation (must not exceed permissible bearing capacity)', unit: 'kN/m²' },
+    ],
+  },
+  {
+    id: 'eq-insulator-pin-load',
+    number: '2.14',
+    title: 'Insulator Pin Cantilever Load & Tie Check (R)',
+    category: 'pole',
+    standardRef: 'engine/pole_engine/insulators.py · LECO Spec',
+    description: 'Resultant force acting on an insulator pin from conductor tension in transverse direction and wind force on conductor, checked against Ultimate Pin Strength / 2 (SF = 2).',
+    equationSvg: (
+      <svg viewBox="0 0 500 84" style={{ width: '560px', height: '94px', display: 'block' }}>
+        <text x="8" y="34" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="17" fontStyle="italic" fill="currentColor">
+          R<tspan fontStyle="normal"> = 2 · </tspan>
+          T<tspan fontStyle="normal"> · sin(α/2) + ω · </tspan>
+          d<tspan fontStyle="normal"> · </tspan>
+          s<tspan fontStyle="normal"> · cos(α/2)</tspan>
+        </text>
+        <text x="8" y="68" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          R<tspan fontStyle="normal"> &lt; Ultimate Pin Strength / 2  (SF = 2)</tspan>
+        </text>
+      </svg>
+    ),
+    variables: [
+      { symbol: 'R', description: 'Force acting on an insulator pin', unit: 'kN' },
+      { symbol: 'T', description: 'Maximum anticipated tension of the conductor (15°C + Wind)', unit: 'kN' },
+      { symbol: 'α', description: 'Angle of deviation at the pole', unit: 'degrees' },
+      { symbol: 'ω', description: 'Designed wind pressure on conductor (575 N/m²)', unit: 'kN/m²' },
+      { symbol: 'd', description: 'Conductor diameter', unit: 'm' },
+      { symbol: 's', description: 'Wind span', unit: 'm' },
+      { symbol: 'Allowable', description: 'Ultimate Pin Strength / 2 (Safety Factor = 2)', unit: 'kN' },
+    ],
+  },
+  {
+    id: 'eq-ground-angle-clearance',
+    number: '2.15',
+    title: 'Ground Clearance & Effective Crossarm Angle Separation',
+    category: 'pole',
+    standardRef: 'engine/pole_engine/clearances.py',
+    description: 'Verifies lowest conductor height above ground at 65°C maximum sag and effective phase separation at line angles.',
+    equationSvg: (
+      <svg viewBox="0 0 430 76" style={{ width: '510px', height: '90px', display: 'block' }}>
+        <text x="8" y="26" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          C<tspan fontSize="11" dy="3">ground</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = </tspan>
+          H<tspan fontSize="11" dy="3">lowest</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> − </tspan>
+          S<tspan fontSize="11" dy="3">65,span</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> ≥ </tspan>
+          C<tspan fontSize="11" dy="3">min</tspan>
+        </text>
+        <text x="8" y="56" fontFamily="'Times New Roman', 'Cambria Math', serif" fontSize="16" fontStyle="italic" fill="currentColor">
+          D<tspan fontSize="11" dy="3">eff</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> = min(</tspan>
+          D<tspan fontSize="11" dy="3">start</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> cos(θ</tspan><tspan fontSize="11" dy="3">1</tspan><tspan fontSize="16" dy="-3" fontStyle="normal">/2), </tspan>
+          D<tspan fontSize="11" dy="3">end</tspan><tspan fontSize="16" dy="-3" fontStyle="normal"> cos(θ</tspan><tspan fontSize="11" dy="3">2</tspan><tspan fontSize="16" dy="-3" fontStyle="normal">/2))</tspan>
+        </text>
+      </svg>
+    ),
+    variables: [
+      { symbol: 'C_ground', description: 'Lowest conductor clearance above ground under 65°C maximum sag', unit: 'm' },
+      { symbol: 'H_lowest', description: 'Lowest conductor attachment height above ground line', unit: 'm' },
+      { symbol: 'S_65,span', description: 'Scaled 65°C sag on the individual span', unit: 'm' },
+      { symbol: 'D_eff', description: 'Minimum effective crossarm phase separation across start/end poles of span', unit: 'm' },
     ],
   },
 ]

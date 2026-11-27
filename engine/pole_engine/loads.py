@@ -128,12 +128,12 @@ def bm_equip_parts(
 
     qp_kn = (q_pole_n_per_m2 or 865.0) / 1000.0
     wind_bm = area * qp_kn * (h_tf + b_height / 2.0)
-    weight_bm = weight * 9.810001 * (1.325 - depth / 2.0) * 0.001
+    weight_bm = 0.0
 
     return {
         "wind_bm_kn_m": wind_bm,
         "weight_bm_kn_m": weight_bm,
-        "total_kn_m": wind_bm + weight_bm,
+        "total_kn_m": wind_bm,
         "h_tf_m": h_tf,
         "b_m": b_height,
         "depth_m": depth,

@@ -1,5 +1,0 @@
-feat: add CRUD capabilities to Construction Data Library
-
-- Added POST and DELETE endpoints in backend/app/api/master.py with unit syncing and defaults
-- Added Add Record modal and Delete buttons to ConstructionDataPage.tsx
-- Verified frontend production build and engine benchmark tests

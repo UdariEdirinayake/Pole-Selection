@@ -29,26 +29,35 @@ ENV/
 .coverage
 htmlcov/
 
-# Database
+# Database (local only — never commit)
 *.db
 *.sqlite
 *.sqlite3
 
 # Node / Frontend
 node_modules/
-dist/
-dist-ssr/
+frontend/dist/
+frontend/dist-ssr/
 *.local
 *.tsbuildinfo
 
-# Environment variables
+# Environment variables (never commit secrets)
 .env
 .env.*
 !.env.example
 
-# IDE
+# IDE & OS
 .vscode/
 .idea/
 *.swp
 *.swo
-~$*.xlsx 
+~$*.xlsx
+Thumbs.db
+.DS_Store
+
+# Misc dev artifacts
+tools/
+tests/__pycache__/
+frontend/e2e/
+frontend/scripts/
+
